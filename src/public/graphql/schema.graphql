@@ -1,0 +1,121 @@
+type Query {
+	getUser(userId: Id): User
+	getPost(postId: Id): Post
+	getChat(chatId: Id): Chat
+	getRequest(requestId: Id): Request
+}
+
+type Mutation {
+	#_____Post_____
+	#"Upvote/downvote a Post"
+	vote(postId: id!, type: [VoteType!]!): Bool
+	#"Report the post"
+	report(postId: id!): Bool
+	#_____Request_____
+    #"if u accept a request"
+	acceptRequest(requestId: id!): bool
+	#_____ChatRoom_____
+    #"send a assage in a Chatroom"
+	sendMassage(chatId: Id!, massage: String!): bool
+}
+
+type User {
+	#"ProfilPicture of the User"
+	profilPicture: String!
+	#"name from the User"
+	name: String!
+	#"unique name from the User"
+	handle: String!
+	#"Id from the User"
+	userId: ID!
+	#"Counted number of al Posts he posted"
+	numberOfPosts: int
+	#"show the posts of the User"
+	getAllPosts(first: int, offset: int): [Post]
+	#"Date when he/she Created the account"
+	JoinedDate: Date!
+	#"all chats for the mainsite(left)"
+	pinnedChats: [Chats]
+	#"all friends of the user"
+	friends: [User]
+	#"all request for groupChats/friends/events"
+	friends: [Request]
+}
+
+type Post {
+	#"PicturePath"
+	picture: String
+	#"posted Text"
+	text: String
+	#"upvotes from Post"
+	upvotes: Int!
+	#"downvotes from Post"
+	downvotes: Int!
+	#"The AuthorID of the Post"
+	author: User!
+	#"Creationdate of the Post"
+	creationDate: Date!
+	#"Upvoteted/Downvoted the User already (NoVote(Null),Upvote,Downvote)"
+	alreadyVoted: [VoteType]
+	#"with tags u can find the post in a research"
+	tags: [String]
+}
+
+type Search {
+	#"u can find posts with a name(text) or posted time"
+	findPost(first: int, offset: int, text: String!, postedDate: Date): [Post]
+	#"u can find a User with his Name or handle"
+	findUser(first: int, offset: int, name: String!, handle: string!): [User]
+}
+
+type Request {
+	#"RequestId"
+	requestId: Id!
+	#"RequestType"
+	requestType: [RequestType!]!
+}
+
+type ChatRoom {
+	#"Every User in the room"
+	members: [Users!]
+	#"Get the Chat"
+	getMessages(first: int, offset: int): [String]
+	#"chatId"
+	chatId: Id!
+}
+
+enum VoteType {
+	UPDATE
+	DOWNVOTE
+}
+
+enum RequestType {
+	FRIENDREQUEST
+	GROUPINVITE
+	EVENTINVITE
+}
+
+#type Event {
+#}
+
+#type Comment {
+#	#"CommentId"
+#	commentId: Id!
+#	#"text from the Comment"
+#	text: String
+#	#"PostId"
+#	postId: Id
+#	#"Upvotes of the comment"
+#	upvotes: int!
+#	#"Downvotes of the comment"
+#	downvotes: int!
+#	#"Upvoteted/Downvoted the User already (NoVote(Null),Upvote,Downvote)"
+#	alreadyVoted: [VoteType]
+#   #"Creationdate of the Post"
+#	creationDate: Date!
+#Comment
+#    #"Upvote/downvote a Comment"
+#	vote(CommentId: id!, type: [VoteType!]!): Bool
+#	#"Report the Comment"
+#	report(CommentId: id!): Bool
+#}
