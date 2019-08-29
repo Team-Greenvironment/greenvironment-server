@@ -1,0 +1,6 @@
+database:
+  url: localhost
+  port: 54332
+  user: greenvironment
+  password: greendev
+  database: greenvironment
