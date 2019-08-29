@@ -1,121 +1,100 @@
 type Query {
-	getUser(userId: Id): User
-	getPost(postId: Id): Post
-	getChat(chatId: Id): Chat
-	getRequest(requestId: Id): Request
+	"returns the user object for a given user id"
+	getUser(userId: ID): User
+	"returns the post object for a post id"
+	getPost(postId: ID): Post
+	"returns the chat object for a chat id"
+	getChat(chatId: ID): ChatRoom
+	"returns the request object for a request id"
+	getRequest(requestId: ID): Request
+	"find a post by the posted date or content"
+	findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
+	"find a user by user name or handle"
+	findUser(first: Int, offset: Int, name: String!, handle: String!): [User]
 }
 
 type Mutation {
-	#_____Post_____
-	#"Upvote/downvote a Post"
-	vote(postId: id!, type: [VoteType!]!): Bool
-	#"Report the post"
-	report(postId: id!): Bool
-	#_____Request_____
-    #"if u accept a request"
-	acceptRequest(requestId: id!): bool
-	#_____ChatRoom_____
-    #"send a assage in a Chatroom"
-	sendMassage(chatId: Id!, massage: String!): bool
+	"Upvote/downvote a Post"
+	vote(postId: ID!, type: [VoteType!]!): Boolean
+	"Report the post"
+	report(postId: ID!): Boolean
+    "lets you accept a request for a given request id"
+	acceptRequest(requestId: ID!): Boolean
+    "send a message in a Chatroom"
+	sendMessage(chatId: ID!, content: String!): Boolean
 }
 
+"represents a single user account"
 type User {
-	#"ProfilPicture of the User"
-	profilPicture: String!
-	#"name from the User"
+	"url for the Profile picture of the User"
+	profilePicture: String!
+	"name of the User"
 	name: String!
-	#"unique name from the User"
+	"unique identifier name from the User"
 	handle: String!
-	#"Id from the User"
-	userId: ID!
-	#"Counted number of al Posts he posted"
-	numberOfPosts: int
-	#"show the posts of the User"
-	getAllPosts(first: int, offset: int): [Post]
-	#"Date when he/she Created the account"
-	JoinedDate: Date!
-	#"all chats for the mainsite(left)"
-	pinnedChats: [Chats]
-	#"all friends of the user"
+	"Id of the User"
+	id: ID!
+	"the total number of posts the user posted"
+	numberOfPosts: Int
+	"returns a given number of posts of a user"
+	getAllPosts(first: Int=10, offset: Int): [Post]
+	"creation date of the user account"
+	joinedDate: String!
+	"returns chats the user pinned"
+	pinnedChats: [ChatRoom]
+	"returns all friends of the user"
 	friends: [User]
-	#"all request for groupChats/friends/events"
-	friends: [Request]
+	"all request for groupChats/friends/events"
+	requests: [Request]
 }
 
+"represents a single user post"
 type Post {
-	#"PicturePath"
+	"returns the path to the posts picture if it has one"
 	picture: String
-	#"posted Text"
+	"returns the text of the post"
 	text: String
-	#"upvotes from Post"
+	"upvotes of the Post"
 	upvotes: Int!
-	#"downvotes from Post"
+	"downvotes of the Post"
 	downvotes: Int!
-	#"The AuthorID of the Post"
+	"the user that is the author of the Post"
 	author: User!
-	#"Creationdate of the Post"
-	creationDate: Date!
-	#"Upvoteted/Downvoted the User already (NoVote(Null),Upvote,Downvote)"
-	alreadyVoted: [VoteType]
-	#"with tags u can find the post in a research"
+	"date the post was created"
+	creationDate: String!
+	"returns the type of vote the user performed on the post"
+	alreadyVoted: VoteType
+	"returns the tags of the post"
 	tags: [String]
 }
 
-type Search {
-	#"u can find posts with a name(text) or posted time"
-	findPost(first: int, offset: int, text: String!, postedDate: Date): [Post]
-	#"u can find a User with his Name or handle"
-	findUser(first: int, offset: int, name: String!, handle: string!): [User]
-}
-
+"represents a request of any type"
 type Request {
-	#"RequestId"
-	requestId: Id!
-	#"RequestType"
-	requestType: [RequestType!]!
+	"id of the request"
+	id: ID!
+	"type of the request"
+	requestType: RequestType!
 }
 
+"represents a chatroom"
 type ChatRoom {
-	#"Every User in the room"
-	members: [Users!]
-	#"Get the Chat"
-	getMessages(first: int, offset: int): [String]
-	#"chatId"
-	chatId: Id!
+	"the members of the chatroom"
+	members: [User!]
+	"return a specfic range of messages posted in the chat"
+	getMessages(first: Int, offset: Int): [String]
+	"id of the chat"
+	id: ID!
 }
 
+"represents the type of vote performed on a post"
 enum VoteType {
-	UPDATE
+	UPVOTE
 	DOWNVOTE
 }
 
+"represents the type of request that the user has received"
 enum RequestType {
 	FRIENDREQUEST
 	GROUPINVITE
 	EVENTINVITE
 }
-
-#type Event {
-#}
-
-#type Comment {
-#	#"CommentId"
-#	commentId: Id!
-#	#"text from the Comment"
-#	text: String
-#	#"PostId"
-#	postId: Id
-#	#"Upvotes of the comment"
-#	upvotes: int!
-#	#"Downvotes of the comment"
-#	downvotes: int!
-#	#"Upvoteted/Downvoted the User already (NoVote(Null),Upvote,Downvote)"
-#	alreadyVoted: [VoteType]
-#   #"Creationdate of the Post"
-#	creationDate: Date!
-#Comment
-#    #"Upvote/downvote a Comment"
-#	vote(CommentId: id!, type: [VoteType!]!): Bool
-#	#"Report the Comment"
-#	report(CommentId: id!): Bool
-#}
