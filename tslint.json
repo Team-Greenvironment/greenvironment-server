@@ -18,7 +18,10 @@
     "no-console": {
       "severity": "warning",
       "options": ["debug", "info", "log", "time", "timeEnd", "trace"]
-    }
+    },
+    "no-namespace": false,
+    "no-internal-module": false,
+    "max-classes-per-file": false
   },
   "jsRules": {
     "max-line-length": {

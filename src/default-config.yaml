@@ -1,0 +1,11 @@
+# database connection info
+database:
+  host:
+  port:
+  user:
+  password:
+  database:
+
+# http server configuration
+server:
+  port:
