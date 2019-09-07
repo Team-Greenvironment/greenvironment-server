@@ -12,5 +12,7 @@ const defaultConfig = __dirname + "/default-config.yaml";
         await fsx.copy(defaultConfig, configPath);
     }
     const app = new App();
+    await app.init();
+    app.start();
 })();
 

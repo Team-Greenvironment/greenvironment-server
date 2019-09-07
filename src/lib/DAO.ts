@@ -3,6 +3,7 @@ import globals from "./globals";
 import {QueryHelper} from "./QueryHelper";
 
 const config = globals.config;
+const tableCreationFile = __dirname + "/../sql/create-tables.sql";
 
 export class DAO {
     private queryHelper: QueryHelper;
@@ -14,6 +15,13 @@ export class DAO {
             port: config.database.port,
             user: config.database.user,
         });
-        this.queryHelper = new QueryHelper(dbClient);
+        this.queryHelper = new QueryHelper(dbClient, tableCreationFile);
+    }
+
+    /**
+     * Initializes everything that needs to be initialized asynchronous.
+     */
+    public async init() {
+        await this.queryHelper.createTables();
     }
 }
