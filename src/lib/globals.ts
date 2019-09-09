@@ -14,7 +14,7 @@ namespace globals {
                     winston.format.timestamp(),
                     winston.format.colorize(),
                     winston.format.printf(({ level, message, label, timestamp }) => {
-                        return `${timestamp} [${label}] ${level}: ${message}`;
+                        return `${timestamp} ${level}: ${message}`;
                     }),
                 ),
             }),

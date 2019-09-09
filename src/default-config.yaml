@@ -8,4 +8,4 @@ database:
 
 # http server configuration
 server:
-  port:
+  port: 8080

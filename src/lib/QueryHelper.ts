@@ -1,3 +1,4 @@
+import * as fsx from "fs-extra";
 import {Pool, PoolClient, QueryConfig, QueryResult} from "pg";
 import globals from "./globals";
 
@@ -47,8 +48,19 @@ export class SqlTransaction {
 export class QueryHelper {
     private pool: Pool;
 
-    constructor(pgPool: Pool) {
+    constructor(pgPool: Pool, private tableCreationFile?: string) {
         this.pool = pgPool;
+    }
+
+    /**
+     * creates all tables needed if a filepath was given with the constructor
+     */
+    public async createTables() {
+        if (this.tableCreationFile) {
+            logger.info("Creating nonexistent tables...");
+            const tableSql = await fsx.readFile(this.tableCreationFile, "utf-8");
+            await this.query({text: tableSql});
+        }
     }
 
     /**
