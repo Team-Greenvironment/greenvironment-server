@@ -24,6 +24,7 @@ class App {
      */
     public async init() {
         await this.dto.init();
+        await routes.ioListeners(this.io);
         this.app.set("views", path.join(__dirname, "views"));
         this.app.set("view engine", "pug");
         this.app.use(routes.router);
