@@ -1,21 +1,43 @@
+/**
+ * @author Trivernis
+ * @remarks
+ *
+ * Taken from {@link https://github.com/Trivernis/whooshy}
+ */
+
 import {Router} from "express";
 import {Server} from "socket.io";
 
-import homeRouter from "./home";
+import HomeRoute from "./home";
 
+const homeRoute = new HomeRoute();
+
+/**
+ * Namespace to manage the routes of the server.
+ * Allows easier assignments of graphql endpoints, socket.io connections and routers when
+ * used with {@link Route}.
+ */
 namespace routes {
     export const router = Router();
 
-    router.use("/", homeRouter);
+    router.use("/", homeRoute.router);
 
+    /**
+     * Asnyc function to create a graphql resolver that takes the request and response
+     * of express.js as arguments.
+     * @param request
+     * @param response
+     */
     export const resolvers = async (request: any, response: any): Promise<object> => {
-        return {
-        };
+        return homeRoute.resolver(request, response);
     };
 
-    // tslint:disable-next-line:no-empty
-    export const ioListeners = (io: Server) => {
-
+    /**
+     * Assigns the io listeners or namespaces to the routes
+     * @param io
+     */
+    export const ioListeners = async (io: Server) => {
+        await homeRoute.init(io);
     };
 }
 
