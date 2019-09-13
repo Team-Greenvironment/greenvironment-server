@@ -1,29 +1,32 @@
 import * as express from "express";
 import * as http from "http";
+import * as path from "path";
 import * as socketIo from "socket.io";
-import {DAO} from "./lib/DAO";
+import {DTO} from "./lib/DTO";
 import globals from "./lib/globals";
+import routes from "./routes";
+
 class App {
     public app: express.Application;
     public io: socketIo.Server;
     public server: http.Server;
-    public dao: DAO;
+    public dto: DTO;
 
     constructor() {
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
-        this.dao = new DAO();
+        this.dto = new DTO();
     }
 
     /**
      * initializes everything that needs to be initialized asynchronous.
      */
     public async init() {
-        await this.dao.init();
-        this.app.all("/", (req, res) => {
-            res.send("WIP!");
-        });
+        await this.dto.init();
+        this.app.set("views", path.join(__dirname, "views"));
+        this.app.set("view engine", "pug");
+        this.app.use(routes.router);
     }
 
     /**
