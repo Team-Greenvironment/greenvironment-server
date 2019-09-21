@@ -1,7 +1,7 @@
 import {Runtime} from "inspector";
 import {Pool} from "pg";
-import globals from "./globals";
-import {QueryHelper} from "./QueryHelper";
+import globals from "../globals";
+import {QueryHelper} from "../QueryHelper";
 
 const config = globals.config;
 const tableCreationFile = __dirname + "/../sql/create-tables.sql";
