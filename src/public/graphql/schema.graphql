@@ -25,13 +25,23 @@ type Mutation {
     "Report the post"
     report(postId: ID!): Boolean
 
+   "send a request"
+    sendRequest(request: Request!): Boolean
+
     "lets you accept a request for a given request id"
     acceptRequest(requestId: ID!): Boolean
+
+    "lets you deny a request for a given request id"
+    denyRequest(requestId: ID!): Boolean
 
     "send a message in a Chatroom"
     sendMessage(chatId: ID!, content: String!): Boolean
 
-	# TODO: createPost, deletePost, sendRequest, denyRequest
+    "create the post"
+    createPost(post: Post!): Boolean
+
+    "delete the post for a given post id"
+    deletePost(postId: ID!): Boolean
 }
 
 "represents a single user account"
@@ -98,6 +108,12 @@ type Post {
 type Request {
     "id of the request"
     id: ID!
+
+    "Id of the user who sended the request"
+    sender: User!
+
+    "Id of the user who received the request"
+    receiver: User!
 
     "type of the request"
     requestType: RequestType!
