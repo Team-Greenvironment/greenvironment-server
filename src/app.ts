@@ -2,7 +2,7 @@ import * as express from "express";
 import * as http from "http";
 import * as path from "path";
 import * as socketIo from "socket.io";
-import {DTO} from "./lib/DTO";
+import dataaccess from "./lib/dataaccess";
 import globals from "./lib/globals";
 import routes from "./routes";
 
@@ -10,20 +10,18 @@ class App {
     public app: express.Application;
     public io: socketIo.Server;
     public server: http.Server;
-    public dto: DTO;
 
     constructor() {
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
-        this.dto = new DTO();
     }
 
     /**
      * initializes everything that needs to be initialized asynchronous.
      */
     public async init() {
-        await this.dto.init();
+        await dataaccess.init();
         await routes.ioListeners(this.io);
         this.app.set("views", path.join(__dirname, "views"));
         this.app.set("view engine", "pug");

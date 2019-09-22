@@ -68,9 +68,10 @@ export class QueryHelper {
     /**
      * Constructor.
      * @param pgPool
-     * @param tableCreationFile
+     * @param [tableCreationFile]
+     * @param [tableUpdateFile]
      */
-    constructor(pgPool: Pool, private tableCreationFile?: string) {
+    constructor(pgPool: Pool, private tableCreationFile?: string, private tableUpdateFile?: string) {
         this.pool = pgPool;
     }
 
@@ -81,6 +82,17 @@ export class QueryHelper {
         if (this.tableCreationFile) {
             logger.info("Creating nonexistent tables...");
             const tableSql = await fsx.readFile(this.tableCreationFile, "utf-8");
+            await this.query({text: tableSql});
+        }
+    }
+
+    /**
+     * Updates the definition of the tables if the table update file was passed in the constructor
+     */
+    public async updateTableDefinitions() {
+        if (this.tableUpdateFile) {
+            logger.info("Updating table definitions...");
+            const tableSql = await fsx.readFile(this.tableUpdateFile, "utf-8");
             await this.query({text: tableSql});
         }
     }

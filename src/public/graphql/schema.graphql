@@ -1,100 +1,145 @@
 type Query {
-	"returns the user object for a given user id"
-	getUser(userId: ID): User
-	"returns the post object for a post id"
-	getPost(postId: ID): Post
-	"returns the chat object for a chat id"
-	getChat(chatId: ID): ChatRoom
-	"returns the request object for a request id"
-	getRequest(requestId: ID): Request
-	"find a post by the posted date or content"
-	findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
-	"find a user by user name or handle"
-	findUser(first: Int, offset: Int, name: String!, handle: String!): [User]
+    "returns the user object for a given user id"
+    getUser(userId: ID): User
+
+    "returns the post object for a post id"
+    getPost(postId: ID): Post
+
+    "returns the chat object for a chat id"
+    getChat(chatId: ID): ChatRoom
+
+    "returns the request object for a request id"
+    getRequest(requestId: ID): Request
+
+    "find a post by the posted date or content"
+    findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
+
+    "find a user by user name or handle"
+    findUser(first: Int, offset: Int, name: String!, handle: String!): [User]
 }
 
 type Mutation {
-	"Upvote/downvote a Post"
-	vote(postId: ID!, type: [VoteType!]!): Boolean
-	"Report the post"
-	report(postId: ID!): Boolean
+    "Upvote/downvote a Post"
+    vote(postId: ID!, type: [VoteType!]!): Boolean
+
+    "Report the post"
+    report(postId: ID!): Boolean
+
+   "send a request"
+    sendRequest(reciever: ID!, type: RequestType): Boolean
+
     "lets you accept a request for a given request id"
-	acceptRequest(requestId: ID!): Boolean
+    acceptRequest(requestId: ID!): Boolean
+
+    "lets you deny a request for a given request id"
+    denyRequest(requestId: ID!): Boolean
+
     "send a message in a Chatroom"
-	sendMessage(chatId: ID!, content: String!): Boolean
+    sendMessage(chatId: ID!, content: String!): Boolean
+
+    "create the post"
+    createPost(text: String, picture: String, tags: [String]): Boolean
+
+    "delete the post for a given post id"
+    deletePost(postId: ID!): Boolean
 }
 
 "represents a single user account"
 type User {
-	"url for the Profile picture of the User"
-	profilePicture: String!
-	"name of the User"
-	name: String!
-	"unique identifier name from the User"
-	handle: String!
-	"Id of the User"
-	id: ID!
-	"the total number of posts the user posted"
-	numberOfPosts: Int
-	"returns a given number of posts of a user"
-	getAllPosts(first: Int=10, offset: Int): [Post]
-	"creation date of the user account"
-	joinedDate: String!
-	"returns chats the user pinned"
-	pinnedChats: [ChatRoom]
-	"returns all friends of the user"
-	friends: [User]
-	"all request for groupChats/friends/events"
-	requests: [Request]
+    "url for the Profile picture of the User"
+    profilePicture: String!
+
+    "name of the User"
+    name: String!
+
+    "unique identifier name from the User"
+    handle: String!
+
+    "Id of the User"
+    id: ID!
+
+    "the total number of posts the user posted"
+    numberOfPosts: Int
+
+    "returns a given number of posts of a user"
+    getAllPosts(first: Int=10, offset: Int): [Post]
+
+    "creation date of the user account"
+    joinedDate: String!
+
+    "returns chats the user pinned"
+    pinnedChats: [ChatRoom]
+
+    "returns all friends of the user"
+    friends: [User]
+
+    "all request for groupChats/friends/events"
+    requests: [Request]
 }
 
 "represents a single user post"
 type Post {
-	"returns the path to the posts picture if it has one"
-	picture: String
-	"returns the text of the post"
-	text: String
-	"upvotes of the Post"
-	upvotes: Int!
-	"downvotes of the Post"
-	downvotes: Int!
-	"the user that is the author of the Post"
-	author: User!
-	"date the post was created"
-	creationDate: String!
-	"returns the type of vote the user performed on the post"
-	alreadyVoted: VoteType
-	"returns the tags of the post"
-	tags: [String]
+    "returns the path to the posts picture if it has one"
+    picture: String
+
+    "returns the text of the post"
+    text: String
+
+    "upvotes of the Post"
+    upvotes: Int!
+
+    "downvotes of the Post"
+    downvotes: Int!
+
+    "the user that is the author of the Post"
+    author: User!
+
+    "date the post was created"
+    creationDate: String!
+
+    "returns the type of vote the user performed on the post"
+    userVote: VoteType
+
+    "returns the tags of the post"
+    tags: [String]
 }
 
 "represents a request of any type"
 type Request {
-	"id of the request"
-	id: ID!
-	"type of the request"
-	requestType: RequestType!
+    "id of the request"
+    id: ID!
+
+    "Id of the user who sended the request"
+    sender: User!
+
+    "Id of the user who received the request"
+    receiver: User!
+
+    "type of the request"
+    requestType: RequestType!
 }
 
 "represents a chatroom"
 type ChatRoom {
-	"the members of the chatroom"
-	members: [User!]
-	"return a specfic range of messages posted in the chat"
-	getMessages(first: Int, offset: Int): [String]
-	"id of the chat"
-	id: ID!
+    "the members of the chatroom"
+    members: [User!]
+
+    "return a specfic range of messages posted in the chat"
+    getMessages(first: Int, offset: Int): [String]
+
+    "id of the chat"
+    id: ID!
 }
 
 "represents the type of vote performed on a post"
 enum VoteType {
-	UPVOTE
-	DOWNVOTE
+    UPVOTE
+    DOWNVOTE
 }
 
 "represents the type of request that the user has received"
 enum RequestType {
-	FRIENDREQUEST
-	GROUPINVITE
-	EVENTINVITE
+    FRIENDREQUEST
+    GROUPINVITE
+    EVENTINVITE
 }
