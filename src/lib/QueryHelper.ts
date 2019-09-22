@@ -1,10 +1,24 @@
+/**
+ * @author Trivernis
+ * @remarks
+ *
+ * Taken from {@link https://github.com/Trivernis/whooshy}
+ */
+
 import * as fsx from "fs-extra";
 import {Pool, PoolClient, QueryConfig, QueryResult} from "pg";
 import globals from "./globals";
 
 const logger = globals.logger;
 
+/**
+ * Transaction class to wrap SQL transactions.
+ */
 export class SqlTransaction {
+    /**
+     * Constructor.
+     * @param client
+     */
     constructor(private client: PoolClient) {
     }
 
@@ -45,9 +59,17 @@ export class SqlTransaction {
     }
 }
 
+/**
+ * Query helper for easyer fetching of a specific row count.
+ */
 export class QueryHelper {
     private pool: Pool;
 
+    /**
+     * Constructor.
+     * @param pgPool
+     * @param tableCreationFile
+     */
     constructor(pgPool: Pool, private tableCreationFile?: string) {
         this.pool = pgPool;
     }
