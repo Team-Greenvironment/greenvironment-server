@@ -26,7 +26,7 @@ type Mutation {
     report(postId: ID!): Boolean
 
    "send a request"
-    sendRequest(request: Request!): Boolean
+    sendRequest(reciever: ID!, type: RequestType): Boolean
 
     "lets you accept a request for a given request id"
     acceptRequest(requestId: ID!): Boolean
@@ -38,7 +38,7 @@ type Mutation {
     sendMessage(chatId: ID!, content: String!): Boolean
 
     "create the post"
-    createPost(post: Post!): Boolean
+    createPost(text: String, picture: String, tags: [String]): Boolean
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean
