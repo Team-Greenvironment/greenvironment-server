@@ -1,4 +1,6 @@
-import {queryHelper, VoteType} from "./index";
+import {DataObject} from "./DataObject";
+import {queryHelper} from "./index";
+import dataaccess from "./index";
 import {User} from "./User";
 
 export class Post extends DataObject {
@@ -63,7 +65,7 @@ export class Post extends DataObject {
     /**
      * The type of vote the user performed on the post.
      */
-    public async userVote(userId: number): Promise<VoteType> {
+    public async userVote(userId: number): Promise<dataaccess.VoteType> {
         const result = await queryHelper.first({
             text: "SELECT vote_type FROM votes WHERE user_id = $1 AND item_id = $2",
             values: [userId, this.id],

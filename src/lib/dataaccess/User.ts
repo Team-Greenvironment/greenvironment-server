@@ -1,3 +1,4 @@
+import {DataObject} from "./DataObject";
 import {queryHelper} from "./index";
 import {Post} from "./Post";
 

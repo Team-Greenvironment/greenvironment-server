@@ -4,7 +4,9 @@ import {QueryHelper} from "../QueryHelper";
 import {User} from "./User";
 
 const config = globals.config;
-const tableCreationFile = __dirname + "/../sql/create-tables.sql";
+const tableCreationFile = __dirname + "/../../sql/create-tables.sql";
+const tableUpdateFile = __dirname + "/../../sql/update-tables.sql";
+
 const dbClient: Pool = new Pool({
     database: config.database.database,
     host: config.database.host,
@@ -12,13 +14,14 @@ const dbClient: Pool = new Pool({
     port: config.database.port,
     user: config.database.user,
 });
-export const queryHelper = new QueryHelper(dbClient, tableCreationFile);
+export const queryHelper = new QueryHelper(dbClient, tableCreationFile, tableUpdateFile);
 
 namespace dataaccess {
     /**
      * Initializes everything that needs to be initialized asynchronous.
      */
     export async function init() {
+        await queryHelper.updateTableDefinitions();
         await queryHelper.createTables();
     }
 

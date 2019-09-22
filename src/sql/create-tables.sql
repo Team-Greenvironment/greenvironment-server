@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE TABLE IF NOT EXISTS votes (
     user_id SERIAL REFERENCES users (id) ON DELETE CASCADE,
     item_id BIGSERIAL REFERENCES posts (id) ON DELETE CASCADE,
-    vote_type varchar(8) DEFAULT 1
+    vote_type varchar(8) DEFAULT 'upvote'
 );
 
 CREATE TABLE IF NOT EXISTS events (
