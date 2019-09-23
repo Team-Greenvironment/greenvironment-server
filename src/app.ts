@@ -36,7 +36,7 @@ class App {
 
         const appSession = session({
             cookie: {
-                maxAge: Number(globals.config.session.cookieMaxAge),
+                maxAge: Number(globals.config.session.cookieMaxAge) || 604800000,
                 secure: "auto",
             },
             resave: false,
