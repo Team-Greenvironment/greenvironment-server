@@ -1,0 +1,82 @@
+@import "vars"
+@import "mixins"
+
+body
+  font-family: Arial, serif
+
+button
+  border: 2px solid $cPrimary
+  margin-top: 0.125em
+  padding: 0.125em
+  background-color: $cPrimary
+  color: $cPrimarySurface
+  font-weight: bold
+  transition-duration: 0.25s
+
+button:hover
+  background-color: lighten($cPrimary, 10%)
+  cursor: pointer
+
+button:active
+  background-color: darken($cPrimary, 5%)
+  box-shadow: inset 0.25em 0.25em 0.1em rgba(0, 0, 0, 0.25)
+
+.stylebar
+  @include gridPosition(1, 2, 1, 4)
+  display: grid
+  grid-template: 100% /25% 50% 25%
+  background-color: $cPrimary
+  color: $cPrimarySurface
+
+  h1
+    @include gridPosition(1, 2, 1, 2)
+    text-align: center
+    margin: auto
+
+#content
+  grid-template: 7.5% 92.5% / 25% 50% 25%
+  display: grid
+  width: 100%
+  height: 100%
+
+#friendscontainer
+  @include gridPosition(2, 3, 1, 2)
+  background-color: $cPrimaryBackground
+
+#feedcontainer
+  @include gridPosition(2, 3, 2, 3)
+  background-color: $cSecondaryBackground
+  .postinput
+    margin: 0.5em
+    input
+      width: 100%
+      border-radius: 0.25em
+      border: 1px solid $cPrimary
+      padding: 0.125em
+      height: 2em
+    button.submitbutton
+      border-radius: 0.25em
+      height: 2em
+
+  .feeditem
+    background-color: $cPrimaryBackground
+    min-height: 2em
+    margin: 0.5em
+    padding: 0.25em
+    border-radius: 0.25em
+    .itemhead
+      align-items: flex-start
+
+      .title, .handle, .date
+        margin: 0.125em
+      .title
+        font-weight: bold
+
+      .handle, .date
+        color: $cInactiveText
+      .handle a
+        text-decoration: none
+        color: $cInactiveText
+        font-style: normal
+      .handle a:hover
+        text-decoration: underline

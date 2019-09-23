@@ -12,3 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Graphql Schema
 - default-config file and generation of config file on startup
 - DTOs
+- Home Route

@@ -1,6 +1,21 @@
+/**
+ * @author Trivernis
+ * @remarks
+ *
+ * Partly taken from {@link https://github.com/Trivernis/whooshy}
+ */
+
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
 import * as winston from "winston";
+
+const configPath = "config.yaml";
+const defaultConfig = __dirname + "/../default-config.yaml";
+
+// ensure that the config exists by copying the default config.
+if (!(fsx.pathExistsSync(configPath))) {
+    fsx.copySync(defaultConfig, configPath);
+}
 
 /**
  * Defines global variables to be used.
