@@ -1,6 +1,7 @@
 import {Pool} from "pg";
 import globals from "../globals";
 import {QueryHelper} from "../QueryHelper";
+import {Profile} from "./Profile";
 import {User} from "./User";
 
 const config = globals.config;
@@ -16,7 +17,18 @@ const dbClient: Pool = new Pool({
 });
 export const queryHelper = new QueryHelper(dbClient, tableCreationFile, tableUpdateFile);
 
+/**
+ * Generates a new handle from the username and a base64 string of the current time.
+ * @param username
+ */
+function generateHandle(username: string) {
+    return `${username}.${Buffer.from(Date.now().toString()).toString("base64")}`;
+}
+
 namespace dataaccess {
+
+    export const pool: Pool = dbClient;
+
     /**
      * Initializes everything that needs to be initialized asynchronous.
      */
@@ -43,6 +55,33 @@ namespace dataaccess {
             values: [userHandle],
         });
         return new User(result.id, result);
+    }
+
+    /**
+     * Returns the user by email and password
+     * @param email
+     * @param password
+     */
+    export async function getUserByLogin(email: string, password: string) {
+        const result = await this.queryHelper.first({
+            text: "SELECT * FROM users WHERE email = $1 AND password = $2",
+            values: [email, password],
+        });
+        return new Profile(result.id, result);
+    }
+
+    /**
+     * Registers a user with a username and password returning a user
+     * @param username
+     * @param email
+     * @param password
+     */
+    export async function registerUser(username: string, email: string, password: string) {
+        const result = await this.queryHelper.first({
+            text: "INSERT INTO users (name, handle, password, email) VALUES ($1, $2, $3, $4) RETURNING *",
+            values: [username, generateHandle(username), password, email],
+        });
+        return new Profile(result.id, result);
     }
 
     /**

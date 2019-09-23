@@ -28,9 +28,9 @@ namespace routes {
      * @param request
      * @param response
      */
-    export const resolvers = async (request: any, response: any): Promise<object> => {
+    export async function resolvers(request: any, response: any): Promise<object> {
         return homeRoute.resolver(request, response);
-    };
+    }
 
     /**
      * Assigns the io listeners or namespaces to the routes
