@@ -19,6 +19,9 @@ type Query {
 }
 
 type Mutation {
+    "Accepts the usage of cookies."
+    acceptCookies: Boolean
+
     "Upvote/downvote a Post"
     vote(postId: ID!, type: [VoteType!]!): Boolean
 
