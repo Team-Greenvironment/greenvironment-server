@@ -49,6 +49,12 @@ class HomeRoute extends Route {
         this.router.get("/", (req, res) => {
             res.render("home");
         });
+        this.router.get("/login", (req, res) => {
+            res.render("login");
+        });
+        this.router.get("/register", (req, res) => {
+            res.render("register");
+        });
     }
 }
 
