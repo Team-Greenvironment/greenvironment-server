@@ -25,6 +25,7 @@ class App {
         await routes.ioListeners(this.io);
         this.app.set("views", path.join(__dirname, "views"));
         this.app.set("view engine", "pug");
+        this.app.use(express.static(path.join(__dirname, "public")));
         this.app.use(routes.router);
     }
 
