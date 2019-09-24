@@ -133,7 +133,7 @@ export class QueryHelper {
         try {
             return await this.pool.query(query);
         } catch (err) {
-            logger.debug(`Error on query "${query}".`);
+            logger.debug(`Error on query "${JSON.stringify(query)}".`);
             logger.error(`Sql query failed: ${err}`);
             logger.verbose(err.stack);
             return {

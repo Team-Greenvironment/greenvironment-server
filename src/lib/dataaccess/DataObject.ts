@@ -12,9 +12,9 @@ export abstract class DataObject {
     /**
      * Loads data from the database if data has not been loaded
      */
-    protected loadDataIfNotExists() {
-        if (this.dataLoaded) {
-            this.loadData();
+    protected async loadDataIfNotExists() {
+        if (!this.dataLoaded) {
+            await this.loadData();
         }
     }
 }

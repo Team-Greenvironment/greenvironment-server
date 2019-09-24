@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS posts (
     created_at TIMESTAMP DEFAULT now(),
     content text,
     author SERIAL REFERENCES users (id) ON DELETE CASCADE,
-    type varchar(16) NOT NULL
+    type varchar(16) NOT NULL DEFAULT 'MISC'
 );
 
 CREATE TABLE IF NOT EXISTS votes (

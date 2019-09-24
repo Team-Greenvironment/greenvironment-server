@@ -1,3 +1,8 @@
 ALTER TABLE IF EXISTS votes
-    ADD COLUMN IF NOT EXISTS vote_type varchar(8) DEFAULT 'upvote',
-    ALTER COLUMN vote_type SET DEFAULT 'upvote';
+    ADD COLUMN IF NOT EXISTS vote_type varchar(8) DEFAULT 'UPVOTE',
+    ALTER COLUMN vote_type SET DEFAULT 'UPVOTE';
+
+ALTER TABLE IF EXISTS posts
+    ALTER COLUMN type SET DEFAULT 'MISC',
+    DROP COLUMN IF EXISTS upvotes,
+    DROP COLUMN IF EXISTS downvotes;

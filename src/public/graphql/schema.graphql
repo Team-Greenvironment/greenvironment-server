@@ -2,6 +2,9 @@ type Query {
     "returns the user object for a given user id"
     getUser(userId: ID): User
 
+    "returns the logged in user"
+    getSelf: User
+
     "returns the post object for a post id"
     getPost(postId: ID): Post
 
@@ -25,11 +28,14 @@ type Mutation {
     "Login of the user. The passwordHash should be a sha512 hash of the password."
     login(email: String, passwordHash: String): User
 
+    "Registers the user."
+    register(username: String, email: String, passwordHash: String): User
+
     "Logout of the user."
     logout: Boolean
 
     "Upvote/downvote a Post"
-    vote(postId: ID!, type: [VoteType!]!): Boolean
+    vote(postId: ID!, type: VoteType!): VoteType
 
     "Report the post"
     report(postId: ID!): Boolean
@@ -47,7 +53,7 @@ type Mutation {
     sendMessage(chatId: ID!, content: String!): Boolean
 
     "create the post"
-    createPost(text: String, picture: String, tags: [String]): Boolean
+    createPost(content: String!): Boolean
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean
@@ -56,7 +62,7 @@ type Mutation {
 "represents a single user account"
 type User {
     "url for the Profile picture of the User"
-    profilePicture: String!
+    profilePicture: String
 
     "name of the User"
     name: String!
@@ -71,13 +77,10 @@ type User {
     numberOfPosts: Int
 
     "returns a given number of posts of a user"
-    getAllPosts(first: Int=10, offset: Int): [Post]
+    posts(first: Int=10, offset: Int): [Post]
 
     "creation date of the user account"
-    joinedDate: String!
-
-    "returns chats the user pinned"
-    pinnedChats: [ChatRoom]
+    joinedAt: String!
 
     "returns all friends of the user"
     friends: [User]

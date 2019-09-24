@@ -13,7 +13,7 @@ export class User extends DataObject {
      * The name of the user
      */
     public async name(): Promise<string> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$name;
     }
 
@@ -21,7 +21,7 @@ export class User extends DataObject {
      * The unique handle of the user.
      */
     public async handle(): Promise<string> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$handle;
     }
 
@@ -29,7 +29,7 @@ export class User extends DataObject {
      * The email of the user
      */
     public async email(): Promise<string> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$email;
     }
 
@@ -37,25 +37,38 @@ export class User extends DataObject {
      * The number of greenpoints of the user
      */
     public async greenpoints(): Promise<number> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$greenpoints;
+    }
+
+    /**
+     * Returns the number of posts the user created
+     */
+    public async numberOfPosts(): Promise<number> {
+        const result = await queryHelper.first({
+            text: "SELECT COUNT(*) count FROM posts WHERE author = $1",
+            values: [this.id],
+        });
+        return result.count;
     }
 
     /**
      * The date the user joined the platform
      */
     public async joinedAt(): Promise<Date> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return new Date(this.$joinedAt);
     }
 
     /**
      * Returns all posts for a user.
      */
-    public async posts(): Promise<Post[]> {
+    public async posts({first, offset}: {first: number, offset: number}): Promise<Post[]> {
+        first = first || 10;
+        offset = offset || 0;
         const result = await queryHelper.all({
-            text: "SELECT * FROM posts WHERE author = $1",
-            values: [this.id],
+            text: "SELECT * FROM posts WHERE author = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            values: [this.id, first, offset],
         });
         const posts = [];
 
@@ -74,7 +87,7 @@ export class User extends DataObject {
             result = this.row;
         } else {
             result = await queryHelper.first({
-                text: "SELECT * FROM users WHERE user.id = $1",
+                text: "SELECT * FROM users WHERE users.id = $1",
                 values: [this.id],
             });
         }

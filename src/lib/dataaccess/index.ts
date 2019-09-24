@@ -1,6 +1,7 @@
 import {Pool} from "pg";
 import globals from "../globals";
 import {QueryHelper} from "../QueryHelper";
+import {Post} from "./Post";
 import {Profile} from "./Profile";
 import {User} from "./User";
 
@@ -86,6 +87,20 @@ namespace dataaccess {
             values: [username, generateHandle(username), password, email],
         });
         return new Profile(result.id, result);
+    }
+
+    /**
+     * Creates a post
+     * @param content
+     * @param authorId
+     * @param type
+     */
+    export async function createPost(content: string, authorId: number, type: string) {
+        const result = await queryHelper.first({
+            text: "INSERT INTO posts (content, author, type) VALUES ($1, $2, $3) RETURNING *",
+            values: [content, authorId, type],
+        });
+        return new Post(result.id, result);
     }
 
     /**
