@@ -35,6 +35,7 @@
     "@types/winston": "^2.4.4",
     "delete": "^1.1.0",
     "gulp": "^4.0.2",
+    "gulp-angular": "^0.1.2",
     "gulp-minify": "^3.1.0",
     "gulp-sass": "^4.0.2",
     "gulp-typescript": "^5.0.1",

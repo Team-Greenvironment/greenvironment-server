@@ -95,12 +95,24 @@ namespace dataaccess {
      * @param authorId
      * @param type
      */
-    export async function createPost(content: string, authorId: number, type: string) {
+    export async function createPost(content: string, authorId: number, type?: string) {
         const result = await queryHelper.first({
             text: "INSERT INTO posts (content, author, type) VALUES ($1, $2, $3) RETURNING *",
             values: [content, authorId, type],
         });
         return new Post(result.id, result);
+    }
+
+    /**
+     * Deletes a post
+     * @param postId
+     */
+    export async function deletePost(postId: number) {
+        const result = await queryHelper.first({
+            text: "DELETE FROM posts WHERE posts.id = $1",
+            values: [postId],
+        });
+        return true;
     }
 
     /**

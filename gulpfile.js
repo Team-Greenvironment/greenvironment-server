@@ -3,7 +3,7 @@ const sass = require('gulp-sass');
 const ts = require('gulp-typescript');
 const minify = require('gulp-minify');
 const del = require('delete');
-
+const gulp = require('gulp');
 
 function clearDist(cb) {
     del('dist/*', cb);

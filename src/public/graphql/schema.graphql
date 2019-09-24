@@ -91,11 +91,9 @@ type User {
 
 "represents a single user post"
 type Post {
-    "returns the path to the posts picture if it has one"
-    picture: String
 
     "returns the text of the post"
-    text: String
+    content: String
 
     "upvotes of the Post"
     upvotes: Int!
@@ -111,9 +109,6 @@ type Post {
 
     "returns the type of vote the user performed on the post"
     userVote: VoteType
-
-    "returns the tags of the post"
-    tags: [String]
 }
 
 "represents a request of any type"

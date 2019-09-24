@@ -1,7 +1,6 @@
 import {Router} from "express";
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
-import {constants} from "http2";
 import {Server} from "socket.io";
 import dataaccess from "../lib/dataaccess";
 import {Post} from "../lib/dataaccess/Post";
@@ -18,7 +17,6 @@ class HomeRoute extends Route {
     constructor() {
         super();
         this.router = Router();
-        this.configure();
     }
 
     /**
@@ -56,7 +54,7 @@ class HomeRoute extends Route {
                 req.session.cookiesAccepted = true;
                 return true;
             },
-            async login(args: any) {
+            async login(args: {email: string, passwordHash: string}) {
                 if (args.email && args.passwordHash) {
                     const user = await dataaccess.getUserByLogin(args.email, args.passwordHash);
                     if (user && user.id) {
@@ -80,7 +78,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("User is not logged in.");
                 }
             },
-            async register(args: any) {
+            async register(args: {username: string, email: string, passwordHash: string}) {
                 if (args.username && args.email && args.passwordHash) {
                     const user = await dataaccess.registerUser(args.username, args.email, args.passwordHash);
                     if (user) {
@@ -95,7 +93,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No username, email or password given.");
                 }
             },
-            async vote(args: any) {
+            async vote(args: {postId: number, type: dataaccess.VoteType}) {
                 if (args.postId && args.type) {
                     if (req.session.userId) {
                         return await (new Post(args.postId)).vote(req.session.userId, args.type);
@@ -108,22 +106,33 @@ class HomeRoute extends Route {
                     return new GraphQLError("No postId or type given.");
                 }
             },
+            async createPost(args: {content: string}) {
+                if (args.content) {
+                    if (req.session.userId) {
+                        return await dataaccess.createPost(args.content, req.session.userId);
+                    } else {
+                        res.status(status.UNAUTHORIZED);
+                        return new GraphQLError("Not logged in.");
+                    }
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("Can't create empty post.");
+                }
+            },
+            async deletePost(args: {postId: number}) {
+                if (args.postId) {
+                    const post = new Post(args.postId);
+                    if ((await post.author()).id === req.session.userId) {
+                        return await dataaccess.deletePost(post.id);
+                    } else {
+                        res.status(status.FORBIDDEN);
+                        return new GraphQLError("User is not author of the post.");
+                    }
+                } else {
+                    return new GraphQLError("No postId given.");
+                }
+            },
         };
-    }
-
-    /**
-     * Configures the route.
-     */
-    private configure() {
-        this.router.get("/", (req, res) => {
-            res.render("home");
-        });
-        this.router.get("/login", (req, res) => {
-            res.render("login");
-        });
-        this.router.get("/register", (req, res) => {
-            res.render("register");
-        });
     }
 }
 
