@@ -14,6 +14,8 @@ import dataaccess from "./lib/dataaccess";
 import globals from "./lib/globals";
 import routes from "./routes";
 
+const logger = globals.logger;
+
 const PgSession = connectPgSimple(session);
 
 class App {
@@ -40,7 +42,7 @@ class App {
                 secure: "auto",
             },
             resave: false,
-            saveUninitialized: true,    // TODO: Set to false and only save when accepted by user.
+            saveUninitialized: false,
             secret: globals.config.session.secret,
             store: new PgSession({
                 pool: dataaccess.pool,
@@ -60,14 +62,18 @@ class App {
         this.app.use(express.static(path.join(__dirname, "public")));
         this.app.use(cookieParser());
         this.app.use(appSession);
+        this.app.use((req, res, next) => {
+            logger.verbose(`${req.method} ${req.url}`);
+            next();
+        });
         this.app.use(routes.router);
-        this.app.use("/graphql",  graphqlHTTP(async (request, response) => {
+        this.app.use("/graphql",  graphqlHTTP((request, response) => {
             return {
                 // @ts-ignore all
                 context: {session: request.session},
                 graphiql: true,
-                rootValue: await routes.resolvers(request, response),
-                schema: buildSchema(importSchema("./public/graphql/schema.graphql")),
+                rootValue: routes.resolvers(request, response),
+                schema: buildSchema(importSchema(path.join(__dirname, "./public/graphql/schema.graphql"))),
             };
         }));
     }
@@ -77,11 +83,11 @@ class App {
      */
     public start() {
         if (globals.config.server.port) {
-            globals.logger.info(`Starting server...`);
+            logger.info(`Starting server...`);
             this.app.listen(globals.config.server.port);
-            globals.logger.info(`Server running on port ${globals.config.server.port}`);
+            logger.info(`Server running on port ${globals.config.server.port}`);
         } else {
-            globals.logger.error("No port specified in the config." +
+            logger.error("No port specified in the config." +
                 "Please configure a port in the config.yaml.");
         }
     }

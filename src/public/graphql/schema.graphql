@@ -22,6 +22,12 @@ type Mutation {
     "Accepts the usage of cookies."
     acceptCookies: Boolean
 
+    "Login of the user. The passwordHash should be a sha512 hash of the password."
+    login(email: String, passwordHash: String): User
+
+    "Logout of the user."
+    logout: Boolean
+
     "Upvote/downvote a Post"
     vote(postId: ID!, type: [VoteType!]!): Boolean
 

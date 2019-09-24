@@ -50,7 +50,7 @@ namespace dataaccess {
      * @param userHandle
      */
     export async function getUserByHandle(userHandle: string) {
-        const result = await this.queryHelper.first({
+        const result = await queryHelper.first({
             text: "SELECT * FROM users WHERE users.handle = $1",
             values: [userHandle],
         });
@@ -62,12 +62,16 @@ namespace dataaccess {
      * @param email
      * @param password
      */
-    export async function getUserByLogin(email: string, password: string) {
-        const result = await this.queryHelper.first({
+    export async function getUserByLogin(email: string, password: string): Promise<Profile> {
+        const result = await queryHelper.first({
             text: "SELECT * FROM users WHERE email = $1 AND password = $2",
             values: [email, password],
         });
-        return new Profile(result.id, result);
+        if (result) {
+            return new Profile(result.id, result);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -77,7 +81,7 @@ namespace dataaccess {
      * @param password
      */
     export async function registerUser(username: string, email: string, password: string) {
-        const result = await this.queryHelper.first({
+        const result = await queryHelper.first({
             text: "INSERT INTO users (name, handle, password, email) VALUES ($1, $2, $3, $4) RETURNING *",
             values: [username, generateHandle(username), password, email],
         });

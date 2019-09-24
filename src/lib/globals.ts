@@ -15,6 +15,10 @@ const defaultConfig = __dirname + "/../default-config.yaml";
 // ensure that the config exists by copying the default config.
 if (!(fsx.pathExistsSync(configPath))) {
     fsx.copySync(defaultConfig, configPath);
+} else {
+    const conf = yaml.safeLoad(fsx.readFileSync(configPath, "utf-8"));
+    const defConf = yaml.safeLoad(fsx.readFileSync(defaultConfig, "utf-8"));
+    fsx.writeFileSync(configPath, yaml.safeDump(Object.assign(defConf, conf)));
 }
 
 /**
@@ -28,10 +32,11 @@ namespace globals {
                 format: winston.format.combine(
                     winston.format.timestamp(),
                     winston.format.colorize(),
-                    winston.format.printf(({ level, message, label, timestamp }) => {
+                    winston.format.printf(({ level, message, timestamp }) => {
                         return `${timestamp} ${level}: ${message}`;
                     }),
                 ),
+                level: "debug",
             }),
         ],
     });

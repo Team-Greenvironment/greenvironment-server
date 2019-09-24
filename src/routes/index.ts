@@ -28,7 +28,7 @@ namespace routes {
      * @param request
      * @param response
      */
-    export async function resolvers(request: any, response: any): Promise<object> {
+    export function resolvers(request: any, response: any): Promise<object> {
         return homeRoute.resolver(request, response);
     }
 
