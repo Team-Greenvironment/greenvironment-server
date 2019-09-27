@@ -1,18 +1,21 @@
 type Query {
-    "returns the user object for a given user id"
-    getUser(userId: ID): User
+    "returns the user object for a given user id or a handle (only one required)"
+    getUser(userId: ID, handle: String): User
 
     "returns the logged in user"
     getSelf: User
 
     "returns the post object for a post id"
-    getPost(postId: ID): Post
+    getPost(postId: ID!): Post
 
     "returns the chat object for a chat id"
-    getChat(chatId: ID): ChatRoom
+    getChat(chatId: ID!): ChatRoom
+
+    "Creates a chat between the user (and optional an other user)"
+    createChat(members: [ID!]): ChatRoom
 
     "returns the request object for a request id"
-    getRequest(requestId: ID): Request
+    getRequest(requestId: ID!): Request
 
     "find a post by the posted date or content"
     findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]

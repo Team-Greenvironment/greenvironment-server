@@ -54,7 +54,7 @@ export class SqlTransaction {
     /**
      * Releases the client back to the pool.
      */
-    public async release() {
+    public release() {
         this.client.release();
     }
 }

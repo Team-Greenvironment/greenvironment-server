@@ -1,6 +1,7 @@
 import {Pool} from "pg";
 import globals from "../globals";
 import {QueryHelper} from "../QueryHelper";
+import {Chatroom} from "./Chatroom";
 import {Post} from "./Post";
 import {Profile} from "./Profile";
 import {User} from "./User";
@@ -90,6 +91,22 @@ namespace dataaccess {
     }
 
     /**
+     * Returns a post for a given postId.s
+     * @param postId
+     */
+    export async function getPost(postId: number) {
+        const result = await queryHelper.first({
+            text: "SELECT * FROM posts WHERE id = $1",
+            values: [postId],
+        });
+        if (result) {
+            return new Post(result.id, result);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Creates a post
      * @param content
      * @param authorId
@@ -113,6 +130,35 @@ namespace dataaccess {
             values: [postId],
         });
         return true;
+    }
+
+    /**
+     * Creates a chatroom containing two users
+     * @param members
+     */
+    export async function createChat(...members: number[]) {
+        const idResult = await queryHelper.first({
+            text: "INSERT INTO chats (id) values (nextval('chats_id_seq'::regclass)) RETURNING *;",
+        });
+        const id = idResult.id;
+        const transaction = await queryHelper.createTransaction();
+        try {
+            await transaction.begin();
+            for (const member of members) {
+                await transaction.query({
+                    name: "chat-member-insert",
+                    text: "INSERT INTO chat_members (ABSOLUTE chat, member) VALUES ($1, $2);",
+                    values: [member],
+                });
+            }
+            await transaction.commit();
+        } catch (err) {
+            globals.logger.warn(`Failed to insert chatmember into database: ${err.message}`);
+            globals.logger.debug(err.stack);
+        } finally {
+            transaction.release();
+        }
+        return new Chatroom(id);
     }
 
     /**

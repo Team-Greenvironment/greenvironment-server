@@ -5,6 +5,7 @@ import {Server} from "socket.io";
 import dataaccess from "../lib/dataaccess";
 import {Post} from "../lib/dataaccess/Post";
 import {Profile} from "../lib/dataaccess/Profile";
+import {is} from "../lib/regex";
 import Route from "../lib/Route";
 
 /**
@@ -50,13 +51,31 @@ class HomeRoute extends Route {
                     return new GraphQLError("Not logged in");
                 }
             },
+            async getUser({userId, handle}: {userId: number, handle: string}) {
+                if (handle) {
+                    return await dataaccess.getUserByHandle(handle);
+                } else if (userId) {
+                    return dataaccess.getUser(userId);
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No userId or handle provided.");
+                }
+            },
+            async getPost({postId}: {postId: number}) {
+                if (postId) {
+                    return await dataaccess.getPost(postId);
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No postId given.");
+                }
+            },
             acceptCookies() {
                 req.session.cookiesAccepted = true;
                 return true;
             },
-            async login(args: {email: string, passwordHash: string}) {
-                if (args.email && args.passwordHash) {
-                    const user = await dataaccess.getUserByLogin(args.email, args.passwordHash);
+            async login({email, passwordHash}: {email: string, passwordHash: string}) {
+                if (email && passwordHash) {
+                    const user = await dataaccess.getUserByLogin(email, passwordHash);
                     if (user && user.id) {
                         req.session.userId = user.id;
                         return user;
@@ -75,12 +94,16 @@ class HomeRoute extends Route {
                     return true;
                 } else {
                     res.status(status.UNAUTHORIZED);
-                    return new GraphQLError("User is not logged in.");
+                    return new GraphQLError("Not logged in.");
                 }
             },
-            async register(args: {username: string, email: string, passwordHash: string}) {
-                if (args.username && args.email && args.passwordHash) {
-                    const user = await dataaccess.registerUser(args.username, args.email, args.passwordHash);
+            async register({username, email, passwordHash}: {username: string, email: string, passwordHash: string}) {
+                if (username && email && passwordHash) {
+                    if (!is.email(email)) {
+                        res.status(status.BAD_REQUEST);
+                        return new GraphQLError(`'${email}' is not a valid email address!`);
+                    }
+                    const user = await dataaccess.registerUser(username, email, passwordHash);
                     if (user) {
                         req.session.userId = user.id;
                         return user;
@@ -93,10 +116,10 @@ class HomeRoute extends Route {
                     return new GraphQLError("No username, email or password given.");
                 }
             },
-            async vote(args: {postId: number, type: dataaccess.VoteType}) {
-                if (args.postId && args.type) {
+            async vote({postId, type}: {postId: number, type: dataaccess.VoteType}) {
+                if (postId && type) {
                     if (req.session.userId) {
-                        return await (new Post(args.postId)).vote(req.session.userId, args.type);
+                        return await (new Post(postId)).vote(req.session.userId, type);
                     } else {
                         res.status(status.UNAUTHORIZED);
                         return new GraphQLError("Not logged in.");
@@ -106,10 +129,10 @@ class HomeRoute extends Route {
                     return new GraphQLError("No postId or type given.");
                 }
             },
-            async createPost(args: {content: string}) {
-                if (args.content) {
+            async createPost({content}: {content: string}) {
+                if (content) {
                     if (req.session.userId) {
-                        return await dataaccess.createPost(args.content, req.session.userId);
+                        return await dataaccess.createPost(content, req.session.userId);
                     } else {
                         res.status(status.UNAUTHORIZED);
                         return new GraphQLError("Not logged in.");
@@ -119,9 +142,9 @@ class HomeRoute extends Route {
                     return new GraphQLError("Can't create empty post.");
                 }
             },
-            async deletePost(args: {postId: number}) {
-                if (args.postId) {
-                    const post = new Post(args.postId);
+            async deletePost({postId}: {postId: number}) {
+                if (postId) {
+                    const post = new Post(postId);
                     if ((await post.author()).id === req.session.userId) {
                         return await dataaccess.deletePost(post.id);
                     } else {
@@ -130,6 +153,19 @@ class HomeRoute extends Route {
                     }
                 } else {
                     return new GraphQLError("No postId given.");
+                }
+            },
+            async createChat({members}: {members: number[]}) {
+                if (req.session.userId) {
+                    const chatMembers = [req.session.userId];
+                    if (members) {
+                        chatMembers.push(...members);
+                    }
+                    return await dataaccess.createChat(...chatMembers);
+
+                } else {
+                    res.status(status.UNAUTHORIZED);
+                    return new GraphQLError("Not logged in.");
                 }
             },
         };

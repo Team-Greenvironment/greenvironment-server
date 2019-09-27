@@ -10,7 +10,7 @@ import {importSchema} from "graphql-import";
 import * as http from "http";
 import * as path from "path";
 import * as socketIo from "socket.io";
-import dataaccess from "./lib/dataaccess";
+import dataaccess, {queryHelper} from "./lib/dataaccess";
 import globals from "./lib/globals";
 import routes from "./routes";
 
