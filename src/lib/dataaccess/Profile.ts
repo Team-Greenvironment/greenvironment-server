@@ -1,7 +1,29 @@
+import {Chatroom} from "./Chatroom";
 import {queryHelper} from "./index";
 import {User} from "./User";
 
 export class Profile extends User {
+
+    /**
+     * Returns all chatrooms (with pagination).
+     * @param first
+     * @param offset
+     */
+    public async chats({first, offset}: {first: number, offset?: number}) {
+        first = first || 10;
+        offset = offset || 0;
+
+        const result = await queryHelper.all({
+            text: "SELECT chat FROM chat_members WHERE member = $1 LIMIT $2 OFFSET $3",
+            values: [this.id, first, offset],
+        });
+        if (result) {
+            return result.map((row) => new Chatroom(row.chat));
+        } else {
+            return [];
+        }
+    }
+
     /**
      * Sets the greenpoints of a user.
      * @param points

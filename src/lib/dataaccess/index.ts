@@ -1,6 +1,9 @@
 import {Pool} from "pg";
+import {ChatNotFoundError} from "../errors/ChatNotFoundError";
+import {UserNotFoundError} from "../errors/UserNotFoundError";
 import globals from "../globals";
 import {QueryHelper} from "../QueryHelper";
+import {ChatMessage} from "./ChatMessage";
 import {Chatroom} from "./Chatroom";
 import {Post} from "./Post";
 import {Profile} from "./Profile";
@@ -27,6 +30,9 @@ function generateHandle(username: string) {
     return `${username}.${Buffer.from(Date.now().toString()).toString("base64")}`;
 }
 
+/**
+ * Namespace with functions to fetch initial data for wrapping.
+ */
 namespace dataaccess {
 
     export const pool: Pool = dbClient;
@@ -40,23 +46,19 @@ namespace dataaccess {
     }
 
     /**
-     * Returns the user by id
-     * @param userId
-     */
-    export function getUser(userId: number) {
-        return new User(userId);
-    }
-
-    /**
      * Returns the user by handle.
      * @param userHandle
      */
-    export async function getUserByHandle(userHandle: string) {
+    export async function getUserByHandle(userHandle: string): Promise<User> {
         const result = await queryHelper.first({
             text: "SELECT * FROM users WHERE users.handle = $1",
             values: [userHandle],
         });
-        return new User(result.id, result);
+        if (result) {
+            return new User(result.id, result);
+        } else {
+            throw new UserNotFoundError(userHandle);
+        }
     }
 
     /**
@@ -72,7 +74,7 @@ namespace dataaccess {
         if (result) {
             return new Profile(result.id, result);
         } else {
-            return null;
+            throw new UserNotFoundError(email);
         }
     }
 
@@ -94,7 +96,7 @@ namespace dataaccess {
      * Returns a post for a given postId.s
      * @param postId
      */
-    export async function getPost(postId: number) {
+    export async function getPost(postId: number): Promise<Post> {
         const result = await queryHelper.first({
             text: "SELECT * FROM posts WHERE id = $1",
             values: [postId],
@@ -112,7 +114,7 @@ namespace dataaccess {
      * @param authorId
      * @param type
      */
-    export async function createPost(content: string, authorId: number, type?: string) {
+    export async function createPost(content: string, authorId: number, type?: string): Promise<Post> {
         const result = await queryHelper.first({
             text: "INSERT INTO posts (content, author, type) VALUES ($1, $2, $3) RETURNING *",
             values: [content, authorId, type],
@@ -124,7 +126,7 @@ namespace dataaccess {
      * Deletes a post
      * @param postId
      */
-    export async function deletePost(postId: number) {
+    export async function deletePost(postId: number): Promise<boolean> {
         const result = await queryHelper.first({
             text: "DELETE FROM posts WHERE posts.id = $1",
             values: [postId],
@@ -136,7 +138,7 @@ namespace dataaccess {
      * Creates a chatroom containing two users
      * @param members
      */
-    export async function createChat(...members: number[]) {
+    export async function createChat(...members: number[]): Promise<Chatroom> {
         const idResult = await queryHelper.first({
             text: "INSERT INTO chats (id) values (nextval('chats_id_seq'::regclass)) RETURNING *;",
         });
@@ -159,6 +161,25 @@ namespace dataaccess {
             transaction.release();
         }
         return new Chatroom(id);
+    }
+
+    /**
+     * Sends a message into a chat.
+     * @param authorId
+     * @param chatId
+     * @param content
+     */
+    export async function sendChatMessage(authorId: number, chatId: number, content: string) {
+        const chat = new Chatroom(chatId);
+        if ((await chat.exists())) {
+            const result = await queryHelper.first({
+                text: "INSERT INTO chat_messages (chat, author, content, created_at) values ($1, $2, $3) RETURNING *",
+                values: [chatId, authorId, content],
+            });
+            return new ChatMessage(new User(result.author), chat, result.timestamp, result.content);
+        } else {
+            throw new ChatNotFoundError(chatId);
+        }
     }
 
     /**

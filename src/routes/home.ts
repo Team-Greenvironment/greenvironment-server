@@ -3,8 +3,12 @@ import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import {Server} from "socket.io";
 import dataaccess from "../lib/dataaccess";
+import {Chatroom} from "../lib/dataaccess/Chatroom";
 import {Post} from "../lib/dataaccess/Post";
 import {Profile} from "../lib/dataaccess/Profile";
+import {User} from "../lib/dataaccess/User";
+import {NotLoggedInGqlError} from "../lib/errors/graphqlErrors";
+import globals from "../lib/globals";
 import {is} from "../lib/regex";
 import Route from "../lib/Route";
 
@@ -48,14 +52,14 @@ class HomeRoute extends Route {
                     return new Profile(req.session.userId);
                 } else {
                     res.status(status.UNAUTHORIZED);
-                    return new GraphQLError("Not logged in");
+                    return new NotLoggedInGqlError();
                 }
             },
             async getUser({userId, handle}: {userId: number, handle: string}) {
                 if (handle) {
                     return await dataaccess.getUserByHandle(handle);
                 } else if (userId) {
-                    return dataaccess.getUser(userId);
+                    return new User(userId);
                 } else {
                     res.status(status.BAD_REQUEST);
                     return new GraphQLError("No userId or handle provided.");
@@ -69,19 +73,28 @@ class HomeRoute extends Route {
                     return new GraphQLError("No postId given.");
                 }
             },
+            async getChat({chatId}: {chatId: number}) {
+                if (chatId) {
+                    return new Chatroom(chatId);
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No chatId given.");
+                }
+            },
             acceptCookies() {
                 req.session.cookiesAccepted = true;
                 return true;
             },
             async login({email, passwordHash}: {email: string, passwordHash: string}) {
                 if (email && passwordHash) {
-                    const user = await dataaccess.getUserByLogin(email, passwordHash);
-                    if (user && user.id) {
+                    try {
+                        const user = await dataaccess.getUserByLogin(email, passwordHash);
                         req.session.userId = user.id;
                         return user;
-                    } else {
+                    } catch (err) {
+                        globals.logger.verbose(`Failed to login user '${email}'`);
                         res.status(status.BAD_REQUEST);
-                        return new GraphQLError("Invalid login data.");
+                        return err.graphqlError;
                     }
                 } else {
                     res.status(status.BAD_REQUEST);
@@ -94,7 +107,7 @@ class HomeRoute extends Route {
                     return true;
                 } else {
                     res.status(status.UNAUTHORIZED);
-                    return new GraphQLError("Not logged in.");
+                    return new NotLoggedInGqlError();
                 }
             },
             async register({username, email, passwordHash}: {username: string, email: string, passwordHash: string}) {
@@ -165,7 +178,23 @@ class HomeRoute extends Route {
 
                 } else {
                     res.status(status.UNAUTHORIZED);
-                    return new GraphQLError("Not logged in.");
+                    return new NotLoggedInGqlError();
+                }
+            },
+            async sendChatMessage({chatId, content}: {chatId: number, content: string}) {
+                if (!req.session.userId) {
+                    return new NotLoggedInGqlError();
+                }
+                if (chatId && content) {
+                    try {
+                        return await dataaccess.sendChatMessage(req.session.userId, chatId, content);
+                    } catch (err) {
+                        res.status(status.BAD_REQUEST);
+                        return err.graphqlError;
+                    }
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No chatId or content given.");
                 }
             },
         };

@@ -1,3 +1,4 @@
+import markdown from "../markdown";
 import {DataObject} from "./DataObject";
 import {queryHelper} from "./index";
 import dataaccess from "./index";
@@ -38,6 +39,14 @@ export class Post extends DataObject {
     public async content(): Promise<string> {
         await this.loadDataIfNotExists();
         return this.$content;
+    }
+
+    /**
+     * the content rendered by markdown-it.
+     */
+    public async htmlContent(): Promise<string> {
+        await this.loadDataIfNotExists();
+        return markdown.render(this.$content);
     }
 
     /**

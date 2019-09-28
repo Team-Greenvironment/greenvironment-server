@@ -7,6 +7,14 @@ export abstract class DataObject {
     constructor(public id: number, protected row?: any) {
     }
 
+    /**
+     * Returns if the object extists by trying to load data.
+     */
+    public async exists() {
+        await this.loadDataIfNotExists();
+        return this.dataLoaded;
+    }
+
     protected abstract loadData(): Promise<void>;
 
     /**

@@ -53,7 +53,7 @@ type Mutation {
     denyRequest(requestId: ID!): Boolean
 
     "send a message in a Chatroom"
-    sendMessage(chatId: ID!, content: String!): Boolean
+    sendMessage(chatId: ID!, content: String!): ChatMessage
 
     "create the post"
     createPost(content: String!): Boolean
@@ -70,6 +70,9 @@ type User {
     "name of the User"
     name: String!
 
+    "returns the chatrooms the user joined."
+    chats(first: Int=10, offset: Int): [ChatRoom]
+
     "unique identifier name from the User"
     handle: String!
 
@@ -85,7 +88,7 @@ type User {
     "creation date of the user account"
     joinedAt: String!
 
-    "returns all friends of the user"
+    "all friends of the user"
     friends: [User]
 
     "all request for groupChats/friends/events"
@@ -95,8 +98,11 @@ type User {
 "represents a single user post"
 type Post {
 
-    "returns the text of the post"
+    "the text of the post"
     content: String
+
+    "the content of the post rendered by markdown-it"
+    htmlContent: String
 
     "upvotes of the Post"
     upvotes: Int!
@@ -110,7 +116,7 @@ type Post {
     "date the post was created"
     creationDate: String!
 
-    "returns the type of vote the user performed on the post"
+    "the type of vote the user performed on the post"
     userVote: VoteType
 }
 
@@ -135,10 +141,27 @@ type ChatRoom {
     members: [User!]
 
     "return a specfic range of messages posted in the chat"
-    getMessages(first: Int, offset: Int): [String]
+    getMessages(first: Int, offset: Int): [ChatMessage]
 
     "id of the chat"
     id: ID!
+}
+
+type ChatMessage {
+    "The author of the chat message."
+    author: User
+
+    "The chatroom the message was posted in"
+    chat: ChatRoom
+
+    "The timestamp when the message was posted (epoch)."
+    timestamp: Int
+
+    "The content of the message."
+    content: String
+
+    "The content of the message rendered by markdown-it."
+    htmlContent: String
 }
 
 "represents the type of vote performed on a post"

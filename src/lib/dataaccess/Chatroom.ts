@@ -7,6 +7,17 @@ export class Chatroom {
     constructor(private id: number) {}
 
     /**
+     * Returns if the chat exists.
+     */
+    public async exists(): Promise<boolean> {
+        const result = await queryHelper.first({
+            text: "SELECT id FROM chats WHERE id = $1",
+            values: [this.id],
+        });
+        return !!result.id;
+    }
+
+    /**
      * Returns all members of a chatroom.
      */
     public async members(): Promise<User[]> {

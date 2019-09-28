@@ -8,6 +8,7 @@ export class User extends DataObject {
     private $email: string;
     private $greenpoints: number;
     private $joinedAt: string;
+    private $exists: boolean;
 
     /**
      * The name of the user

@@ -13,3 +13,7 @@ server:
 session:
   secret: REPLACE WITH SAFE RANDOM GENERATED SECRET
   cookieMaxAge: 604800000‬ # 7 days
+
+markdown:
+  plugins:
+    - 'markdown-it-emoji'
