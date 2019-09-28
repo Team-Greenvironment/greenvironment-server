@@ -135,7 +135,7 @@ class HomeRoute extends Route {
                         return await (new Post(postId)).vote(req.session.userId, type);
                     } else {
                         res.status(status.UNAUTHORIZED);
-                        return new GraphQLError("Not logged in.");
+                        return new NotLoggedInGqlError();
                     }
                 } else {
                     res.status(status.BAD_REQUEST);
@@ -148,7 +148,7 @@ class HomeRoute extends Route {
                         return await dataaccess.createPost(content, req.session.userId);
                     } else {
                         res.status(status.UNAUTHORIZED);
-                        return new GraphQLError("Not logged in.");
+                        return new NotLoggedInGqlError();
                     }
                 } else {
                     res.status(status.BAD_REQUEST);

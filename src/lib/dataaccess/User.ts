@@ -62,6 +62,25 @@ export class User extends DataObject {
     }
 
     /**
+     * Returns all friends of the user.
+     */
+    public async friends(): Promise<User[]> {
+        const result = await queryHelper.all({
+            text: "SELECT * FROM user_friends WHERE user_id = $1 OR friend_id = $1",
+            values: [this.id],
+        });
+        const userFriends = [];
+        for (const row of result) {
+            if (row.user_id === this.id) {
+                userFriends.push(new User(row.friend_id));
+            } else {
+                userFriends.push(new User(row.user_id));
+            }
+        }
+        return userFriends;
+    }
+
+    /**
      * Returns all posts for a user.
      */
     public async posts({first, offset}: {first: number, offset: number}): Promise<Post[]> {

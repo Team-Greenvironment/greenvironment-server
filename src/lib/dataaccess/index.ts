@@ -41,8 +41,8 @@ namespace dataaccess {
      * Initializes everything that needs to be initialized asynchronous.
      */
     export async function init() {
-        await queryHelper.updateTableDefinitions();
         await queryHelper.createTables();
+        await queryHelper.updateTableDefinitions();
     }
 
     /**
