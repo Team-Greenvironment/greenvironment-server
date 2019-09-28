@@ -140,7 +140,7 @@ namespace dataaccess {
      */
     export async function createChat(...members: number[]): Promise<Chatroom> {
         const idResult = await queryHelper.first({
-            text: "INSERT INTO chats (id) values (nextval('chats_id_seq'::regclass)) RETURNING *;",
+            text: "INSERT INTO chats (id) values (default) RETURNING *;",
         });
         const id = idResult.id;
         const transaction = await queryHelper.createTransaction();
@@ -149,14 +149,15 @@ namespace dataaccess {
             for (const member of members) {
                 await transaction.query({
                     name: "chat-member-insert",
-                    text: "INSERT INTO chat_members (ABSOLUTE chat, member) VALUES ($1, $2);",
-                    values: [member],
+                    text: "INSERT INTO chat_members (chat, member) VALUES ($1, $2);",
+                    values: [id, member],
                 });
             }
             await transaction.commit();
         } catch (err) {
             globals.logger.warn(`Failed to insert chatmember into database: ${err.message}`);
             globals.logger.debug(err.stack);
+            await transaction.rollback();
         } finally {
             transaction.release();
         }
@@ -173,10 +174,10 @@ namespace dataaccess {
         const chat = new Chatroom(chatId);
         if ((await chat.exists())) {
             const result = await queryHelper.first({
-                text: "INSERT INTO chat_messages (chat, author, content, created_at) values ($1, $2, $3) RETURNING *",
+                text: "INSERT INTO chat_messages (chat, author, content) values ($1, $2, $3) RETURNING *",
                 values: [chatId, authorId, content],
             });
-            return new ChatMessage(new User(result.author), chat, result.timestamp, result.content);
+            return new ChatMessage(new User(result.author), chat, result.created_at, result.content);
         } else {
             throw new ChatNotFoundError(chatId);
         }

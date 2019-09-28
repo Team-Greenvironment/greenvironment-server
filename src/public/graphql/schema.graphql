@@ -11,9 +11,6 @@ type Query {
     "returns the chat object for a chat id"
     getChat(chatId: ID!): ChatRoom
 
-    "Creates a chat between the user (and optional an other user)"
-    createChat(members: [ID!]): ChatRoom
-
     "returns the request object for a request id"
     getRequest(requestId: ID!): Request
 
@@ -60,6 +57,9 @@ type Mutation {
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean
+
+    "Creates a chat between the user (and optional an other user)"
+    createChat(members: [ID!]): ChatRoom
 }
 
 "represents a single user account"
@@ -141,7 +141,7 @@ type ChatRoom {
     members: [User!]
 
     "return a specfic range of messages posted in the chat"
-    getMessages(first: Int, offset: Int): [ChatMessage]
+    messages(first: Int = 10, offset: Int, containing: String): [ChatMessage]!
 
     "id of the chat"
     id: ID!
@@ -149,16 +149,16 @@ type ChatRoom {
 
 type ChatMessage {
     "The author of the chat message."
-    author: User
+    author: User!
 
     "The chatroom the message was posted in"
-    chat: ChatRoom
+    chat: ChatRoom!
 
     "The timestamp when the message was posted (epoch)."
-    timestamp: Int
+    createdAt: String!
 
     "The content of the message."
-    content: String
+    content: String!
 
     "The content of the message rendered by markdown-it."
     htmlContent: String

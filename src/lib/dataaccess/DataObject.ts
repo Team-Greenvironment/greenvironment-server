@@ -5,6 +5,7 @@ export abstract class DataObject {
     protected dataLoaded: boolean = false;
 
     constructor(public id: number, protected row?: any) {
+        this.id = Number(id);
     }
 
     /**

@@ -181,7 +181,7 @@ class HomeRoute extends Route {
                     return new NotLoggedInGqlError();
                 }
             },
-            async sendChatMessage({chatId, content}: {chatId: number, content: string}) {
+            async sendMessage({chatId, content}: {chatId: number, content: string}) {
                 if (!req.session.userId) {
                     return new NotLoggedInGqlError();
                 }

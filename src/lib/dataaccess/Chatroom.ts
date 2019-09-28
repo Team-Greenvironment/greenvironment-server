@@ -4,7 +4,9 @@ import {User} from "./User";
 
 export class Chatroom {
 
-    constructor(private id: number) {}
+    constructor(private readonly id: number) {
+        this.id = Number(id);
+    }
 
     /**
      * Returns if the chat exists.
@@ -29,7 +31,7 @@ export class Chatroom {
         });
         const chatMembers = [];
         for (const row of result) {
-            chatMembers.push(new User(row));
+            chatMembers.push(new User(row.id, row));
         }
         return chatMembers;
     }
@@ -40,8 +42,8 @@ export class Chatroom {
      * @param offset - the offset of messages to return
      * @param containing - filter by containing
      */
-    public async messages(limit?: number, offset?: number, containing?: string) {
-        const lim = limit || 16;
+    public async messages({first, offset, containing}: {first?: number, offset?: number, containing?: string}) {
+        const lim = first || 16;
         const offs = offset || 0;
 
         const result = await queryHelper.all({
@@ -51,7 +53,7 @@ export class Chatroom {
 
         const messages = [];
         for (const row of result) {
-            messages.push(new ChatMessage(new User(row.author), this, row.timestamp, row.content));
+            messages.push(new ChatMessage(new User(row.author), this, row.created_at, row.content));
         }
         if (containing) {
             return messages.filter((x) => x.content.includes(containing));
