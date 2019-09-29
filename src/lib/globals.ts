@@ -8,7 +8,7 @@
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
 import * as winston from "winston";
-import {MemoryCache} from "./Cache";
+import {MemoryCache} from "./MemoryCache";
 
 const configPath = "config.yaml";
 const defaultConfig = __dirname + "/../default-config.yaml";
