@@ -3,8 +3,11 @@ import {Chatroom} from "./Chatroom";
 import {User} from "./User";
 
 export class ChatMessage {
-    constructor(public author: User, public chat: Chatroom, public createdAt: number, public content: string) {
-    }
+    constructor(
+        public readonly author: User,
+        public readonly chat: Chatroom,
+        public readonly createdAt: number,
+        public readonly content: string) {}
 
     /**
      * The content rendered by markdown-it.

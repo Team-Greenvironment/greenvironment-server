@@ -13,4 +13,7 @@ DO $$ BEGIN
         DROP COLUMN IF EXISTS upvotes,
         DROP COLUMN IF EXISTS downvotes;
 
+    ALTER TABLE requests
+        ADD COLUMN IF NOT EXISTS type requesttype DEFAULT 'FRIENDREQUEST';
+
 END $$;

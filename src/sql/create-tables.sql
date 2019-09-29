@@ -81,7 +81,8 @@ DO $$ BEGIN
     CREATE TABLE IF NOT EXISTS votes (
         user_id SERIAL REFERENCES users (id) ON DELETE CASCADE,
         item_id BIGSERIAL REFERENCES posts (id) ON DELETE CASCADE,
-        vote_type votetype DEFAULT 'DOWNVOTE'
+        vote_type votetype DEFAULT 'DOWNVOTE',
+        PRIMARY KEY (user_id, item_id)
     );
 
     CREATE TABLE IF NOT EXISTS events (
@@ -92,7 +93,8 @@ DO $$ BEGIN
 
     CREATE TABLE IF NOT EXISTS event_members (
         event BIGSERIAL REFERENCES events (id),
-        member SERIAL REFERENCES users (id)
+        member SERIAL REFERENCES users (id),
+        PRIMARY KEY (event, member)
     );
 
     CREATE TABLE IF NOT EXISTS chats (
@@ -109,17 +111,21 @@ DO $$ BEGIN
 
     CREATE TABLE IF NOT EXISTS chat_members (
         chat BIGSERIAL REFERENCES chats (id) ON DELETE CASCADE,
-        member SERIAL REFERENCES users (id) ON DELETE CASCADE
+        member SERIAL REFERENCES users (id) ON DELETE CASCADE,
+        PRIMARY KEY (chat, member)
     );
 
     CREATE TABLE IF NOT EXISTS user_friends (
         user_id SERIAL REFERENCES users (id) ON DELETE CASCADE,
-        friend_id SERIAL REFERENCES users (id) ON DELETE CASCADE
+        friend_id SERIAL REFERENCES users (id) ON DELETE CASCADE,
+        PRIMARY KEY (user_id, friend_id)
     );
 
     CREATE TABLE IF NOT EXISTS requests (
         sender SERIAL REFERENCES users (id) ON DELETE CASCADE,
-        receiver SERIAL REFERENCES users (id) ON DELETE CASCADE
+        receiver SERIAL REFERENCES users (id) ON DELETE CASCADE,
+        type requesttype DEFAULT 'FRIENDREQUEST',
+        PRIMARY KEY (sender, receiver, type)
     );
 
 END $$;

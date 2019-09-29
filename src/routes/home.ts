@@ -183,6 +183,7 @@ class HomeRoute extends Route {
             },
             async sendMessage({chatId, content}: {chatId: number, content: string}) {
                 if (!req.session.userId) {
+                    res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
                 }
                 if (chatId && content) {
@@ -195,6 +196,51 @@ class HomeRoute extends Route {
                 } else {
                     res.status(status.BAD_REQUEST);
                     return new GraphQLError("No chatId or content given.");
+                }
+            },
+            async sendRequest({receiver, type}: {receiver: number, type: dataaccess.RequestType}) {
+                if (!req.session.userId) {
+                    res.status(status.UNAUTHORIZED);
+                    return new NotLoggedInGqlError();
+                }
+                if (receiver && type) {
+                    return await dataaccess.createRequest(req.session.userId, receiver, type);
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No receiver or type given.");
+                }
+            },
+            async denyRequest({sender, type}: {sender: number, type: dataaccess.RequestType}) {
+                if (!req.session.userId) {
+                    res.status(status.UNAUTHORIZED);
+                    return new NotLoggedInGqlError();
+                }
+                if (sender && type) {
+                    const profile = new Profile(req.session.userId);
+                    await profile.denyRequest(sender, type);
+                    return true;
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No sender or type given.");
+                }
+            },
+            async acceptRequest({sender, type}: {sender: number, type: dataaccess.RequestType}) {
+                if (!req.session.userId) {
+                    res.status(status.UNAUTHORIZED);
+                    return new NotLoggedInGqlError();
+                }
+                if (sender && type) {
+                    try {
+                        const profile = new Profile(req.session.userId);
+                        await profile.acceptRequest(sender, type);
+                        return true;
+                    } catch (err) {
+                        res.status(status.BAD_REQUEST);
+                        return err.graphqlError;
+                    }
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError("No sender or type given.");
                 }
             },
         };

@@ -11,9 +11,6 @@ type Query {
     "returns the chat object for a chat id"
     getChat(chatId: ID!): ChatRoom
 
-    "returns the request object for a request id"
-    getRequest(requestId: ID!): Request
-
     "find a post by the posted date or content"
     findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
 
@@ -41,10 +38,10 @@ type Mutation {
     report(postId: ID!): Boolean
 
    "send a request"
-    sendRequest(reciever: ID!, type: RequestType): Boolean
+    sendRequest(receiver: ID!, type: RequestType): Request
 
     "lets you accept a request for a given request id"
-    acceptRequest(requestId: ID!): Boolean
+    acceptRequest(sender: ID!, type: RequestType): Boolean
 
     "lets you deny a request for a given request id"
     denyRequest(requestId: ID!): Boolean
@@ -143,8 +140,11 @@ type Profile implements UserData {
     "all friends of the user"
     friends: [User]
 
-    "all request for groupChats/friends/events"
-    requests: [Request]
+    "all sent request for groupChats/friends/events"
+    sentRequests: [Request]
+
+    "all received request for groupChats/friends/events"
+    receivedRequests: [Request]
 }
 
 "represents a single user post"
@@ -177,9 +177,6 @@ type Post {
 
 "represents a request of any type"
 type Request {
-    "id of the request"
-    id: ID!
-
     "Id of the user who sended the request"
     sender: User!
 
@@ -187,7 +184,7 @@ type Request {
     receiver: User!
 
     "type of the request"
-    requestType: RequestType!
+    type: RequestType!
 }
 
 "represents a chatroom"
@@ -225,7 +222,10 @@ enum VoteType {
     DOWNVOTE
 }
 
-"represents the type of request that the user has received"
+"""
+represents the type of request that the user has received
+Currently on Friend Requests are implemented.
+"""
 enum RequestType {
     FRIENDREQUEST
     GROUPINVITE

@@ -108,7 +108,7 @@ export class Post extends DataObject {
         } else {
             if (uVote) {
                 await queryHelper.first({
-                    text: "UPDATE votes SET vote_type = $1 WHERE user_id = $1 AND item_id = $3",
+                    text: "UPDATE votes SET vote_type = $1 WHERE user_id = $2 AND item_id = $3",
                     values: [type, userId, this.id],
                 });
             } else {

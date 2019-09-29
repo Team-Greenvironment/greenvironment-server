@@ -1,6 +1,8 @@
+import {RequestNotFoundError} from "../errors/RequestNotFoundError";
 import {Chatroom} from "./Chatroom";
-import {queryHelper} from "./index";
+import dataaccess, {queryHelper} from "./index";
 import {User} from "./User";
+import {Request} from "./Request";
 
 export class Profile extends User {
 
@@ -29,6 +31,30 @@ export class Profile extends User {
     }
 
     /**
+     * Returns all open requests the user has send.
+     */
+    public async sentRequests() {
+        const result = await queryHelper.all({
+            cache: true,
+            text: "SELECT * FROM requests WHERE sender = $1",
+            values: [this.id],
+        });
+        return this.getRequests(result);
+    }
+
+    /**
+     * Returns all received requests of the user.
+     */
+    public async receivedRequests() {
+        const result = await queryHelper.all({
+            cache: true,
+            text: "SELECT * FROM requests WHERE receiver = $1",
+            values: [this.id],
+        });
+        return this.getRequests(result);
+    }
+
+    /**
      * Sets the greenpoints of a user.
      * @param points
      */
@@ -46,7 +72,7 @@ export class Profile extends User {
      */
     public async setEmail(email: string): Promise<string> {
         const result = await queryHelper.first({
-            text: "UPDATE TABLE users SET email = $1 WHERE users.id = $2 RETURNING email",
+            text: "UPDATE users SET email = $1 WHERE users.id = $2 RETURNING email",
             values: [email, this.id],
         });
         return result.email;
@@ -57,7 +83,7 @@ export class Profile extends User {
      */
     public async setHandle(handle: string): Promise<string> {
         const result = await queryHelper.first({
-            text: "UPDATE TABLE users SET handle = $1 WHERE id = $2",
+            text: "UPDATE users SET handle = $1 WHERE id = $2",
             values: [handle, this.id],
         });
         return result.handle;
@@ -69,9 +95,69 @@ export class Profile extends User {
      */
     public async setName(name: string): Promise<string> {
         const result = await queryHelper.first({
-            text: "UPDATE TABLE users SET name = $1 WHERE id = $2",
+            text: "UPDATE users SET name = $1 WHERE id = $2",
             values: [name, this.id],
         });
         return result.name;
+    }
+
+    /**
+     * Denys a request.
+     * @param sender
+     * @param type
+     */
+    public async denyRequest(sender: number, type: dataaccess.RequestType) {
+        await queryHelper.first({
+            text: "DELETE FROM requests WHERE receiver = $1 AND sender = $2 AND type = $3",
+            values: [this.id, sender, type],
+        });
+    }
+
+    /**
+     * Accepts a request.
+     * @param sender
+     * @param type
+     */
+    public async acceptRequest(sender: number, type: dataaccess.RequestType) {
+        const exists = await queryHelper.first({
+            cache: true,
+            text: "SELECT 1 FROM requests WHERE receiver = $1 AND sender = $2 AND type = $3",
+            values: [this.id, sender, type],
+        });
+        if (exists) {
+            if (type === dataaccess.RequestType.FRIENDREQUEST) {
+                await queryHelper.first({
+                    text: "INSERT INTO user_friends (user_id, friend_id) VALUES ($1, $2)",
+                    values: [this.id, sender],
+                });
+            }
+        } else {
+            throw new RequestNotFoundError(sender, this.id, type);
+        }
+    }
+
+    /**
+     * Returns request wrapper for a row database request result.
+     * @param rows
+     */
+    private getRequests(rows: any) {
+        const requests = [];
+        const requestUsers: any = {};
+
+        for (const row of rows) {
+            let sender = requestUsers[row.sender];
+
+            if (!sender) {
+                sender = new User(row.sender);
+                requestUsers[row.sender] = sender;
+            }
+            let receiver = requestUsers[row.receiver];
+            if (!receiver) {
+                receiver = new User(row.receiver);
+                requestUsers[row.receiver] = receiver;
+            }
+            requests.push(new Request(sender, receiver, row.type));
+        }
+        return requests;
     }
 }

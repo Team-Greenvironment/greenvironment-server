@@ -7,6 +7,7 @@ import {ChatMessage} from "./ChatMessage";
 import {Chatroom} from "./Chatroom";
 import {Post} from "./Post";
 import {Profile} from "./Profile";
+import {Request} from "./Request";
 import {User} from "./User";
 
 const config = globals.config;
@@ -182,6 +183,22 @@ namespace dataaccess {
         } else {
             throw new ChatNotFoundError(chatId);
         }
+    }
+
+    /**
+     * Sends a request to a user.
+     * @param sender
+     * @param receiver
+     * @param type
+     */
+    export async function createRequest(sender: number, receiver: number, type?: RequestType) {
+        type = type || RequestType.FRIENDREQUEST;
+
+        const result = await queryHelper.first({
+            text: "INSERT INTO requests (sender, receiver, type) VALUES ($1, $2, $3) RETURNING *",
+            values: [sender, receiver, type],
+        });
+        return new Request(new User(result.sender), new User(result.receiver), result.type);
     }
 
     /**
