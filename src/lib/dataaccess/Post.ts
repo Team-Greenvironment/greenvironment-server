@@ -16,6 +16,7 @@ export class Post extends DataObject {
      */
     public async upvotes(): Promise<number> {
         const result = await queryHelper.first({
+            cache: true,
             text: "SELECT COUNT(*) count FROM votes WHERE item_id = $1 AND vote_type = 'UPVOTE'",
             values: [this.id],
         });
@@ -27,6 +28,7 @@ export class Post extends DataObject {
      */
     public async downvotes(): Promise<number> {
         const result = await queryHelper.first({
+            cache: true,
             text: "SELECT COUNT(*) count FROM votes WHERE item_id = $1 AND vote_type = 'DOWNVOTE'",
             values: [this.id],
         });
@@ -80,6 +82,7 @@ export class Post extends DataObject {
      */
     public async userVote(userId: number): Promise<dataaccess.VoteType> {
         const result = await queryHelper.first({
+            cache: true,
             text: "SELECT vote_type FROM votes WHERE user_id = $1 AND item_id = $2",
             values: [userId, this.id],
         });
@@ -127,6 +130,7 @@ export class Post extends DataObject {
             result = this.row;
         } else {
             result = await queryHelper.first({
+                cache: true,
                 text: "SELECT * FROM posts WHERE posts.id = $1",
                 values: [this.id],
             });

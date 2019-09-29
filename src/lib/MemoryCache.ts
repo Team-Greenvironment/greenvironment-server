@@ -1,5 +1,5 @@
-import {EventEmitter} from "events";
 import * as crypto from "crypto";
+import {EventEmitter} from "events";
 
 export class MemoryCache extends EventEmitter {
     private cacheItems: any = {};

@@ -53,7 +53,7 @@ type Mutation {
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
     "create the post"
-    createPost(content: String!): Boolean
+    createPost(content: String!): Post
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean
@@ -150,6 +150,9 @@ type Profile implements UserData {
 "represents a single user post"
 type Post {
 
+    "The id of the post."
+    id: ID!
+
     "the text of the post"
     content: String
 
@@ -166,7 +169,7 @@ type Post {
     author: User!
 
     "date the post was created"
-    creationDate: String!
+    createdAt: String!
 
     "the type of vote the user performed on the post"
     userVote: VoteType

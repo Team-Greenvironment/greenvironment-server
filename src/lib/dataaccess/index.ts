@@ -115,6 +115,7 @@ namespace dataaccess {
      * @param type
      */
     export async function createPost(content: string, authorId: number, type?: string): Promise<Post> {
+        type = type || "MISC";
         const result = await queryHelper.first({
             text: "INSERT INTO posts (content, author, type) VALUES ($1, $2, $3) RETURNING *",
             values: [content, authorId, type],
