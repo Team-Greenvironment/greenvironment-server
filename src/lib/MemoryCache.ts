@@ -20,7 +20,7 @@ export class MemoryCache extends EventEmitter {
      * @param key
      */
     public hashKey(key: string): string {
-        const hash = crypto.createHash("md5");
+        const hash = crypto.createHash("sha1");
         const data = hash.update(key, "utf8");
         return data.digest("hex");
     }
