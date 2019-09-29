@@ -3,7 +3,7 @@ type Query {
     getUser(userId: ID, handle: String): User
 
     "returns the logged in user"
-    getSelf: User
+    getSelf: Profile
 
     "returns the post object for a post id"
     getPost(postId: ID!): Post
@@ -26,10 +26,10 @@ type Mutation {
     acceptCookies: Boolean
 
     "Login of the user. The passwordHash should be a sha512 hash of the password."
-    login(email: String, passwordHash: String): User
+    login(email: String, passwordHash: String): Profile
 
     "Registers the user."
-    register(username: String, email: String, passwordHash: String): User
+    register(username: String, email: String, passwordHash: String): Profile
 
     "Logout of the user."
     logout: Boolean
@@ -62,8 +62,60 @@ type Mutation {
     createChat(members: [ID!]): ChatRoom
 }
 
+interface UserData {
+    "url for the Profile picture of the User"
+    profilePicture: String
+
+    "name of the User"
+    name: String!
+
+    "unique identifier name from the User"
+    handle: String!
+
+    "Id of the User"
+    id: ID!
+
+    "the total number of posts the user posted"
+    numberOfPosts: Int
+
+    "returns a given number of posts of a user"
+    posts(first: Int=10, offset: Int): [Post]
+
+    "creation date of the user account"
+    joinedAt: String!
+
+    "all friends of the user"
+    friends: [User]
+}
+
 "represents a single user account"
-type User {
+type User implements UserData{
+    "url for the Profile picture of the User"
+    profilePicture: String
+
+    "name of the User"
+    name: String!
+
+    "unique identifier name from the User"
+    handle: String!
+
+    "Id of the User"
+    id: ID!
+
+    "the total number of posts the user posted"
+    numberOfPosts: Int
+
+    "returns a given number of posts of a user"
+    posts(first: Int=10, offset: Int): [Post]
+
+    "creation date of the user account"
+    joinedAt: String!
+
+    "all friends of the user"
+    friends: [User]
+}
+
+type Profile implements UserData {
     "url for the Profile picture of the User"
     profilePicture: String
 

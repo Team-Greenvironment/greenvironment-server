@@ -17,3 +17,6 @@ session:
 markdown:
   plugins:
     - 'markdown-it-emoji'
+
+logging:
+  level: info

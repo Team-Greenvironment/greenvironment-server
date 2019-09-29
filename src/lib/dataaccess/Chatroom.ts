@@ -1,3 +1,4 @@
+import globals from "../globals";
 import {ChatMessage} from "./ChatMessage";
 import {queryHelper} from "./index";
 import {User} from "./User";
@@ -24,6 +25,7 @@ export class Chatroom {
      */
     public async members(): Promise<User[]> {
         const result = await queryHelper.all({
+            cache: true,
             text:  `SELECT * FROM chat_members
                     JOIN users ON (chat_members.member = users.id)
                     WHERE chat_members.chat = $1;`,
@@ -31,7 +33,8 @@ export class Chatroom {
         });
         const chatMembers = [];
         for (const row of result) {
-            chatMembers.push(new User(row.id, row));
+            const user = new User(row.id, row);
+            chatMembers.push(user);
         }
         return chatMembers;
     }
@@ -47,13 +50,20 @@ export class Chatroom {
         const offs = offset || 0;
 
         const result = await queryHelper.all({
+            cache: true,
             text: "SELECT * FROM chat_messages WHERE chat = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
             values: [this.id, lim, offs],
         });
 
         const messages = [];
+        const users: any = {};
         for (const row of result) {
-            messages.push(new ChatMessage(new User(row.author), this, row.created_at, row.content));
+            if (!users[row.author]) {
+                const user = new User(row.author);
+                await user.exists();
+                users[row.author] = user;
+            }
+            messages.push(new ChatMessage(users[row.author], this, row.created_at, row.content));
         }
         if (containing) {
             return messages.filter((x) => x.content.includes(containing));

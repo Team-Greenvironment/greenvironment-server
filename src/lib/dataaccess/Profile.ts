@@ -6,10 +6,14 @@ export class Profile extends User {
 
     /**
      * Returns all chatrooms (with pagination).
+     * Skips the query if the user doesn't exist.
      * @param first
      * @param offset
      */
-    public async chats({first, offset}: {first: number, offset?: number}) {
+    public async chats({first, offset}: {first: number, offset?: number}): Promise<Chatroom[]> {
+        if (!(await this.exists())) {
+            return [];
+        }
         first = first || 10;
         offset = offset || 0;
 

@@ -1,3 +1,4 @@
+import globals from "../globals";
 import {DataObject} from "./DataObject";
 import {queryHelper} from "./index";
 import {Post} from "./Post";
@@ -47,6 +48,7 @@ export class User extends DataObject {
      */
     public async numberOfPosts(): Promise<number> {
         const result = await queryHelper.first({
+            cache: true,
             text: "SELECT COUNT(*) count FROM posts WHERE author = $1",
             values: [this.id],
         });
@@ -66,6 +68,7 @@ export class User extends DataObject {
      */
     public async friends(): Promise<User[]> {
         const result = await queryHelper.all({
+            cache: true,
             text: "SELECT * FROM user_friends WHERE user_id = $1 OR friend_id = $1",
             values: [this.id],
         });
@@ -87,6 +90,7 @@ export class User extends DataObject {
         first = first || 10;
         offset = offset || 0;
         const result = await queryHelper.all({
+            cache: true,
             text: "SELECT * FROM posts WHERE author = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
             values: [this.id, first, offset],
         });
@@ -107,6 +111,7 @@ export class User extends DataObject {
             result = this.row;
         } else {
             result = await queryHelper.first({
+                cache: true,
                 text: "SELECT * FROM users WHERE users.id = $1",
                 values: [this.id],
             });
