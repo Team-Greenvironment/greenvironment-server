@@ -1,3 +1,4 @@
+import globals from "../globals";
 import {DataObject} from "./DataObject";
 import {queryHelper} from "./index";
 import {Post} from "./Post";
@@ -8,101 +9,90 @@ export class User extends DataObject {
     private $email: string;
     private $greenpoints: number;
     private $joinedAt: string;
+    private $exists: boolean;
 
     /**
      * The name of the user
      */
     public async name(): Promise<string> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$name;
-    }
-
-    /**
-     * Sets the username of the user
-     * @param name
-     */
-    public async setName(name: string): Promise<string> {
-        const result = await queryHelper.first({
-            text: "UPDATE TABLE users SET name = $1 WHERE id = $2",
-            values: [name, this.id],
-        });
-        return result.name;
     }
 
     /**
      * The unique handle of the user.
      */
     public async handle(): Promise<string> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$handle;
-    }
-
-    /**
-     * Updates the handle of the user
-     */
-    public async setHandle(handle: string): Promise<string> {
-        const result = await queryHelper.first({
-            text: "UPDATE TABLE users SET handle = $1 WHERE id = $2",
-            values: [handle, this.id],
-        });
-        return result.handle;
     }
 
     /**
      * The email of the user
      */
     public async email(): Promise<string> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$email;
-    }
-
-    /**
-     * Sets the email of the user
-     * @param email
-     */
-    public async setEmail(email: string): Promise<string> {
-        const result = await queryHelper.first({
-            text: "UPDATE TABLE users SET email = $1 WHERE users.id = $2 RETURNING email",
-            values: [email, this.id],
-        });
-        return result.email;
     }
 
     /**
      * The number of greenpoints of the user
      */
     public async greenpoints(): Promise<number> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return this.$greenpoints;
     }
 
     /**
-     * Sets the greenpoints of a user.
-     * @param points
+     * Returns the number of posts the user created
      */
-    public async setGreenpoints(points: number): Promise<number> {
+    public async numberOfPosts(): Promise<number> {
         const result = await queryHelper.first({
-            text: "UPDATE users SET greenpoints = $1 WHERE id = $2 RETURNING greenpoints",
-            values: [points, this.id],
+            cache: true,
+            text: "SELECT COUNT(*) count FROM posts WHERE author = $1",
+            values: [this.id],
         });
-        return result.greenpoints;
+        return result.count;
     }
 
     /**
      * The date the user joined the platform
      */
     public async joinedAt(): Promise<Date> {
-        this.loadDataIfNotExists();
+        await this.loadDataIfNotExists();
         return new Date(this.$joinedAt);
+    }
+
+    /**
+     * Returns all friends of the user.
+     */
+    public async friends(): Promise<User[]> {
+        const result = await queryHelper.all({
+            cache: true,
+            text: "SELECT * FROM user_friends WHERE user_id = $1 OR friend_id = $1",
+            values: [this.id],
+        });
+        const userFriends = [];
+        for (const row of result) {
+            if (row.user_id === this.id) {
+                userFriends.push(new User(row.friend_id));
+            } else {
+                userFriends.push(new User(row.user_id));
+            }
+        }
+        return userFriends;
     }
 
     /**
      * Returns all posts for a user.
      */
-    public async posts(): Promise<Post[]> {
+    public async posts({first, offset}: {first: number, offset: number}): Promise<Post[]> {
+        first = first || 10;
+        offset = offset || 0;
         const result = await queryHelper.all({
-            text: "SELECT * FROM posts WHERE author = $1",
-            values: [this.id],
+            cache: true,
+            text: "SELECT * FROM posts WHERE author = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            values: [this.id, first, offset],
         });
         const posts = [];
 
@@ -121,7 +111,8 @@ export class User extends DataObject {
             result = this.row;
         } else {
             result = await queryHelper.first({
-                text: "SELECT * FROM users WHERE user.id = $1",
+                cache: true,
+                text: "SELECT * FROM users WHERE users.id = $1",
                 values: [this.id],
             });
         }

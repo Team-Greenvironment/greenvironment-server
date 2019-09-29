@@ -8,6 +8,7 @@
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
 import * as winston from "winston";
+import {MemoryCache} from "./MemoryCache";
 
 const configPath = "config.yaml";
 const defaultConfig = __dirname + "/../default-config.yaml";
@@ -15,6 +16,10 @@ const defaultConfig = __dirname + "/../default-config.yaml";
 // ensure that the config exists by copying the default config.
 if (!(fsx.pathExistsSync(configPath))) {
     fsx.copySync(defaultConfig, configPath);
+} else {
+    const conf = yaml.safeLoad(fsx.readFileSync(configPath, "utf-8"));
+    const defConf = yaml.safeLoad(fsx.readFileSync(defaultConfig, "utf-8"));
+    fsx.writeFileSync(configPath, yaml.safeDump(Object.assign(defConf, conf)));
 }
 
 /**
@@ -22,19 +27,24 @@ if (!(fsx.pathExistsSync(configPath))) {
  */
 namespace globals {
     export const config = yaml.safeLoad(fsx.readFileSync("config.yaml", "utf-8"));
+    export const cache = new MemoryCache(1200);
     export const logger = winston.createLogger({
         transports: [
             new winston.transports.Console({
                 format: winston.format.combine(
                     winston.format.timestamp(),
                     winston.format.colorize(),
-                    winston.format.printf(({ level, message, label, timestamp }) => {
+                    winston.format.printf(({ level, message, timestamp }) => {
                         return `${timestamp} ${level}: ${message}`;
                     }),
                 ),
+                level: config.logging.level,
             }),
         ],
     });
+    cache.on("set", (key) => logger.debug(`Caching '${key}'.`));
+    cache.on("miss", (key) => logger.debug(`Cache miss for '${key}'`));
+    cache.on("hit", (key) => logger.debug(`Cache hit for '${key}'`));
 }
 
 export default globals;

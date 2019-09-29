@@ -11,6 +11,10 @@ import globals from "./globals";
 
 const logger = globals.logger;
 
+export interface IAdvancedQueryConfig extends QueryConfig {
+    cache?: boolean;
+}
+
 /**
  * Transaction class to wrap SQL transactions.
  */
@@ -54,7 +58,7 @@ export class SqlTransaction {
     /**
      * Releases the client back to the pool.
      */
-    public async release() {
+    public release() {
         this.client.release();
     }
 }
@@ -101,7 +105,7 @@ export class QueryHelper {
      * executes the sql query with values and returns all results.
      * @param query
      */
-    public async all(query: QueryConfig): Promise<any[]> {
+    public async all(query: IAdvancedQueryConfig): Promise<any[]> {
         const result = await this.query(query);
         return result.rows;
     }
@@ -110,7 +114,7 @@ export class QueryHelper {
      * executes the sql query with values and returns the first result.
      * @param query
      */
-    public async first(query: QueryConfig): Promise<any> {
+    public async first(query: IAdvancedQueryConfig): Promise<any> {
         const result = await this.query(query);
         if (result.rows && result.rows.length > 0) {
             return result.rows[0];
@@ -129,11 +133,26 @@ export class QueryHelper {
      * Queries the database with error handling.
      * @param query - the sql and values to execute
      */
-    private async query(query: QueryConfig): Promise<QueryResult|{rows: any}> {
+    private async query(query: IAdvancedQueryConfig): Promise<QueryResult|{rows: any}> {
         try {
-            return await this.pool.query(query);
+            query.text = query.text.replace(/[\r\n]/g, " ");
+            globals.logger.silly(`Executing sql '${JSON.stringify(query)}'`);
+
+            if (query.cache) {
+                const key = globals.cache.hashKey(JSON.stringify(query));
+                const cacheResult = globals.cache.get(key);
+                if (cacheResult) {
+                    return cacheResult;
+                } else {
+                    const result = await this.pool.query(query);
+                    globals.cache.set(key, result);
+                    return result;
+                }
+            } else {
+                return await this.pool.query(query);
+            }
         } catch (err) {
-            logger.debug(`Error on query "${query}".`);
+            logger.debug(`Error on query "${JSON.stringify(query)}".`);
             logger.error(`Sql query failed: ${err}`);
             logger.verbose(err.stack);
             return {

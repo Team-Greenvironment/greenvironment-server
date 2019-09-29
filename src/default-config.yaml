@@ -9,3 +9,14 @@ database:
 # http server configuration
 server:
   port: 8080
+
+session:
+  secret: REPLACE WITH SAFE RANDOM GENERATED SECRET
+  cookieMaxAge: 604800000‬ # 7 days
+
+markdown:
+  plugins:
+    - 'markdown-it-emoji'
+
+logging:
+  level: info
