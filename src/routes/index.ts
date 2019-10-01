@@ -23,16 +23,6 @@ namespace routes {
     router.use("/", homeRoute.router);
 
     /**
-     * Asnyc function to create a graphql resolver that takes the request and response
-     * of express.js as arguments.
-     * @param request
-     * @param response
-     */
-    export function resolvers(request: any, response: any): Promise<object> {
-        return homeRoute.resolver(request, response);
-    }
-
-    /**
      * Assigns the io listeners or namespaces to the routes
      * @param io
      */

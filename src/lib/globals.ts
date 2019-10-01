@@ -5,6 +5,7 @@
  * Partly taken from {@link https://github.com/Trivernis/whooshy}
  */
 
+import {EventEmitter} from "events";
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
 import * as winston from "winston";
@@ -42,6 +43,7 @@ namespace globals {
             }),
         ],
     });
+    export const internalEmitter = new EventEmitter();
     cache.on("set", (key) => logger.debug(`Caching '${key}'.`));
     cache.on("miss", (key) => logger.debug(`Cache miss for '${key}'`));
     cache.on("hit", (key) => logger.debug(`Cache hit for '${key}'`));

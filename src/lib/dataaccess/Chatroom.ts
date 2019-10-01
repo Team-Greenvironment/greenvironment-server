@@ -5,8 +5,10 @@ import {User} from "./User";
 
 export class Chatroom {
 
-    constructor(private readonly id: number) {
+    public namespace: string;
+    constructor(public readonly id: number) {
         this.id = Number(id);
+        this.namespace = `/chat/${id}`;
     }
 
     /**

@@ -189,6 +189,9 @@ type Request {
 
 "represents a chatroom"
 type ChatRoom {
+    "the socket.io namespace for the chatroom"
+    namespace: String
+
     "the members of the chatroom"
     members: [User!]
 
