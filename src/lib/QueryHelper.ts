@@ -95,7 +95,18 @@ export class QueryHelper {
         if (this.tableCreationFile) {
             logger.info("Creating nonexistent tables...");
             const tableSql = await fsx.readFile(this.tableCreationFile, "utf-8");
-            await this.query({text: tableSql});
+            const trans = await this.createTransaction();
+            await trans.begin();
+            try {
+                await trans.query({text: tableSql});
+                await trans.commit();
+            } catch (err) {
+                globals.logger.error(`Error on table creation ${err.message}`);
+                globals.logger.debug(err.stack);
+                await trans.rollback();
+            } finally {
+                trans.release();
+            }
         }
     }
 
@@ -106,7 +117,18 @@ export class QueryHelper {
         if (this.tableUpdateFile) {
             logger.info("Updating table definitions...");
             const tableSql = await fsx.readFile(this.tableUpdateFile, "utf-8");
-            await this.query({text: tableSql});
+            const trans = await this.createTransaction();
+            await trans.begin();
+            try {
+                await trans.query({text: tableSql});
+                await trans.commit();
+            } catch (err) {
+                globals.logger.error(`Error on table update ${err.message}`);
+                globals.logger.debug(err.stack);
+                await trans.rollback();
+            } finally {
+                trans.release();
+            }
         }
     }
 

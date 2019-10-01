@@ -15,20 +15,6 @@ DO $$BEGIN
         END $BODY$;
     END IF;
 
-    IF NOT function_exists('cast_to_votetype') THEN
-        CREATE FUNCTION cast_to_votetype(text) RETURNS votetype LANGUAGE plpgsql AS $BODY$
-        BEGIN
-            RETURN CASE WHEN $1::votetype IS NULL THEN 'UPVOTE' ELSE $1::votetype END;
-        END $BODY$;
-    END IF;
-
-    IF NOT function_exists('cast_to_posttype') THEN
-        CREATE FUNCTION cast_to_posttype(text) RETURNS posttype LANGUAGE plpgsql AS $BODY$
-        BEGIN
-            RETURN CASE WHEN $1::posttype IS NULL THEN 'MISC' ELSE $1::posttype END;
-        END $BODY$;
-    END IF;
-
 END$$;
 
 --create types
@@ -44,6 +30,26 @@ DO $$ BEGIN
 
     IF NOT type_exists('requesttype') THEN
         CREATE TYPE requesttype AS enum ('FRIENDREQUEST');
+    END IF;
+
+END$$;
+
+-- create functions relying on types
+
+DO $$ BEGIN
+
+    IF NOT function_exists('cast_to_votetype') THEN
+        CREATE FUNCTION cast_to_votetype(text) RETURNS votetype LANGUAGE plpgsql AS $BODY$
+        BEGIN
+            RETURN CASE WHEN $1::votetype IS NULL THEN 'UPVOTE' ELSE $1::votetype END;
+        END $BODY$;
+    END IF;
+
+    IF NOT function_exists('cast_to_posttype') THEN
+        CREATE FUNCTION cast_to_posttype(text) RETURNS posttype LANGUAGE plpgsql AS $BODY$
+        BEGIN
+            RETURN CASE WHEN $1::posttype IS NULL THEN 'MISC' ELSE $1::posttype END;
+        END $BODY$;
     END IF;
 
 END$$;
