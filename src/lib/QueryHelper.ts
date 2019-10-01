@@ -80,6 +80,15 @@ export class QueryHelper {
     }
 
     /**
+     * Async init function
+     */
+    public async init() {
+        await this.pool.connect();
+        await this.createTables();
+        await this.updateTableDefinitions();
+    }
+
+    /**
      * creates all tables needed if a filepath was given with the constructor
      */
     public async createTables() {
