@@ -1,5 +1,6 @@
 import {Pool} from "pg";
 import {ChatNotFoundError} from "../errors/ChatNotFoundError";
+import {EmailAlreadyRegisteredError} from "../errors/EmailAlreadyRegisteredError";
 import {UserNotFoundError} from "../errors/UserNotFoundError";
 import globals from "../globals";
 import {InternalEvents} from "../InternalEvents";
@@ -91,11 +92,19 @@ namespace dataaccess {
      * @param password
      */
     export async function registerUser(username: string, email: string, password: string) {
-        const result = await queryHelper.first({
-            text: "INSERT INTO users (name, handle, password, email) VALUES ($1, $2, $3, $4) RETURNING *",
-            values: [username, generateHandle(username), password, email],
+        const existResult = await queryHelper.first({
+            text: "SELECT email FROM users WHERE email = $1;",
+            values: [email],
         });
-        return new Profile(result.id, result);
+        if (!existResult || !existResult.email) {
+            const result = await queryHelper.first({
+                text: "INSERT INTO users (name, handle, password, email) VALUES ($1, $2, $3, $4) RETURNING *",
+                values: [username, generateHandle(username), password, email],
+            });
+            return new Profile(result.id, result);
+        } else {
+            throw new EmailAlreadyRegisteredError(email);
+        }
     }
 
     /**

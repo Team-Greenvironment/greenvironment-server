@@ -10,6 +10,7 @@ import {importSchema} from "graphql-import";
 import * as http from "http";
 import * as path from "path";
 import * as socketIo from "socket.io";
+import {resolver} from "./graphql/resolvers";
 import dataaccess, {queryHelper} from "./lib/dataaccess";
 import globals from "./lib/globals";
 import routes from "./routes";
@@ -72,8 +73,8 @@ class App {
                 // @ts-ignore all
                 context: {session: request.session},
                 graphiql: true,
-                rootValue: routes.resolvers(request, response),
-                schema: buildSchema(importSchema(path.join(__dirname, "./public/graphql/schema.graphql"))),
+                rootValue: resolver(request, response),
+                schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
     }

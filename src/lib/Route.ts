@@ -21,7 +21,6 @@ abstract class Route {
 
     public abstract async init(...params: any): Promise<any>;
     public abstract async destroy(...params: any): Promise<any>;
-    public abstract async resolver(request: any, response: any): Promise<object>;
 }
 
 export default Route;
