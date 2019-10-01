@@ -12,6 +12,19 @@ export class Post extends DataObject {
     private $type: string;
 
     /**
+     * Returns the resolved data of the post.
+     */
+    public async resolvedData() {
+        await this.loadDataIfNotExists();
+        return {
+            authorId: this.$author,
+            content: this.$content,
+            createdAt: this.$createdAt,
+            id: this.id,
+            type: this.$type,
+        };
+    }
+    /**
      * Returns the upvotes of a post.
      */
     public async upvotes(): Promise<number> {

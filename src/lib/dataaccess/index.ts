@@ -2,6 +2,7 @@ import {Pool} from "pg";
 import {ChatNotFoundError} from "../errors/ChatNotFoundError";
 import {UserNotFoundError} from "../errors/UserNotFoundError";
 import globals from "../globals";
+import {InternalEvents} from "../InternalEvents";
 import {QueryHelper} from "../QueryHelper";
 import {ChatMessage} from "./ChatMessage";
 import {Chatroom} from "./Chatroom";
@@ -125,7 +126,9 @@ namespace dataaccess {
             text: "INSERT INTO posts (content, author, type) VALUES ($1, $2, $3) RETURNING *",
             values: [content, authorId, type],
         });
-        return new Post(result.id, result);
+        const post = new Post(result.id, result);
+        globals.internalEmitter.emit(InternalEvents.POSTCREATE, post);
+        return post;
     }
 
     /**
@@ -167,7 +170,9 @@ namespace dataaccess {
         } finally {
             transaction.release();
         }
-        return new Chatroom(id);
+        const chat = new Chatroom(id);
+        globals.internalEmitter.emit(InternalEvents.CHATCREATE, chat);
+        return chat;
     }
 
     /**
@@ -183,10 +188,26 @@ namespace dataaccess {
                 text: "INSERT INTO chat_messages (chat, author, content) values ($1, $2, $3) RETURNING *",
                 values: [chatId, authorId, content],
             });
-            return new ChatMessage(new User(result.author), chat, result.created_at, result.content);
+            const message = new ChatMessage(new User(result.author), chat, result.created_at, result.content);
+            globals.internalEmitter.emit(InternalEvents.CHATMESSAGE, message);
+            return message;
         } else {
             throw new ChatNotFoundError(chatId);
         }
+    }
+
+    /**
+     * Returns all chats.
+     */
+    export async function getAllChats(): Promise<Chatroom[]> {
+        const result = await queryHelper.all({
+            text: "SELECT id FROM chats;",
+        });
+        const chats = [];
+        for (const row of result) {
+            chats.push(new Chatroom(row.id));
+        }
+        return chats;
     }
 
     /**
@@ -202,7 +223,9 @@ namespace dataaccess {
             text: "INSERT INTO requests (sender, receiver, type) VALUES ($1, $2, $3) RETURNING *",
             values: [sender, receiver, type],
         });
-        return new Request(new User(result.sender), new User(result.receiver), result.type);
+        const request = new Request(new User(result.sender), new User(result.receiver), result.type);
+        globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, Request);
+        return request;
     }
 
     /**

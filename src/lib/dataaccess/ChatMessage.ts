@@ -15,4 +15,17 @@ export class ChatMessage {
     public htmlContent(): string {
         return markdown.renderInline(this.content);
     }
+
+    /**
+     * Returns resolved and rendered content of the chat message.
+     */
+    public resolvedContent() {
+        return {
+            author: this.author.id,
+            chat: this.chat.id,
+            content: this.content,
+            createdAt: this.createdAt,
+            htmlContent: this.htmlContent(),
+        };
+    }
 }

@@ -1,16 +1,21 @@
 import {Router} from "express";
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
-import {Server} from "socket.io";
+import {Namespace, Server} from "socket.io";
 import dataaccess from "../lib/dataaccess";
+import {ChatMessage} from "../lib/dataaccess/ChatMessage";
 import {Chatroom} from "../lib/dataaccess/Chatroom";
 import {Post} from "../lib/dataaccess/Post";
 import {Profile} from "../lib/dataaccess/Profile";
+import {Request} from "../lib/dataaccess/Request";
 import {User} from "../lib/dataaccess/User";
 import {NotLoggedInGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
+import {InternalEvents} from "../lib/InternalEvents";
 import {is} from "../lib/regex";
 import Route from "../lib/Route";
+
+const chatRooms: Namespace[] = [];
 
 /**
  * Class for the home route.
@@ -30,6 +35,33 @@ class HomeRoute extends Route {
      */
     public async init(io: Server) {
         this.io = io;
+
+        io.on("connection", (socket) => {
+            socket.on("postCreate", async (content) => {
+                if (socket.handshake.session.userId) {
+                    const post = await dataaccess.createPost(content, socket.handshake.session.userId);
+                    io.emit("post", await post.resolvedData());
+                } else {
+                    socket.emit("error", "Not logged in!");
+                }
+            });
+            globals.internalEmitter.on(InternalEvents.REQUESTCREATE, (request: Request) => {
+                if (request.receiver.id === socket.handshake.session.userId) {
+                    socket.emit("request", request.resolvedData());
+                }
+            });
+            globals.internalEmitter.on(InternalEvents.GQLPOSTCREATE, async (post: Post) => {
+                socket.emit("post", await post.resolvedData());
+            });
+        });
+
+        const chats = await dataaccess.getAllChats();
+        for (const chat of chats) {
+            chatRooms[chat.id] = this.getChatSocketNamespace(chat.id);
+        }
+        globals.internalEmitter.on(InternalEvents.CHATCREATE, (chat: Chatroom) => {
+            chatRooms[chat.id] = this.getChatSocketNamespace(chat.id);
+        });
     }
 
     /**
@@ -55,7 +87,7 @@ class HomeRoute extends Route {
                     return new NotLoggedInGqlError();
                 }
             },
-            async getUser({userId, handle}: {userId: number, handle: string}) {
+            async getUser({userId, handle}: { userId: number, handle: string }) {
                 if (handle) {
                     return await dataaccess.getUserByHandle(handle);
                 } else if (userId) {
@@ -65,7 +97,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No userId or handle provided.");
                 }
             },
-            async getPost({postId}: {postId: number}) {
+            async getPost({postId}: { postId: number }) {
                 if (postId) {
                     return await dataaccess.getPost(postId);
                 } else {
@@ -73,7 +105,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No postId given.");
                 }
             },
-            async getChat({chatId}: {chatId: number}) {
+            async getChat({chatId}: { chatId: number }) {
                 if (chatId) {
                     return new Chatroom(chatId);
                 } else {
@@ -85,7 +117,7 @@ class HomeRoute extends Route {
                 req.session.cookiesAccepted = true;
                 return true;
             },
-            async login({email, passwordHash}: {email: string, passwordHash: string}) {
+            async login({email, passwordHash}: { email: string, passwordHash: string }) {
                 if (email && passwordHash) {
                     try {
                         const user = await dataaccess.getUserByLogin(email, passwordHash);
@@ -110,7 +142,7 @@ class HomeRoute extends Route {
                     return new NotLoggedInGqlError();
                 }
             },
-            async register({username, email, passwordHash}: {username: string, email: string, passwordHash: string}) {
+            async register({username, email, passwordHash}: { username: string, email: string, passwordHash: string }) {
                 if (username && email && passwordHash) {
                     if (!is.email(email)) {
                         res.status(status.BAD_REQUEST);
@@ -129,7 +161,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No username, email or password given.");
                 }
             },
-            async vote({postId, type}: {postId: number, type: dataaccess.VoteType}) {
+            async vote({postId, type}: { postId: number, type: dataaccess.VoteType }) {
                 if (postId && type) {
                     if (req.session.userId) {
                         return await (new Post(postId)).vote(req.session.userId, type);
@@ -142,10 +174,12 @@ class HomeRoute extends Route {
                     return new GraphQLError("No postId or type given.");
                 }
             },
-            async createPost({content}: {content: string}) {
+            async createPost({content}: { content: string }) {
                 if (content) {
                     if (req.session.userId) {
-                        return await dataaccess.createPost(content, req.session.userId);
+                        const post = await dataaccess.createPost(content, req.session.userId);
+                        globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
+                        return post;
                     } else {
                         res.status(status.UNAUTHORIZED);
                         return new NotLoggedInGqlError();
@@ -155,7 +189,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("Can't create empty post.");
                 }
             },
-            async deletePost({postId}: {postId: number}) {
+            async deletePost({postId}: { postId: number }) {
                 if (postId) {
                     const post = new Post(postId);
                     if ((await post.author()).id === req.session.userId) {
@@ -168,27 +202,28 @@ class HomeRoute extends Route {
                     return new GraphQLError("No postId given.");
                 }
             },
-            async createChat({members}: {members: number[]}) {
+            async createChat({members}: { members: number[] }) {
                 if (req.session.userId) {
                     const chatMembers = [req.session.userId];
                     if (members) {
                         chatMembers.push(...members);
                     }
                     return await dataaccess.createChat(...chatMembers);
-
                 } else {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
                 }
             },
-            async sendMessage({chatId, content}: {chatId: number, content: string}) {
+            async sendMessage({chatId, content}: { chatId: number, content: string }) {
                 if (!req.session.userId) {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
                 }
                 if (chatId && content) {
                     try {
-                        return await dataaccess.sendChatMessage(req.session.userId, chatId, content);
+                        const message = await dataaccess.sendChatMessage(req.session.userId, chatId, content);
+                        globals.internalEmitter.emit(InternalEvents.GQLCHATMESSAGE, message);
+                        return message;
                     } catch (err) {
                         res.status(status.BAD_REQUEST);
                         return err.graphqlError;
@@ -198,7 +233,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No chatId or content given.");
                 }
             },
-            async sendRequest({receiver, type}: {receiver: number, type: dataaccess.RequestType}) {
+            async sendRequest({receiver, type}: { receiver: number, type: dataaccess.RequestType }) {
                 if (!req.session.userId) {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
@@ -210,7 +245,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No receiver or type given.");
                 }
             },
-            async denyRequest({sender, type}: {sender: number, type: dataaccess.RequestType}) {
+            async denyRequest({sender, type}: { sender: number, type: dataaccess.RequestType }) {
                 if (!req.session.userId) {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
@@ -224,7 +259,7 @@ class HomeRoute extends Route {
                     return new GraphQLError("No sender or type given.");
                 }
             },
-            async acceptRequest({sender, type}: {sender: number, type: dataaccess.RequestType}) {
+            async acceptRequest({sender, type}: { sender: number, type: dataaccess.RequestType }) {
                 if (!req.session.userId) {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
@@ -244,6 +279,35 @@ class HomeRoute extends Route {
                 }
             },
         };
+    }
+
+    /**
+     * Returns the namespace socket for a chat socket.
+     * @param chatId
+     */
+    private getChatSocketNamespace(chatId: number) {
+        if (chatRooms[chatId]) {
+            return chatRooms[chatId];
+        }
+        const chatNs = this.io.of(`/chat/${chatId}`);
+        chatNs.on("connection", (socket) => {
+            socket.on("chatMessage", async (content) => {
+                if (socket.handshake.session.userId) {
+                    const userId = socket.handshake.session.userId;
+                    const message = await dataaccess.sendChatMessage(userId, chatId, content);
+                    socket.broadcast.emit("chatMessage", message.resolvedContent());
+                    socket.emit("chatMessageSent", message.resolvedContent());
+                } else {
+                    socket.emit("error", "Not logged in!");
+                }
+            });
+            globals.internalEmitter.on(InternalEvents.GQLCHATMESSAGE, (message: ChatMessage) => {
+                if (message.chat.id === chatId) {
+                    socket.emit("chatMessage", message.resolvedContent());
+                }
+            });
+        });
+        return chatNs;
     }
 }
 
