@@ -5,3 +5,4 @@ npm-debug.log
 test/*.log
 dist
 .idea
+config.yaml

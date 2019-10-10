@@ -1,0 +1,236 @@
+type Query {
+    "returns the user object for a given user id or a handle (only one required)"
+    getUser(userId: ID, handle: String): User
+
+    "returns the logged in user"
+    getSelf: Profile
+
+    "returns the post object for a post id"
+    getPost(postId: ID!): Post
+
+    "returns the chat object for a chat id"
+    getChat(chatId: ID!): ChatRoom
+
+    "find a post by the posted date or content"
+    findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
+
+    "find a user by user name or handle"
+    findUser(first: Int, offset: Int, name: String!, handle: String!): [User]
+}
+
+type Mutation {
+    "Accepts the usage of cookies."
+    acceptCookies: Boolean
+
+    "Login of the user. The passwordHash should be a sha512 hash of the password."
+    login(email: String, passwordHash: String): Profile
+
+    "Registers the user."
+    register(username: String, email: String, passwordHash: String): Profile
+
+    "Logout of the user."
+    logout: Boolean
+
+    "Upvote/downvote a Post"
+    vote(postId: ID!, type: VoteType!): VoteType
+
+    "Report the post"
+    report(postId: ID!): Boolean
+
+   "send a request"
+    sendRequest(receiver: ID!, type: RequestType): Request
+
+    "lets you accept a request for a given request id"
+    acceptRequest(sender: ID!, type: RequestType): Boolean
+
+    "lets you deny a request for a given request id"
+    denyRequest(requestId: ID!): Boolean
+
+    "send a message in a Chatroom"
+    sendMessage(chatId: ID!, content: String!): ChatMessage
+
+    "create the post"
+    createPost(content: String!): Post
+
+    "delete the post for a given post id"
+    deletePost(postId: ID!): Boolean
+
+    "Creates a chat between the user (and optional an other user)"
+    createChat(members: [ID!]): ChatRoom
+}
+
+interface UserData {
+    "url for the Profile picture of the User"
+    profilePicture: String
+
+    "name of the User"
+    name: String!
+
+    "unique identifier name from the User"
+    handle: String!
+
+    "Id of the User"
+    id: ID!
+
+    "the total number of posts the user posted"
+    numberOfPosts: Int
+
+    "returns a given number of posts of a user"
+    posts(first: Int=10, offset: Int): [Post]
+
+    "creation date of the user account"
+    joinedAt: String!
+
+    "all friends of the user"
+    friends: [User]
+}
+
+"represents a single user account"
+type User implements UserData{
+    "url for the Profile picture of the User"
+    profilePicture: String
+
+    "name of the User"
+    name: String!
+
+    "unique identifier name from the User"
+    handle: String!
+
+    "Id of the User"
+    id: ID!
+
+    "the total number of posts the user posted"
+    numberOfPosts: Int
+
+    "returns a given number of posts of a user"
+    posts(first: Int=10, offset: Int): [Post]
+
+    "creation date of the user account"
+    joinedAt: String!
+
+    "all friends of the user"
+    friends: [User]
+}
+
+type Profile implements UserData {
+    "url for the Profile picture of the User"
+    profilePicture: String
+
+    "name of the User"
+    name: String!
+
+    "returns the chatrooms the user joined."
+    chats(first: Int=10, offset: Int): [ChatRoom]
+
+    "unique identifier name from the User"
+    handle: String!
+
+    "Id of the User"
+    id: ID!
+
+    "the total number of posts the user posted"
+    numberOfPosts: Int
+
+    "returns a given number of posts of a user"
+    posts(first: Int=10, offset: Int): [Post]
+
+    "creation date of the user account"
+    joinedAt: String!
+
+    "all friends of the user"
+    friends: [User]
+
+    "all sent request for groupChats/friends/events"
+    sentRequests: [Request]
+
+    "all received request for groupChats/friends/events"
+    receivedRequests: [Request]
+}
+
+"represents a single user post"
+type Post {
+
+    "The id of the post."
+    id: ID!
+
+    "the text of the post"
+    content: String
+
+    "the content of the post rendered by markdown-it"
+    htmlContent: String
+
+    "upvotes of the Post"
+    upvotes: Int!
+
+    "downvotes of the Post"
+    downvotes: Int!
+
+    "the user that is the author of the Post"
+    author: User!
+
+    "date the post was created"
+    createdAt: String!
+
+    "the type of vote the user performed on the post"
+    userVote: VoteType
+}
+
+"represents a request of any type"
+type Request {
+    "Id of the user who sended the request"
+    sender: User!
+
+    "Id of the user who received the request"
+    receiver: User!
+
+    "type of the request"
+    type: RequestType!
+}
+
+"represents a chatroom"
+type ChatRoom {
+    "the socket.io namespace for the chatroom"
+    namespace: String
+
+    "the members of the chatroom"
+    members: [User!]
+
+    "return a specfic range of messages posted in the chat"
+    messages(first: Int = 10, offset: Int, containing: String): [ChatMessage]!
+
+    "id of the chat"
+    id: ID!
+}
+
+type ChatMessage {
+    "The author of the chat message."
+    author: User!
+
+    "The chatroom the message was posted in"
+    chat: ChatRoom!
+
+    "The timestamp when the message was posted (epoch)."
+    createdAt: String!
+
+    "The content of the message."
+    content: String!
+
+    "The content of the message rendered by markdown-it."
+    htmlContent: String
+}
+
+"represents the type of vote performed on a post"
+enum VoteType {
+    UPVOTE
+    DOWNVOTE
+}
+
+"""
+represents the type of request that the user has received
+Currently on Friend Requests are implemented.
+"""
+enum RequestType {
+    FRIENDREQUEST
+    GROUPINVITE
+    EVENTINVITE
+}
