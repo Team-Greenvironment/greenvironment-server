@@ -124,6 +124,44 @@ namespace dataaccess {
     }
 
     /**
+     * Returns all posts sorted by new or top with pagination.
+     * @param first
+     * @param offset
+     * @param sort
+     */
+    export async function getPosts(first: number, offset: number, sort: SortType) {
+        if (sort === SortType.NEW) {
+            const results = await queryHelper.all({
+                cache: true,
+                text: "SELECT * FROM posts ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+                values: [first, offset],
+            });
+            const posts = [];
+            for (const row of results) {
+                posts.push(new Post(row.id, row));
+            }
+            return posts;
+        } else {
+            const results = await queryHelper.all({
+                cache: true,
+                text: `
+                    SELECT * FROM (
+                    SELECT *,
+                    (SELECT count(*) FROM votes WHERE vote_type = 'UPVOTE' AND item_id = posts.id) AS upvotes ,
+                    (SELECT count(*) FROM votes WHERE vote_type = 'DOWNVOTE' AND item_id = posts.id) AS downvotes
+                    FROM posts) AS a ORDER BY (a.upvotes - a.downvotes) DESC LIMIT $1 OFFSET $2;
+                `,
+                values: [first, offset],
+            });
+            const posts = [];
+            for (const row of results) {
+                posts.push(new Post(row.id, row));
+            }
+            return posts;
+        }
+    }
+
+    /**
      * Creates a post
      * @param content
      * @param authorId
@@ -252,6 +290,14 @@ namespace dataaccess {
         FRIENDREQUEST = "FRIENDREQUEST",
         GROUPINVITE = "GROUPINVITE",
         EVENTINVITE = "EVENTINVITE",
+    }
+
+    /**
+     * Enum representing the types of sorting in the feed.
+     */
+    export enum SortType {
+        TOP = "TOP",
+        NEW = "NEW",
     }
 }
 
