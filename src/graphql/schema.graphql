@@ -16,6 +16,9 @@ type Query {
 
     "find a user by user name or handle"
     findUser(first: Int, offset: Int, name: String!, handle: String!): [User]
+
+    "returns the post filtered by the sort type with pagination."
+    getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
 }
 
 type Mutation {
@@ -233,4 +236,9 @@ enum RequestType {
     FRIENDREQUEST
     GROUPINVITE
     EVENTINVITE
+}
+
+enum SortType {
+    TOP
+    NEW
 }

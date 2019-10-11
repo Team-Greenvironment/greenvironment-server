@@ -223,5 +223,8 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No sender or type given.");
             }
         },
+        async getPosts({first, offset, sort}: {first: number, offset: number, sort: dataaccess.SortType}) {
+            return await dataaccess.getPosts(first, offset, sort);
+        },
     };
 }
