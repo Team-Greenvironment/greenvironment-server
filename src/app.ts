@@ -1,6 +1,7 @@
 import * as compression from "compression";
 import connectPgSimple = require("connect-pg-simple");
 import * as cookieParser from "cookie-parser";
+import * as cors from "cors";
 import * as express from "express";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
@@ -63,6 +64,9 @@ class App {
         this.app.use(express.static(path.join(__dirname, "public")));
         this.app.use(cookieParser());
         this.app.use(appSession);
+        if (globals.config.server.cors) {
+            this.app.use(cors());
+        }
         this.app.use((req, res, next) => {
             logger.verbose(`${req.method} ${req.url}`);
             next();

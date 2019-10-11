@@ -9,6 +9,7 @@ database:
 # http server configuration
 server:
   port: 8080
+  cors: false
 
 session:
   secret: REPLACE WITH SAFE RANDOM GENERATED SECRET
