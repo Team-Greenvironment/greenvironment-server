@@ -74,10 +74,22 @@ export class Post {
      * @param type
      */
     public async vote(userId: number, type: dataaccess.VoteType): Promise<dataaccess.VoteType> {
-        const [vote, _] = await SqPostVotes
-            .findOrCreate({where: {userId}, defaults: {voteType: type, postId: this.post.id}});
-        vote.voteType = type;
-        await vote.save();
+        type = type || dataaccess.VoteType.UPVOTE;
+        let vote = await SqPostVotes.findOne({where: {user_id: userId, post_id: this.id}});
+        if (!vote) {
+            await this.post.addVote(userId);
+            vote = await SqPostVotes.findOne({where: {user_id: userId, post_id: this.id}});
+        }
+        if (vote) {
+            if (vote.voteType === type) {
+                await vote.destroy();
+                return null;
+            } else {
+                vote.voteType = type;
+                await vote.save();
+            }
+        }
+
         return vote.voteType;
     }
 }

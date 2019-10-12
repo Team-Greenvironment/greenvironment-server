@@ -111,7 +111,7 @@ export function resolver(req: any, res: any): any {
             if (postId && type) {
                 if (req.session.userId) {
                     const post = await models.SqPost.findByPk(postId);
-                    return await (post.post).vote(req.session.userId, type);
+                    return await post.post.vote(req.session.userId, type);
                 } else {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
