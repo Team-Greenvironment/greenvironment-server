@@ -206,6 +206,9 @@ type ChatRoom {
 }
 
 type ChatMessage {
+    "Id of the chat message"
+    id: ID!
+
     "The author of the chat message."
     author: User!
 

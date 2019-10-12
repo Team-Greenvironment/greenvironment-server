@@ -21,7 +21,8 @@
     },
     "no-namespace": false,
     "no-internal-module": false,
-    "max-classes-per-file": false
+    "max-classes-per-file": false,
+    "no-var-requires": false
   },
   "jsRules": {
     "max-line-length": {

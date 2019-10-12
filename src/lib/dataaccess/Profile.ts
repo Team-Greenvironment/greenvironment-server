@@ -1,10 +1,61 @@
 import {RequestNotFoundError} from "../errors/RequestNotFoundError";
 import {Chatroom} from "./Chatroom";
-import dataaccess, {queryHelper} from "./index";
-import {User} from "./User";
-import {Request} from "./Request";
+import {SqUser} from "./datamodels";
+import dataaccess from "./index";
+import * as wrappers from "./wrappers";
 
-export class Profile extends User {
+export class Profile {
+
+    public id: number;
+    public name: string;
+    public handle: string;
+    public email: string;
+    public greenpoints: number;
+    public joinedAt: Date;
+
+    protected user: SqUser;
+
+    constructor(user: SqUser) {
+        this.name = user.username;
+        this.handle = user.handle;
+        this.email = user.email;
+        this.greenpoints = user.rankpoints;
+        this.joinedAt = user.joinedAt;
+        this.id = user.id;
+        this.user = user;
+    }
+
+    /**
+     * Returns the number of posts the user created
+     */
+    public async numberOfPosts(): Promise<number> {
+        return this.user.countPosts();
+    }
+
+    /**
+     * Returns all friends of the user.
+     */
+    public async friends(): Promise<wrappers.User[]> {
+        const result = await this.user.getFriends();
+        const userFriends = [];
+        for (const friend of result) {
+            userFriends.push(new wrappers.User(friend));
+        }
+        return userFriends;
+    }
+
+    /**
+     * Returns all posts for a user.
+     */
+    public async posts({first, offset}: { first: number, offset: number }): Promise<wrappers.Post[]> {
+        const postRes = await this.user.getPosts();
+        const posts = [];
+
+        for (const post of postRes) {
+            posts.push(new wrappers.Post(post));
+        }
+        return posts;
+    }
 
     /**
      * Returns all chatrooms (with pagination).
@@ -12,19 +63,14 @@ export class Profile extends User {
      * @param first
      * @param offset
      */
-    public async chats({first, offset}: {first: number, offset?: number}): Promise<Chatroom[]> {
-        if (!(await this.exists())) {
-            return [];
-        }
+    public async chats({first, offset}: { first: number, offset?: number }): Promise<Chatroom[]> {
         first = first || 10;
         offset = offset || 0;
 
-        const result = await queryHelper.all({
-            text: "SELECT chat FROM chat_members WHERE member = $1 LIMIT $2 OFFSET $3",
-            values: [this.id, first, offset],
-        });
+        const result = await this.user.getChats();
+
         if (result) {
-            return result.map((row) => new Chatroom(row.chat));
+            return result.map((chat) => new Chatroom(chat));
         } else {
             return [];
         }
@@ -34,24 +80,14 @@ export class Profile extends User {
      * Returns all open requests the user has send.
      */
     public async sentRequests() {
-        const result = await queryHelper.all({
-            cache: true,
-            text: "SELECT * FROM requests WHERE sender = $1",
-            values: [this.id],
-        });
-        return this.getRequests(result);
+        return this.user.getSentRequests();
     }
 
     /**
      * Returns all received requests of the user.
      */
     public async receivedRequests() {
-        const result = await queryHelper.all({
-            cache: true,
-            text: "SELECT * FROM requests WHERE receiver = $1",
-            values: [this.id],
-        });
-        return this.getRequests(result);
+        return this.user.getReceivedRequests();
     }
 
     /**
@@ -59,11 +95,9 @@ export class Profile extends User {
      * @param points
      */
     public async setGreenpoints(points: number): Promise<number> {
-        const result = await queryHelper.first({
-            text: "UPDATE users SET greenpoints = $1 WHERE id = $2 RETURNING greenpoints",
-            values: [points, this.id],
-        });
-        return result.greenpoints;
+        this.user.rankpoints = points;
+        await this.user.save();
+        return this.user.rankpoints;
     }
 
     /**
@@ -71,22 +105,18 @@ export class Profile extends User {
      * @param email
      */
     public async setEmail(email: string): Promise<string> {
-        const result = await queryHelper.first({
-            text: "UPDATE users SET email = $1 WHERE users.id = $2 RETURNING email",
-            values: [email, this.id],
-        });
-        return result.email;
+        this.user.email = email;
+        await this.user.save();
+        return this.user.email;
     }
 
     /**
      * Updates the handle of the user
      */
     public async setHandle(handle: string): Promise<string> {
-        const result = await queryHelper.first({
-            text: "UPDATE users SET handle = $1 WHERE id = $2",
-            values: [handle, this.id],
-        });
-        return result.handle;
+        this.user.handle = handle;
+        await this.user.save();
+        return this.user.handle;
     }
 
     /**
@@ -94,11 +124,9 @@ export class Profile extends User {
      * @param name
      */
     public async setName(name: string): Promise<string> {
-        const result = await queryHelper.first({
-            text: "UPDATE users SET name = $1 WHERE id = $2",
-            values: [name, this.id],
-        });
-        return result.name;
+        this.user.username = name;
+        await this.user.save();
+        return this.user.username;
     }
 
     /**
@@ -107,10 +135,10 @@ export class Profile extends User {
      * @param type
      */
     public async denyRequest(sender: number, type: dataaccess.RequestType) {
-        await queryHelper.first({
-            text: "DELETE FROM requests WHERE receiver = $1 AND sender = $2 AND type = $3",
-            values: [this.id, sender, type],
-        });
+        const request = await this.user.getReceivedRequests({where: {senderId: sender, requestType: type}});
+        if (request[0]) {
+            await request[0].destroy();
+        }
     }
 
     /**
@@ -119,45 +147,15 @@ export class Profile extends User {
      * @param type
      */
     public async acceptRequest(sender: number, type: dataaccess.RequestType) {
-        const exists = await queryHelper.first({
-            cache: true,
-            text: "SELECT 1 FROM requests WHERE receiver = $1 AND sender = $2 AND type = $3",
-            values: [this.id, sender, type],
-        });
-        if (exists) {
-            if (type === dataaccess.RequestType.FRIENDREQUEST) {
-                await queryHelper.first({
-                    text: "INSERT INTO user_friends (user_id, friend_id) VALUES ($1, $2)",
-                    values: [this.id, sender],
-                });
+        const requests = await this.user.getReceivedRequests({where: {senderId: sender, requestType: type}});
+        if (requests.length > 0) {
+            const request = requests[0];
+            if (request.requestType === dataaccess.RequestType.FRIENDREQUEST) {
+                await this.user.addFriend(sender);
+                await request.destroy();
             }
         } else {
             throw new RequestNotFoundError(sender, this.id, type);
         }
-    }
-
-    /**
-     * Returns request wrapper for a row database request result.
-     * @param rows
-     */
-    private getRequests(rows: any) {
-        const requests = [];
-        const requestUsers: any = {};
-
-        for (const row of rows) {
-            let sender = requestUsers[row.sender];
-
-            if (!sender) {
-                sender = new User(row.sender);
-                requestUsers[row.sender] = sender;
-            }
-            let receiver = requestUsers[row.receiver];
-            if (!receiver) {
-                receiver = new User(row.receiver);
-                requestUsers[row.receiver] = receiver;
-            }
-            requests.push(new Request(sender, receiver, row.type));
-        }
-        return requests;
     }
 }

@@ -1,84 +1,39 @@
-import globals from "../globals";
-import {DataObject} from "./DataObject";
-import {queryHelper} from "./index";
-import {Post} from "./Post";
+import {SqUser} from "./datamodels";
+import * as wrappers from "./wrappers";
 
-export class User extends DataObject {
-    private $name: string;
-    private $handle: string;
-    private $email: string;
-    private $greenpoints: number;
-    private $joinedAt: string;
-    private $exists: boolean;
+export class User {
+    public id: number;
+    public name: string;
+    public handle: string;
+    public greenpoints: number;
+    public joinedAt: Date;
 
-    /**
-     * The name of the user
-     */
-    public async name(): Promise<string> {
-        await this.loadDataIfNotExists();
-        return this.$name;
-    }
+    protected user: SqUser;
 
-    /**
-     * The unique handle of the user.
-     */
-    public async handle(): Promise<string> {
-        await this.loadDataIfNotExists();
-        return this.$handle;
-    }
-
-    /**
-     * The email of the user
-     */
-    public async email(): Promise<string> {
-        await this.loadDataIfNotExists();
-        return this.$email;
-    }
-
-    /**
-     * The number of greenpoints of the user
-     */
-    public async greenpoints(): Promise<number> {
-        await this.loadDataIfNotExists();
-        return this.$greenpoints;
+    constructor(user: SqUser) {
+        this.id = user.id;
+        this.name = user.username;
+        this.handle = user.handle;
+        this.greenpoints = user.rankpoints;
+        this.joinedAt = user.joinedAt;
+        this.user = user;
     }
 
     /**
      * Returns the number of posts the user created
      */
     public async numberOfPosts(): Promise<number> {
-        const result = await queryHelper.first({
-            cache: true,
-            text: "SELECT COUNT(*) count FROM posts WHERE author = $1",
-            values: [this.id],
-        });
-        return result.count;
-    }
-
-    /**
-     * The date the user joined the platform
-     */
-    public async joinedAt(): Promise<Date> {
-        await this.loadDataIfNotExists();
-        return new Date(this.$joinedAt);
+        return this.user.countPosts();
     }
 
     /**
      * Returns all friends of the user.
      */
     public async friends(): Promise<User[]> {
-        const result = await queryHelper.all({
-            cache: true,
-            text: "SELECT * FROM user_friends WHERE user_id = $1 OR friend_id = $1",
-            values: [this.id],
-        });
+        const result = await this.user.getFriends();
         const userFriends = [];
-        for (const row of result) {
-            if (row.user_id === this.id) {
-                userFriends.push(new User(row.friend_id));
-            } else {
-                userFriends.push(new User(row.user_id));
-            }
+        for (const friend of result) {
+            userFriends.push(new User(friend));
         }
         return userFriends;
     }
@@ -86,43 +41,13 @@ export class User extends DataObject {
     /**
      * Returns all posts for a user.
      */
-    public async posts({first, offset}: {first: number, offset: number}): Promise<Post[]> {
-        first = first || 10;
-        offset = offset || 0;
-        const result = await queryHelper.all({
-            cache: true,
-            text: "SELECT * FROM posts WHERE author = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-            values: [this.id, first, offset],
-        });
+    public async posts({first, offset}: { first: number, offset: number }): Promise<wrappers.Post[]> {
+        const postRes = await this.user.getPosts();
         const posts = [];
 
-        for (const row of result) {
-            posts.push(new Post(row.id, row));
+        for (const post of postRes) {
+            posts.push(new wrappers.Post(post));
         }
         return posts;
-    }
-
-    /**
-     * Fetches the data for the user.
-     */
-    protected async loadData(): Promise<void> {
-        let result: any;
-        if (this.row) {
-            result = this.row;
-        } else {
-            result = await queryHelper.first({
-                cache: true,
-                text: "SELECT * FROM users WHERE users.id = $1",
-                values: [this.id],
-            });
-        }
-        if (result) {
-            this.$name = result.name;
-            this.$handle = result.handle;
-            this.$email = result.email;
-            this.$greenpoints = result.greenpoints;
-            this.$joinedAt = result.joined_at;
-            this.dataLoaded = true;
-        }
     }
 }

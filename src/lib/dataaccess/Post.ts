@@ -1,106 +1,68 @@
 import markdown from "../markdown";
-import {DataObject} from "./DataObject";
-import {queryHelper} from "./index";
+import {SqPost, SqPostVotes} from "./datamodels";
+import {PostVotes} from "./datamodels/models";
 import dataaccess from "./index";
 import {User} from "./User";
 
-export class Post extends DataObject {
+export class Post {
     public readonly id: number;
-    private $createdAt: string;
-    private $content: string;
-    private $author: number;
-    private $type: string;
+    public createdAt: Date;
+    public content: string;
+    public type: string;
 
-    /**
-     * Returns the resolved data of the post.
-     */
-    public async resolvedData() {
-        await this.loadDataIfNotExists();
-        return {
-            authorId: this.$author,
-            content: this.$content,
-            createdAt: this.$createdAt,
-            id: this.id,
-            type: this.$type,
-        };
+    private post: SqPost;
+
+    constructor(post: SqPost) {
+        this.id = post.id;
+        this.createdAt = post.createdAt;
+        this.post = post;
+        this.type = "";
+        this.content = post.content;
     }
+
     /**
      * Returns the upvotes of a post.
      */
     public async upvotes(): Promise<number> {
-        const result = await queryHelper.first({
-            cache: true,
-            text: "SELECT COUNT(*) count FROM votes WHERE item_id = $1 AND vote_type = 'UPVOTE'",
-            values: [this.id],
-        });
-        return result.count;
+        return PostVotes.count({where: {voteType: dataaccess.VoteType.UPVOTE, post_id: this.id}});
     }
 
     /**
      * Returns the downvotes of the post
      */
     public async downvotes(): Promise<number> {
-        const result = await queryHelper.first({
-            cache: true,
-            text: "SELECT COUNT(*) count FROM votes WHERE item_id = $1 AND vote_type = 'DOWNVOTE'",
-            values: [this.id],
-        });
-        return result.count;
-    }
-
-    /**
-     * The content of the post (markdown)
-     */
-    public async content(): Promise<string> {
-        await this.loadDataIfNotExists();
-        return this.$content;
+        return PostVotes.count({where: {voteType: dataaccess.VoteType.DOWNVOTE, post_id: this.id}});
     }
 
     /**
      * the content rendered by markdown-it.
      */
     public async htmlContent(): Promise<string> {
-        await this.loadDataIfNotExists();
-        return markdown.render(this.$content);
-    }
-
-    /**
-     * The date the post was created at.
-     */
-    public async createdAt(): Promise<string> {
-        await this.loadDataIfNotExists();
-        return this.$createdAt;
+        return markdown.render(this.content);
     }
 
     /**
      * The autor of the post.
      */
     public async author(): Promise<User> {
-        await this.loadDataIfNotExists();
-        return new User(this.$author);
+        return new User(await this.post.getUser());
     }
 
     /**
      * Deletes the post.
      */
     public async delete(): Promise<void> {
-        const query = await queryHelper.first({
-            text: "DELETE FROM posts WHERE id = $1",
-            values: [this.id],
-        });
+        await this.post.destroy();
     }
 
     /**
      * The type of vote the user performed on the post.
      */
     public async userVote(userId: number): Promise<dataaccess.VoteType> {
-        const result = await queryHelper.first({
-            cache: true,
-            text: "SELECT vote_type FROM votes WHERE user_id = $1 AND item_id = $2",
-            values: [userId, this.id],
-        });
-        if (result) {
-            return result.vote_type;
+        const votes = await this.post.getVotes({where: {userId}});
+
+        if (votes.length >= 1) {
+            return votes[0].voteType;
         } else {
             return null;
         }
@@ -112,48 +74,10 @@ export class Post extends DataObject {
      * @param type
      */
     public async vote(userId: number, type: dataaccess.VoteType): Promise<dataaccess.VoteType> {
-        const uVote = await this.userVote(userId);
-        if (uVote === type) {
-            await queryHelper.first({
-                text: "DELETE FROM votes WHERE item_id = $1 AND user_id = $2",
-                values: [this.id, userId],
-            });
-        } else {
-            if (uVote) {
-                await queryHelper.first({
-                    text: "UPDATE votes SET vote_type = $1 WHERE user_id = $2 AND item_id = $3",
-                    values: [type, userId, this.id],
-                });
-            } else {
-                await queryHelper.first({
-                    text: "INSERT INTO votes (user_id, item_id, vote_type) values ($1, $2, $3)",
-                    values: [userId, this.id, type],
-                });
-            }
-            return type;
-        }
-    }
-
-    /**
-     * Loads the data from the database if needed.
-     */
-    protected async loadData(): Promise<void> {
-        let result: any;
-        if (this.row) {
-            result = this.row;
-        } else {
-            result = await queryHelper.first({
-                cache: true,
-                text: "SELECT * FROM posts WHERE posts.id = $1",
-                values: [this.id],
-            });
-        }
-        if (result) {
-            this.$author = result.author;
-            this.$content = result.content;
-            this.$createdAt = result.created_at;
-            this.$type = result.type;
-            this.dataLoaded = true;
-        }
+        const [vote, _] = await SqPostVotes
+            .findOrCreate({where: {userId}, defaults: {voteType: type, postId: this.post.id}});
+        vote.voteType = type;
+        await vote.save();
+        return vote.voteType;
     }
 }
