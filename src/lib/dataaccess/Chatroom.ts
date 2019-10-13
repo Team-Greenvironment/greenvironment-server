@@ -1,44 +1,22 @@
-import globals from "../globals";
-import {ChatMessage} from "./ChatMessage";
-import {queryHelper} from "./index";
+import {SqChat} from "./datamodels";
 import {User} from "./User";
 
 export class Chatroom {
 
+    public readonly id: number;
     public namespace: string;
-    constructor(public readonly id: number) {
-        this.id = Number(id);
-        this.namespace = `/chat/${id}`;
-    }
 
-    /**
-     * Returns if the chat exists.
-     */
-    public async exists(): Promise<boolean> {
-        const result = await queryHelper.first({
-            text: "SELECT id FROM chats WHERE id = $1",
-            values: [this.id],
-        });
-        return !!result.id;
+    constructor(private chat: SqChat) {
+        this.id = chat.id;
+        this.namespace = `/chat/${chat.id}`;
     }
 
     /**
      * Returns all members of a chatroom.
      */
     public async members(): Promise<User[]> {
-        const result = await queryHelper.all({
-            cache: true,
-            text:  `SELECT * FROM chat_members
-                    JOIN users ON (chat_members.member = users.id)
-                    WHERE chat_members.chat = $1;`,
-            values: [this.id],
-        });
-        const chatMembers = [];
-        for (const row of result) {
-            const user = new User(row.id, row);
-            chatMembers.push(user);
-        }
-        return chatMembers;
+        const members = await this.chat.getMembers();
+        return members.map((m) => new User(m));
     }
 
     /**
@@ -47,30 +25,14 @@ export class Chatroom {
      * @param offset - the offset of messages to return
      * @param containing - filter by containing
      */
-    public async messages({first, offset, containing}: {first?: number, offset?: number, containing?: string}) {
+    public async messages({first, offset, containing}: { first?: number, offset?: number, containing?: string }) {
         const lim = first || 16;
         const offs = offset || 0;
-
-        const result = await queryHelper.all({
-            cache: true,
-            text: "SELECT * FROM chat_messages WHERE chat = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-            values: [this.id, lim, offs],
-        });
-
-        const messages = [];
-        const users: any = {};
-        for (const row of result) {
-            if (!users[row.author]) {
-                const user = new User(row.author);
-                await user.exists();
-                users[row.author] = user;
-            }
-            messages.push(new ChatMessage(users[row.author], this, row.created_at, row.content));
-        }
+        const messages = await this.chat.getMessages({limit: lim, offset: offs});
         if (containing) {
-            return messages.filter((x) => x.content.includes(containing));
+            return messages.filter((x) => x.content.includes(containing)).map((m) => m.message);
         } else {
-            return messages;
+            return messages.map((m) => m.message);
         }
     }
 }

@@ -1,31 +1,38 @@
 import markdown from "../markdown";
 import {Chatroom} from "./Chatroom";
+import * as models from "./datamodels/models";
 import {User} from "./User";
 
 export class ChatMessage {
-    constructor(
-        public readonly author: User,
-        public readonly chat: Chatroom,
-        public readonly createdAt: number,
-        public readonly content: string) {}
+
+    public id: number;
+    public content: string;
+    public createdAt: Date;
+
+    constructor(private message: models.ChatMessage) {
+        this.id = message.id;
+        this.content = message.content;
+        this.createdAt = message.createdAt;
+    }
 
     /**
-     * The content rendered by markdown-it.
+     * returns the author of the chat message.
+     */
+    public async author(): Promise<User> {
+        return new User(await this.message.getAuthor());
+    }
+
+    /**
+     * Returns the rendered html content of the chat message.
      */
     public htmlContent(): string {
         return markdown.renderInline(this.content);
     }
 
     /**
-     * Returns resolved and rendered content of the chat message.
+     * returns the chatroom for the chatmessage.
      */
-    public resolvedContent() {
-        return {
-            author: this.author.id,
-            chat: this.chat.id,
-            content: this.content,
-            createdAt: this.createdAt,
-            htmlContent: this.htmlContent(),
-        };
+    public async chat(): Promise<Chatroom> {
+        return (await this.message.getChat()).chatroom;
     }
 }
