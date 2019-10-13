@@ -13,4 +13,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DTOs
 - Home Route
 - session management
-- Sequelize modules and integration
+- Sequelize models and integration
+- Sequelize-typescript integration

@@ -1,18 +1,10 @@
-import {Sequelize} from "sequelize";
+import {Sequelize} from "sequelize-typescript";
 import {ChatNotFoundError} from "../errors/ChatNotFoundError";
 import {EmailAlreadyRegisteredError} from "../errors/EmailAlreadyRegisteredError";
 import {UserNotFoundError} from "../errors/UserNotFoundError";
 import globals from "../globals";
 import {InternalEvents} from "../InternalEvents";
-import {Chatroom} from "./Chatroom";
-import * as models from "./datamodels";
-import {Post} from "./Post";
-import {Profile} from "./Profile";
-import {User} from "./User";
-
-const config = globals.config;
-const tableCreationFile = __dirname + "/../../sql/create-tables.sql";
-const tableUpdateFile = __dirname + "/../../sql/update-tables.sql";
+import * as models from "./models";
 
 /**
  * Generates a new handle from the username and a base64 string of the current time.
@@ -35,7 +27,16 @@ namespace dataaccess {
     export async function init(seq: Sequelize) {
         sequelize = seq;
         try {
-            await models.datainit(sequelize);
+            await sequelize.addModels([
+                models.ChatMember,
+                models.ChatMessage,
+                models.ChatRoom,
+                models.Friendship,
+                models.Post,
+                models.PostVote,
+                models.Request,
+                models.User,
+            ]);
         } catch (err) {
             globals.logger.error(err.message);
             globals.logger.debug(err.stack);
@@ -46,10 +47,10 @@ namespace dataaccess {
      * Returns the user by handle.
      * @param userHandle
      */
-    export async function getUserByHandle(userHandle: string): Promise<User> {
-        const user = await models.SqUser.findOne({where: {handle: userHandle}});
+    export async function getUserByHandle(userHandle: string): Promise<models.User> {
+        const user = await models.User.findOne({where: {handle: userHandle}});
         if (user) {
-            return new User(user);
+            return user;
         } else {
             throw new UserNotFoundError(userHandle);
         }
@@ -60,10 +61,10 @@ namespace dataaccess {
      * @param email
      * @param password
      */
-    export async function getUserByLogin(email: string, password: string): Promise<Profile> {
-        const user = await models.SqUser.findOne({where: {email, password}});
+    export async function getUserByLogin(email: string, password: string): Promise<models.User> {
+        const user = await models.User.findOne({where: {email, password}});
         if (user) {
-            return new Profile(user);
+            return user;
         } else {
             throw new UserNotFoundError(email);
         }
@@ -75,12 +76,11 @@ namespace dataaccess {
      * @param email
      * @param password
      */
-    export async function registerUser(username: string, email: string, password: string) {
-        const existResult = !!(await models.SqUser.findOne({where: {username, email, password}}));
+    export async function registerUser(username: string, email: string, password: string): Promise<models.User> {
+        const existResult = !!(await models.User.findOne({where: {username, email, password}}));
         const handle = generateHandle(username);
         if (!existResult) {
-            const user = await models.SqUser.create({username, email, password, handle});
-            return new Profile(user);
+            return models.User.create({username, email, password, handle});
         } else {
             throw new EmailAlreadyRegisteredError(email);
         }
@@ -90,10 +90,10 @@ namespace dataaccess {
      * Returns a post for a given postId.s
      * @param postId
      */
-    export async function getPost(postId: number): Promise<Post> {
-        const post = await models.SqPost.findByPk(postId);
+    export async function getPost(postId: number): Promise<models.Post> {
+        const post = await models.Post.findByPk(postId);
         if (post) {
-            return new Post(post);
+            return post;
         } else {
             return null;
         }
@@ -107,18 +107,20 @@ namespace dataaccess {
      */
     export async function getPosts(first: number, offset: number, sort: SortType) {
         if (sort === SortType.NEW) {
-            const posts = await models.SqPost.findAll({order: [["createdAt", "DESC"]], limit: first, offset});
-            return posts.map((p) => new Post(p));
+            return models.Post.findAll({
+                include: [{association: "rVotes"}],
+                limit: first,
+                offset,
+                order: [["createdAt", "DESC"]],
+            });
         } else {
-            const results: models.SqPost[] = await sequelize.query(
-                    `SELECT id FROM (
+            return await sequelize.query(
+                    `SELECT * FROM (
                  SELECT *,
-                 (SELECT count(*) FROM votes WHERE vote_type = 'UPVOTE' AND item_id = posts.id) AS upvotes ,
-                 (SELECT count(*) FROM votes WHERE vote_type = 'DOWNVOTE' AND item_id = posts.id) AS downvotes
+                 (SELECT count(*) FROM post_votes WHERE vote_type = 'UPVOTE' AND post_id = posts.id) AS upvotes ,
+                 (SELECT count(*) FROM post_votes WHERE vote_type = 'DOWNVOTE' AND post_id = posts.id) AS downvotes
                  FROM posts) AS a ORDER BY (a.upvotes - a.downvotes) DESC LIMIT ? OFFSET ?`,
-                {replacements: [first, offset], mapToModel: true, model: models.SqPost});
-
-            return results.map((p) => new Post(p));
+                {replacements: [first, offset], mapToModel: true, model: models.Post}) as models.Post[];
         }
     }
 
@@ -128,10 +130,9 @@ namespace dataaccess {
      * @param authorId
      * @param type
      */
-    export async function createPost(content: string, authorId: number, type?: string): Promise<Post> {
+    export async function createPost(content: string, authorId: number, type?: string): Promise<models.Post> {
         type = type || "MISC";
-        const sqPost = await models.SqPost.create({content, userId: authorId});
-        const post = new Post(sqPost);
+        const post = await models.Post.create({content, authorId});
         globals.internalEmitter.emit(InternalEvents.POSTCREATE, post);
         return post;
     }
@@ -141,7 +142,7 @@ namespace dataaccess {
      * @param postId
      */
     export async function deletePost(postId: number): Promise<boolean> {
-        await (await models.SqPost.findByPk(postId)).destroy();
+        await (await models.Post.findByPk(postId)).destroy();
         return true;
     }
 
@@ -149,15 +150,16 @@ namespace dataaccess {
      * Creates a chatroom containing two users
      * @param members
      */
-    export async function createChat(...members: number[]): Promise<Chatroom> {
+    export async function createChat(...members: number[]): Promise<models.ChatRoom> {
         return sequelize.transaction(async (t) => {
-            const chat = await models.SqChat.create({}, {transaction: t});
+            const chat = await models.ChatRoom.create({}, {transaction: t, include: [models.User]});
             for (const member of members) {
-                await chat.addMember(Number(member), {transaction: t});
+                const user = await models.User.findByPk(member);
+                await chat.$add("rMember", user, {transaction: t});
             }
-            const chatroom = new Chatroom(chat);
-            globals.internalEmitter.emit(InternalEvents.CHATCREATE, chatroom);
-            return chatroom;
+            await chat.save({transaction: t});
+            globals.internalEmitter.emit(InternalEvents.CHATCREATE, chat);
+            return chat;
         });
     }
 
@@ -168,22 +170,21 @@ namespace dataaccess {
      * @param content
      */
     export async function sendChatMessage(authorId: number, chatId: number, content: string) {
-        const chat = await models.SqChat.findByPk(chatId);
+        const chat = await models.ChatRoom.findByPk(chatId);
         if (chat) {
-            const message = await chat.createMessage({content, userId: authorId});
-            globals.internalEmitter.emit(InternalEvents.CHATMESSAGE, message.message);
-            return message.message;
+            const message = await chat.$create("rMessage", {content, authorId}) as models.ChatMessage;
+            globals.internalEmitter.emit(InternalEvents.CHATMESSAGE, message);
+            return message;
         } else {
             throw new ChatNotFoundError(chatId);
         }
     }
 
     /**
-     * Returns all chats.
+     * Returns all rChats.
      */
-    export async function getAllChats(): Promise<Chatroom[]> {
-        const chats = await models.SqChat.findAll();
-        return chats.map((c) => new Chatroom(c));
+    export async function getAllChats(): Promise<models.ChatRoom[]> {
+        return models.ChatRoom.findAll();
     }
 
     /**
@@ -195,7 +196,7 @@ namespace dataaccess {
     export async function createRequest(sender: number, receiver: number, requestType?: RequestType) {
         requestType = requestType || RequestType.FRIENDREQUEST;
 
-        const request = await models.SqRequest.create({senderId: sender, receiverId: receiver, requestType});
+        const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
         globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, Request);
         return request;
     }
