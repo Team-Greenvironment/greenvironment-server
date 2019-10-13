@@ -1,11 +1,8 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import dataaccess from "../lib/dataaccess";
-import {Chatroom} from "../lib/dataaccess/Chatroom";
-import {Post} from "../lib/dataaccess/Post";
-import {Profile} from "../lib/dataaccess/Profile";
-import {User} from "../lib/dataaccess/User";
-import {NotLoggedInGqlError} from "../lib/errors/graphqlErrors";
+import * as models from "../lib/models";
+import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import {is} from "../lib/regex";
@@ -17,9 +14,9 @@ import {is} from "../lib/regex";
  */
 export function resolver(req: any, res: any): any {
     return {
-        getSelf() {
+        async getSelf() {
             if (req.session.userId) {
-                return new Profile(req.session.userId);
+                return models.User.findByPk(req.session.userId);
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
@@ -29,7 +26,7 @@ export function resolver(req: any, res: any): any {
             if (handle) {
                 return await dataaccess.getUserByHandle(handle);
             } else if (userId) {
-                return new User(userId);
+                return models.User.findByPk(userId);
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No userId or handle provided.");
@@ -45,7 +42,7 @@ export function resolver(req: any, res: any): any {
         },
         async getChat({chatId}: { chatId: number }) {
             if (chatId) {
-                return new Chatroom(chatId);
+                return models.ChatRoom.findByPk(chatId);
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No chatId given.");
@@ -105,7 +102,13 @@ export function resolver(req: any, res: any): any {
         async vote({postId, type}: { postId: number, type: dataaccess.VoteType }) {
             if (postId && type) {
                 if (req.session.userId) {
-                    return await (new Post(postId)).vote(req.session.userId, type);
+                    const post = await models.Post.findByPk(postId);
+                    if (post) {
+                        return await post.vote(req.session.userId, type);
+                    } else {
+                        res.status(400);
+                        return new PostNotFoundGqlError(postId);
+                    }
                 } else {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
@@ -132,8 +135,8 @@ export function resolver(req: any, res: any): any {
         },
         async deletePost({postId}: { postId: number }) {
             if (postId) {
-                const post = new Post(postId);
-                if ((await post.author()).id === req.session.userId) {
+                const post = await models.Post.findByPk(postId, {include: [models.User]});
+                if (post.rAuthor.id === req.session.userId) {
                     return await dataaccess.deletePost(post.id);
                 } else {
                     res.status(status.FORBIDDEN);
@@ -194,8 +197,8 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
             if (sender && type) {
-                const profile = new Profile(req.session.userId);
-                await profile.denyRequest(sender, type);
+                const user = await models.User.findByPk(req.session.userId);
+                await user.denyRequest(sender, type);
                 return true;
             } else {
                 res.status(status.BAD_REQUEST);
@@ -209,8 +212,8 @@ export function resolver(req: any, res: any): any {
             }
             if (sender && type) {
                 try {
-                    const profile = new Profile(req.session.userId);
-                    await profile.acceptRequest(sender, type);
+                    const user = await models.User.findByPk(req.session.userId);
+                    await user.acceptRequest(sender, type);
                     return true;
                 } catch (err) {
                     globals.logger.warn(err.message);

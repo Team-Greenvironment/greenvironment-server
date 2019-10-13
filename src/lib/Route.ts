@@ -20,6 +20,7 @@ abstract class Route {
     protected ions?: Namespace;
 
     public abstract async init(...params: any): Promise<any>;
+
     public abstract async destroy(...params: any): Promise<any>;
 }
 
