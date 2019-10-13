@@ -1,6 +1,6 @@
 # database connection info
 database:
-  connectionUri: "sqlite://:memory:"
+  connectionUri: "sqlite://greenvironment.db"
 
 # http server configuration
 server:

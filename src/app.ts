@@ -5,17 +5,17 @@ import * as express from "express";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
 import sharedsession = require("express-socket.io-session");
+import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
 import * as http from "http";
 import * as path from "path";
-import {Sequelize} from "sequelize";
+import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataaccess";
 import globals from "./lib/globals";
 import routes from "./routes";
-import * as fsx from "fs-extra";
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
@@ -30,7 +30,7 @@ class App {
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
-        this.sequelize = new Sequelize(globals.config.database.connectionUri);
+        this.sequelize = new Sequelize(globals.config.database.connectionUri );
     }
 
     /**

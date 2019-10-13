@@ -1,10 +1,7 @@
 import {Router} from "express";
 import {Namespace, Server} from "socket.io";
 import dataaccess from "../lib/dataaccess";
-import {ChatMessage} from "../lib/dataaccess/ChatMessage";
-import {Chatroom} from "../lib/dataaccess/Chatroom";
-import {Request} from "../lib/dataaccess/datamodels/models";
-import {Post} from "../lib/dataaccess/Post";
+import {ChatMessage, ChatRoom, Post, Request, User} from "../lib/models";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import Route from "../lib/Route";
@@ -37,18 +34,18 @@ class HomeRoute extends Route {
             socket.on("postCreate", async (content) => {
                 if (socket.handshake.session.userId) {
                     const post = await dataaccess.createPost(content, socket.handshake.session.userId);
-                    io.emit("post", Object.assign(post, {htmlContent: post.htmlContent()}));
+                    io.emit("post", Object.assign(post, {htmlContent: post.htmlContent}));
                 } else {
                     socket.emit("error", "Not logged in!");
                 }
             });
             globals.internalEmitter.on(InternalEvents.REQUESTCREATE, async (request: Request) => {
-                if ((await request.getSender()).id === socket.handshake.session.userId) {
+                if ((await request.$get("sender") as User).id === socket.handshake.session.userId) {
                     socket.emit("request", request);
                 }
             });
             globals.internalEmitter.on(InternalEvents.GQLPOSTCREATE, async (post: Post) => {
-                socket.emit("post", Object.assign(post, {htmlContent: post.htmlContent()}));
+                socket.emit("post", Object.assign(post, {htmlContent: post.htmlContent}));
             });
         });
 
@@ -56,7 +53,7 @@ class HomeRoute extends Route {
         for (const chat of chats) {
             chatRooms[chat.id] = this.getChatSocketNamespace(chat.id);
         }
-        globals.internalEmitter.on(InternalEvents.CHATCREATE, (chat: Chatroom) => {
+        globals.internalEmitter.on(InternalEvents.CHATCREATE, (chat: ChatRoom) => {
             chatRooms[chat.id] = this.getChatSocketNamespace(chat.id);
         });
     }
@@ -82,15 +79,15 @@ class HomeRoute extends Route {
                 if (socket.handshake.session.userId) {
                     const userId = socket.handshake.session.userId;
                     const message = await dataaccess.sendChatMessage(userId, chatId, content);
-                    socket.broadcast.emit("chatMessage", Object.assign(message, {htmlContent: message.htmlContent()}));
-                    socket.emit("chatMessageSent", Object.assign(message, {htmlContent: message.htmlContent()}));
+                    socket.broadcast.emit("chatMessage", Object.assign(message, {htmlContent: message.htmlContent}));
+                    socket.emit("chatMessageSent", Object.assign(message, {htmlContent: message.htmlContent}));
                 } else {
                     socket.emit("error", "Not logged in!");
                 }
             });
             globals.internalEmitter.on(InternalEvents.GQLCHATMESSAGE, async (message: ChatMessage) => {
-                if ((await message.chat()).id === chatId) {
-                    socket.emit("chatMessage", Object.assign(message, {htmlContent: message.htmlContent()}));
+                if ((await message.$get("chat") as ChatRoom).id === chatId) {
+                    socket.emit("chatMessage", Object.assign(message, {htmlContent: message.htmlContent}));
                 }
             });
         });
