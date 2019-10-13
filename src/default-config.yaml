@@ -1,10 +1,6 @@
 # database connection info
 database:
-  host:
-  port:
-  user:
-  password:
-  database:
+  connectionUri: "sqlite://:memory:"
 
 # http server configuration
 server:

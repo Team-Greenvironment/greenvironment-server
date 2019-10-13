@@ -1,7 +1,9 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
+import {Sequelize} from "sequelize";
 import dataaccess from "../lib/dataaccess";
 import {Chatroom} from "../lib/dataaccess/Chatroom";
+import * as models from "../lib/dataaccess/datamodels";
 import {Post} from "../lib/dataaccess/Post";
 import {Profile} from "../lib/dataaccess/Profile";
 import {User} from "../lib/dataaccess/User";
@@ -17,9 +19,10 @@ import {is} from "../lib/regex";
  */
 export function resolver(req: any, res: any): any {
     return {
-        getSelf() {
+        async getSelf() {
             if (req.session.userId) {
-                return new Profile(req.session.userId);
+                const user = await models.SqUser.findByPk(req.session.userId);
+                return user.profile;
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
@@ -29,7 +32,8 @@ export function resolver(req: any, res: any): any {
             if (handle) {
                 return await dataaccess.getUserByHandle(handle);
             } else if (userId) {
-                return new User(userId);
+                const user = await models.SqUser.findByPk(userId);
+                return user.user;
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No userId or handle provided.");
@@ -45,7 +49,8 @@ export function resolver(req: any, res: any): any {
         },
         async getChat({chatId}: { chatId: number }) {
             if (chatId) {
-                return new Chatroom(chatId);
+                const chat = await models.SqChat.findByPk(chatId);
+                return new Chatroom(chat);
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No chatId given.");
@@ -105,7 +110,8 @@ export function resolver(req: any, res: any): any {
         async vote({postId, type}: { postId: number, type: dataaccess.VoteType }) {
             if (postId && type) {
                 if (req.session.userId) {
-                    return await (new Post(postId)).vote(req.session.userId, type);
+                    const post = await models.SqPost.findByPk(postId);
+                    return await post.post.vote(req.session.userId, type);
                 } else {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
@@ -132,7 +138,7 @@ export function resolver(req: any, res: any): any {
         },
         async deletePost({postId}: { postId: number }) {
             if (postId) {
-                const post = new Post(postId);
+                const post = (await models.SqPost.findByPk(postId)).post;
                 if ((await post.author()).id === req.session.userId) {
                     return await dataaccess.deletePost(post.id);
                 } else {
