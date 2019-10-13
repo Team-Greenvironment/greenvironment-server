@@ -1,14 +1,16 @@
-import {Column, ForeignKey, Model, Table,} from "sequelize-typescript";
+import {Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
 import {ChatRoom} from "./ChatRoom";
 import {User} from "./User";
 
 @Table({underscored: true})
 export class ChatMember extends Model<ChatMember> {
     @ForeignKey(() => User)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public userId: number;
 
     @ForeignKey(() => ChatRoom)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public chatId: number;
 }

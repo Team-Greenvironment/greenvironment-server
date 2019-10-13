@@ -1,21 +1,24 @@
 import * as sqz from "sequelize";
-import {BelongsTo, Column, CreatedAt, ForeignKey, Model, Table,} from "sequelize-typescript";
-import markdown from "../../markdown";
+import {BelongsTo, Column, CreatedAt, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import markdown from "../markdown";
 import {ChatRoom} from "./ChatRoom";
 import {User} from "./User";
 
 @Table({underscored: true})
 export class ChatMessage extends Model<ChatMessage> {
 
-    @Column(sqz.STRING(512))
+    @NotNull
+    @Column({type: sqz.STRING(512), allowNull: false})
     public content: string;
 
     @ForeignKey(() => ChatRoom)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public chatId: number;
 
     @ForeignKey(() => User)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public authorId: number;
 
     @BelongsTo(() => ChatRoom, "chatId")

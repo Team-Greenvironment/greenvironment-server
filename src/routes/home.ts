@@ -1,7 +1,7 @@
 import {Router} from "express";
 import {Namespace, Server} from "socket.io";
 import dataaccess from "../lib/dataaccess";
-import {ChatMessage, ChatRoom, Post, Request, User} from "../lib/dataaccess/models";
+import {ChatMessage, ChatRoom, Post, Request, User} from "../lib/models";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import Route from "../lib/Route";

@@ -1,5 +1,5 @@
 import * as sqz from "sequelize";
-import {BelongsTo, Column, ForeignKey, Model, Table,} from "sequelize-typescript";
+import {BelongsTo, Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
 import {User} from "./User";
 
 export enum RequestType {
@@ -10,18 +10,22 @@ export enum RequestType {
 
 @Table({underscored: true})
 export class Request extends Model<Request> {
-    @Column({type: sqz.ENUM, values: ["FRIENDREQUEST", "GROUPINVITE", "EVENTINVITE"]})
+    @NotNull
+    @Column({type: sqz.ENUM, values: ["FRIENDREQUEST", "GROUPINVITE", "EVENTINVITE"],
+        defaultValue: "FRIENDREQUEST", allowNull: false})
     public requestType: RequestType;
 
     @ForeignKey(() => User)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public senderId: number;
 
     @BelongsTo(() => User, "senderId")
     public rSender: User;
 
     @ForeignKey(() => User)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public receiverId: number;
 
     @BelongsTo(() => User, "receiverId")

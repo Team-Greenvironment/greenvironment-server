@@ -1,5 +1,5 @@
 import * as sqz from "sequelize";
-import {Column, ForeignKey, Model, Table,} from "sequelize-typescript";
+import {Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
 import {Post} from "./Post";
 import {User} from "./User";
 
@@ -10,14 +10,17 @@ export enum VoteType {
 
 @Table({underscored: true})
 export class PostVote extends Model<PostVote> {
-    @Column({type: sqz.ENUM, values: ["UPVOTE", "DOWNVOTE"]})
+    @NotNull
+    @Column({type: sqz.ENUM, values: ["UPVOTE", "DOWNVOTE"], defaultValue: "UPVOTE", allowNull: false})
     public voteType: VoteType;
 
     @ForeignKey(() => User)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public userId: number;
 
     @ForeignKey(() => Post)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public postId: number;
 }

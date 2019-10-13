@@ -1,9 +1,9 @@
 import {Sequelize} from "sequelize-typescript";
-import {ChatNotFoundError} from "../errors/ChatNotFoundError";
-import {EmailAlreadyRegisteredError} from "../errors/EmailAlreadyRegisteredError";
-import {UserNotFoundError} from "../errors/UserNotFoundError";
-import globals from "../globals";
-import {InternalEvents} from "../InternalEvents";
+import {ChatNotFoundError} from "./errors/ChatNotFoundError";
+import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
+import {UserNotFoundError} from "./errors/UserNotFoundError";
+import globals from "./globals";
+import {InternalEvents} from "./InternalEvents";
 import * as models from "./models";
 
 /**

@@ -1,8 +1,8 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import dataaccess from "../lib/dataaccess";
-import * as models from "../lib/dataaccess/models";
-import {NotLoggedInGqlError} from "../lib/errors/graphqlErrors";
+import * as models from "../lib/models";
+import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import {is} from "../lib/regex";
@@ -103,7 +103,12 @@ export function resolver(req: any, res: any): any {
             if (postId && type) {
                 if (req.session.userId) {
                     const post = await models.Post.findByPk(postId);
-                    return await post.vote(req.session.userId, type);
+                    if (post) {
+                        return await post.vote(req.session.userId, type);
+                    } else {
+                        res.status(400);
+                        return new PostNotFoundGqlError(postId);
+                    }
                 } else {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();

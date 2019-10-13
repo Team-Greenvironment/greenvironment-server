@@ -1,6 +1,16 @@
 import * as sqz from "sequelize";
-import {BelongsToMany, Column, CreatedAt, HasMany, Model, Table, UpdatedAt,} from "sequelize-typescript";
-import {RequestNotFoundError} from "../../errors/RequestNotFoundError";
+import {
+    BelongsToMany,
+    Column,
+    CreatedAt,
+    HasMany,
+    Model,
+    NotNull,
+    Table,
+    Unique,
+    UpdatedAt,
+} from "sequelize-typescript";
+import {RequestNotFoundError} from "../errors/RequestNotFoundError";
 import {ChatMember} from "./ChatMember";
 import {ChatMessage} from "./ChatMessage";
 import {ChatRoom} from "./ChatRoom";
@@ -11,19 +21,26 @@ import {Request, RequestType} from "./Request";
 
 @Table({underscored: true})
 export class User extends Model<User> {
-    @Column(sqz.STRING(128))
+    @NotNull
+    @Column({type: sqz.STRING(128), allowNull: false})
     public username: string;
 
-    @Column(sqz.STRING(128))
+    @NotNull
+    @Unique
+    @Column({type: sqz.STRING(128), allowNull: false, unique: true})
     public handle: string;
 
-    @Column(sqz.STRING(128))
+    @Unique
+    @NotNull
+    @Column({type: sqz.STRING(128), allowNull: false, unique: true})
     public email: string;
 
-    @Column(sqz.STRING(128))
+    @NotNull
+    @Column({type: sqz.STRING(128), allowNull: false})
     public password: string;
 
-    @Column({defaultValue: 0})
+    @NotNull
+    @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
 
     @BelongsToMany(() => User, () => Friendship)

@@ -1,16 +1,18 @@
 import * as sqz from "sequelize";
-import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, Table,} from "sequelize-typescript";
-import markdown from "../../markdown";
+import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import markdown from "../markdown";
 import {PostVote, VoteType} from "./PostVote";
 import {User} from "./User";
 
 @Table({underscored: true})
 export class Post extends Model<Post> {
-    @Column(sqz.STRING(2048))
+    @NotNull
+    @Column({type: sqz.STRING(2048), allowNull: false})
     public content: string;
 
     @ForeignKey(() => User)
-    @Column
+    @NotNull
+    @Column({allowNull: false})
     public authorId: number;
 
     @BelongsTo(() => User, "authorId")
@@ -44,21 +46,25 @@ export class Post extends Model<Post> {
 
     public async vote(userId: number, type: VoteType): Promise<VoteType> {
         type = type || VoteType.UPVOTE;
-        let vote = await PostVote.findOne({where: {user_id: userId, post_id: this.id}});
+        let votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+        let vote = votes[0] || null;
+        let created = false;
         if (!vote) {
-            await this.$add("rVotes", userId);
-            vote = await PostVote.findOne({where: {user_id: userId, post_id: this.id}});
+            await this.$add("rVote", userId);
+            votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+            vote = votes[0] || null;
+            created = true;
         }
         if (vote) {
-            if (vote.voteType === type) {
-                await vote.destroy();
+            if (vote.PostVote.voteType === type && !created) {
+                await vote.PostVote.destroy();
                 return null;
             } else {
-                vote.voteType = type;
-                await vote.save();
+                vote.PostVote.voteType = type;
+                await vote.PostVote.save();
             }
         }
 
-        return vote.voteType;
+        return vote.PostVote.voteType;
     }
 }
