@@ -44,7 +44,7 @@ export class User extends Model<User> {
     public rankpoints: number;
 
     @BelongsToMany(() => User, () => Friendship)
-    public friends: User[];
+    public rFriends: User[];
 
     @BelongsToMany(() => Post, () => PostVote)
     public votes: Array<Post & {PostVote: PostVote}>;
@@ -76,6 +76,10 @@ export class User extends Model<User> {
 
     public get joinedAt(): Date {
         return this.getDataValue("createdAt");
+    }
+
+    public async friends(): Promise<User[]> {
+        return await this.$get("rFriends") as User[];
     }
 
     public async chats(): Promise<ChatRoom[]> {
