@@ -1,5 +1,6 @@
-import {BelongsTo, BelongsToMany, Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import {BelongsTo, BelongsToMany, Column, ForeignKey, HasMany, Model, NotNull, Table} from "sequelize-typescript";
 import {ChatRoom} from "./ChatRoom";
+import {Event} from "./Event";
 import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
 import {User} from "./User";
@@ -32,6 +33,9 @@ export class Group extends Model<Group> {
     @BelongsTo(() => ChatRoom)
     public rChat: ChatRoom;
 
+    @HasMany(() => Event, "groupId")
+    public rEvents: Event[];
+
     public async creator(): Promise<User> {
         return await this.$get("rCreator") as User;
     }
@@ -48,5 +52,9 @@ export class Group extends Model<Group> {
 
     public async chat(): Promise<ChatRoom> {
         return await this.$get("rChat") as ChatRoom;
+    }
+
+    public async events(): Promise<Event[]> {
+        return await this.$get("rEvents") as Event[];
     }
 }

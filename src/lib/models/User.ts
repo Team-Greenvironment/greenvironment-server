@@ -14,6 +14,8 @@ import {RequestNotFoundError} from "../errors/RequestNotFoundError";
 import {ChatMember} from "./ChatMember";
 import {ChatMessage} from "./ChatMessage";
 import {ChatRoom} from "./ChatRoom";
+import {Event} from "./Event";
+import {EventParticipant} from "./EventParticipant";
 import {Friendship} from "./Friendship";
 import {Group} from "./Group";
 import {GroupAdmin} from "./GroupAdmin";
@@ -57,6 +59,9 @@ export class User extends Model<User> {
 
     @BelongsToMany(() => Group, () => GroupAdmin)
     public rAdministratedGroups: Group[];
+
+    @BelongsToMany(() => Event, () => EventParticipant)
+    public rEvents: Event[];
 
     @BelongsToMany(() => Group, () => GroupMember)
     public rGroups: Group[];
@@ -132,6 +137,10 @@ export class User extends Model<User> {
 
     public async groups(): Promise<Group[]> {
         return await this.$get("rGroups") as Group[];
+    }
+
+    public async events(): Promise<Event[]> {
+        return await this.$get("rEvents") as Event[];
     }
 
     public async denyRequest(sender: number, type: RequestType) {

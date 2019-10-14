@@ -40,6 +40,8 @@ namespace dataaccess {
                 models.Group,
                 models.GroupAdmin,
                 models.GroupMember,
+                models.EventParticipant,
+                models.Event,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
