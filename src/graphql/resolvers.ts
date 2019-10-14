@@ -1,3 +1,4 @@
+import {AggregateError} from "bluebird";
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import dataaccess from "../lib/dataaccess";
@@ -224,6 +225,15 @@ export function resolver(req: any, res: any): any {
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No sender or type given.");
+            }
+        },
+        async removeFriend({friendId}: {friendId: number}) {
+            if (req.session.userId) {
+                const self = await models.User.findByPk(req.session.userId);
+                return await self.removeFriend(friendId);
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
             }
         },
         async getPosts({first, offset, sort}: {first: number, offset: number, sort: dataaccess.SortType}) {

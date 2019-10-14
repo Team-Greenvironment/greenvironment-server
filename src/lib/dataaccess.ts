@@ -213,7 +213,7 @@ namespace dataaccess {
         requestType = requestType || RequestType.FRIENDREQUEST;
 
         const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
-        globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, Request);
+        globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, request);
         return request;
     }
 

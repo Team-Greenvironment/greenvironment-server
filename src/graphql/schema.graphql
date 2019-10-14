@@ -49,6 +49,9 @@ type Mutation {
     "lets you deny a request for a given request id"
     denyRequest(requestId: ID!): Boolean
 
+    "removes a friend"
+    removeFriend(friendId: ID!): Boolean
+
     "send a message in a Chatroom"
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
@@ -137,6 +140,9 @@ type User implements UserData{
 
     "the points of the user"
     points: Int
+
+    "the groups the user has joined"
+    groups: [Group]
 
     "the levels of the user depending on the points"
     level: Int

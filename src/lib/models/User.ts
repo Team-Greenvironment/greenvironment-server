@@ -1,5 +1,6 @@
 import * as sqz from "sequelize";
 import {
+    BelongsTo,
     BelongsToMany,
     Column,
     CreatedAt,
@@ -11,6 +12,7 @@ import {
     UpdatedAt,
 } from "sequelize-typescript";
 import {RequestNotFoundError} from "../errors/RequestNotFoundError";
+import {UserNotFoundError} from "../errors/UserNotFoundError";
 import {ChatMember} from "./ChatMember";
 import {ChatMessage} from "./ChatMessage";
 import {ChatRoom} from "./ChatRoom";
@@ -48,8 +50,11 @@ export class User extends Model<User> {
     @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
 
-    @BelongsToMany(() => User, () => Friendship)
+    @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
+
+    @BelongsToMany(() => User, () => Friendship, "friendId")
+    public rFriendOf: User[];
 
     @BelongsToMany(() => Post, () => PostVote)
     public votes: Array<Post & {PostVote: PostVote}>;
@@ -69,7 +74,7 @@ export class User extends Model<User> {
     @HasMany(() => Post, "authorId")
     public rPosts: Post[];
 
-    @HasMany(() => Request, "receiverId")
+    @HasMany(() => Request, "senderId")
     public rSentRequests: Request[];
 
     @HasMany(() => Request, "receiverId")
@@ -104,7 +109,7 @@ export class User extends Model<User> {
     }
 
     public async friends(): Promise<User[]> {
-        return await this.$get("rFriends") as User[];
+        return await this.$get("rFriendOf") as User[];
     }
 
     public async chats(): Promise<ChatRoom[]> {
@@ -157,11 +162,25 @@ export class User extends Model<User> {
         if (requests.length > 0) {
             const request = requests[0];
             if (request.requestType === RequestType.FRIENDREQUEST) {
-                await this.$add("friends", sender);
+                await Friendship.bulkCreate([
+                    {userId: this.id, friendId: sender},
+                    {userId: sender, friendId: this.id},
+                ], {ignoreDuplicates: true});
                 await request.destroy();
             }
         } else {
             throw new RequestNotFoundError(sender, this.id, type);
+        }
+    }
+
+    public async removeFriend(friendId: number) {
+        const friend = await User.findByPk(friendId);
+        if (friend) {
+            await this.$remove("rFriends", friend);
+            await this.$remove("rFriendOf", friend);
+            return true;
+        } else {
+            throw new UserNotFoundError(friendId);
         }
     }
 }
