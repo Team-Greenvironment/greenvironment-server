@@ -1,16 +1,4 @@
-import * as sqz from "sequelize";
-import {
-    BelongsTo,
-    BelongsToMany,
-    Column,
-    CreatedAt, ForeignKey,
-    HasMany,
-    Model, Not,
-    NotNull,
-    Table,
-    Unique,
-    UpdatedAt,
-} from "sequelize-typescript";
+import {Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
 import {Group} from "./Group";
 import {User} from "./User";
 

@@ -1,17 +1,4 @@
-import * as sqz from "sequelize";
-import {
-    BelongsTo,
-    BelongsToMany,
-    Column,
-    CreatedAt, ForeignKey,
-    HasMany,
-    Model,
-    NotNull,
-    Table,
-    Unique,
-    UpdatedAt,
-} from "sequelize-typescript";
-import {ChatMessage} from "./ChatMessage";
+import {BelongsTo, BelongsToMany, Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
 import {ChatRoom} from "./ChatRoom";
 import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
@@ -20,7 +7,7 @@ import {User} from "./User";
 @Table({underscored: true})
 export class Group extends Model<Group> {
     @NotNull
-    @Column( {allowNull: false})
+    @Column({allowNull: false})
     public name: string;
 
     @NotNull
@@ -53,7 +40,7 @@ export class Group extends Model<Group> {
         return await this.$get("rAdmins") as User[];
     }
 
-    public async members({first, offset}: {first: number, offset: number}): Promise<User[]> {
+    public async members({first, offset}: { first: number, offset: number }): Promise<User[]> {
         const limit = first || 10;
         offset = offset || 0;
         return await this.$get("rMembers", {limit, offset}) as User[];
