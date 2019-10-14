@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import {Sequelize} from "sequelize-typescript";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
@@ -36,6 +37,9 @@ namespace dataaccess {
                 models.PostVote,
                 models.Request,
                 models.User,
+                models.Group,
+                models.GroupAdmin,
+                models.GroupMember,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
@@ -62,6 +66,9 @@ namespace dataaccess {
      * @param password
      */
     export async function getUserByLogin(email: string, password: string): Promise<models.User> {
+        const hash = crypto.createHash("sha512");
+        hash.update(password);
+        password = hash.digest("hex");
         const user = await models.User.findOne({where: {email, password}});
         if (user) {
             return user;
@@ -77,6 +84,9 @@ namespace dataaccess {
      * @param password
      */
     export async function registerUser(username: string, email: string, password: string): Promise<models.User> {
+        const hash = crypto.createHash("sha512");
+        hash.update(password);
+        password = hash.digest("hex");
         const existResult = !!(await models.User.findOne({where: {username, email, password}}));
         const handle = generateHandle(username);
         if (!existResult) {
@@ -199,6 +209,27 @@ namespace dataaccess {
         const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
         globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, Request);
         return request;
+    }
+
+    /**
+     * Create a new group.
+     * @param name
+     * @param creator
+     * @param members
+     */
+    export async function createGroup(name: string, creator: number, members: number[]): Promise<models.Group> {
+        return sequelize.transaction(async (t) => {
+            members.push(creator);
+            const groupChat = await createChat(...members);
+            const group = await models.Group.create({name, creatorId: creator, chatId: groupChat.id}, {transaction: t});
+            const creatorUser = await models.User.findByPk(creator, {transaction: t});
+            await group.$add("rAdmins", creatorUser, {transaction: t});
+            for (const member of members) {
+                const user = await models.User.findByPk(member, {transaction: t});
+                await group.$add("rMembers", user, {transaction: t});
+            }
+            return group;
+        });
     }
 
     /**

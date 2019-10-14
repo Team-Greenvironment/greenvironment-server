@@ -1,8 +1,10 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import dataaccess from "../lib/dataaccess";
+import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
+import {Group} from "../lib/models";
 import * as models from "../lib/models";
-import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
+import {GroupNotFoundGqlError, NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import {is} from "../lib/regex";
@@ -106,7 +108,7 @@ export function resolver(req: any, res: any): any {
                     if (post) {
                         return await post.vote(req.session.userId, type);
                     } else {
-                        res.status(400);
+                        res.status(status.BAD_REQUEST);
                         return new PostNotFoundGqlError(postId);
                     }
                 } else {
@@ -228,6 +230,100 @@ export function resolver(req: any, res: any): any {
         },
         async getPosts({first, offset, sort}: {first: number, offset: number, sort: dataaccess.SortType}) {
             return await dataaccess.getPosts(first, offset, sort);
+        },
+        async createGroup({name, members}: {name: string, members: number[]}) {
+            if (req.session.userId) {
+                return await dataaccess.createGroup(name, req.session.userId, members);
+            } else {
+                return new NotLoggedInGqlError();
+            }
+        },
+        async joinGroup({id}: {id: number}) {
+            if (req.session.userId) {
+                const group = await models.Group.findByPk(id);
+                if (group) {
+                    const user = await models.User.findByPk(req.session.userId);
+                    await group.$add("rMembers", user);
+                    await (await group.chat()).$add("rMembers", user);
+                    return group;
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GroupNotFoundGqlError(id);
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async leaveGroup({id}: {id: number}) {
+            if (req.session.userId) {
+                const group = await models.Group.findByPk(id);
+                if (group) {
+                    const user = await models.User.findByPk(req.session.userId);
+                    await group.$remove("rMembers", user);
+                    await (await group.chat()).$remove("rMembers", user);
+                    return group;
+                } else {
+                    res.status(status.BAD_REQUEST);
+                    return new GroupNotFoundGqlError(id);
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async addGroupAdmin({groupId, userId}: {groupId: number, userId: number}) {
+            if (req.session.userId) {
+                const group = await models.Group.findByPk(groupId);
+                const user = await models.User.findByPk(userId);
+                const self = await models.User.findByPk(req.session.userId);
+                if (!group) {
+                    res.status(status.BAD_REQUEST);
+                    return new GroupNotFoundGqlError(groupId);
+                }
+                if (!user) {
+                    res.status(status.BAD_REQUEST);
+                    return new UserNotFoundError(userId.toString()).graphqlError;
+                }
+                if (!(await group.$has("rAdmins", self)) && (await group.creator()) !== self.id) {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not a group admin!");
+                }
+                await group.$add("rAdmins", user);
+                return group;
+
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async removeGroupAdmin({groupId, userId}: {groupId: number, userId: number}) {
+            if (req.session.userId) {
+                const group = await models.Group.findByPk(groupId);
+                const user = await models.User.findByPk(userId);
+                if (!group) {
+                    res.status(status.BAD_REQUEST);
+                    return new GroupNotFoundGqlError(groupId);
+                }
+                if (!user) {
+                    res.status(status.BAD_REQUEST);
+                    return new UserNotFoundError(userId.toString()).graphqlError;
+                }
+                if ((await group.creator()).id === userId) {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You can't remove the creator of a group.");
+                }
+                if ((await group.creator()).id !== req.session.userId) {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not a group admin!");
+                }
+                await group.$remove("rAdmins", user);
+                return group;
+
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
         },
     };
 }

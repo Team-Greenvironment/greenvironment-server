@@ -15,6 +15,9 @@ import {ChatMember} from "./ChatMember";
 import {ChatMessage} from "./ChatMessage";
 import {ChatRoom} from "./ChatRoom";
 import {Friendship} from "./Friendship";
+import {Group} from "./Group";
+import {GroupAdmin} from "./GroupAdmin";
+import {GroupMember} from "./GroupMember";
 import {Post} from "./Post";
 import {PostVote} from "./PostVote";
 import {Request, RequestType} from "./Request";
@@ -52,6 +55,12 @@ export class User extends Model<User> {
     @BelongsToMany(() => ChatRoom, () => ChatMember)
     public rChats: ChatRoom[];
 
+    @BelongsToMany(() => Group, () => GroupAdmin)
+    public rAdministratedGroups: Group[];
+
+    @BelongsToMany(() => Group, () => GroupMember)
+    public rGroups: Group[];
+
     @HasMany(() => Post, "authorId")
     public rPosts: Post[];
 
@@ -63,6 +72,9 @@ export class User extends Model<User> {
 
     @HasMany(() => ChatMessage, "authorId")
     public messages: ChatMessage[];
+
+    @HasMany(() => Group, "creatorId")
+    public rCreatedGroups: Group[];
 
     @CreatedAt
     public readonly createdAt!: Date;
@@ -100,6 +112,18 @@ export class User extends Model<User> {
 
     public async numberOfPosts(): Promise<number> {
         return this.$count("rPosts");
+    }
+
+    public async administratedGroups(): Promise<Group[]> {
+        return await this.$get("rAdministratedGroups") as Group[];
+    }
+
+    public async createdGroups(): Promise<Group[]> {
+        return await this.$get("rCreatedGroups") as Group[];
+    }
+
+    public async groups(): Promise<Group[]> {
+        return await this.$get("rGroups") as Group[];
     }
 
     public async denyRequest(sender: number, type: RequestType) {

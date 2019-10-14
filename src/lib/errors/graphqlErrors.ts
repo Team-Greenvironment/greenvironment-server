@@ -11,3 +11,9 @@ export class PostNotFoundGqlError extends GraphQLError {
         super(`Post '${postId}' not found!`);
     }
 }
+
+export class GroupNotFoundGqlError extends GraphQLError {
+    constructor(groupId: number) {
+        super(`Group '${groupId}' not found!`);
+    }
+}
