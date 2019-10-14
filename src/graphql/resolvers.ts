@@ -1,8 +1,7 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import dataaccess from "../lib/dataaccess";
-import {GroupNotFoundGqlError, NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
-import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
+import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
@@ -239,15 +238,12 @@ export function resolver(req: any, res: any): any {
         },
         async joinGroup({id}: {id: number}) {
             if (req.session.userId) {
-                const group = await models.Group.findByPk(id);
-                if (group) {
-                    const user = await models.User.findByPk(req.session.userId);
-                    await group.$add("rMembers", user);
-                    await (await group.chat()).$add("rMembers", user);
-                    return group;
-                } else {
+                try {
+                    return await dataaccess
+                        .changeGroupMembership(id, req.session.userId, dataaccess.MembershipChangeAction.ADD);
+                } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return new GroupNotFoundGqlError(id);
+                    return err.graphqlError;
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -256,15 +252,12 @@ export function resolver(req: any, res: any): any {
         },
         async leaveGroup({id}: {id: number}) {
             if (req.session.userId) {
-                const group = await models.Group.findByPk(id);
-                if (group) {
-                    const user = await models.User.findByPk(req.session.userId);
-                    await group.$remove("rMembers", user);
-                    await (await group.chat()).$remove("rMembers", user);
-                    return group;
-                } else {
+                try {
+                    return await dataaccess
+                        .changeGroupMembership(id, req.session.userId, dataaccess.MembershipChangeAction.REMOVE);
+                } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return new GroupNotFoundGqlError(id);
+                    return err.graphqlError;
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -274,22 +267,18 @@ export function resolver(req: any, res: any): any {
         async addGroupAdmin({groupId, userId}: {groupId: number, userId: number}) {
             if (req.session.userId) {
                 const group = await models.Group.findByPk(groupId);
-                const user = await models.User.findByPk(userId);
                 const self = await models.User.findByPk(req.session.userId);
-                if (!group) {
-                    res.status(status.BAD_REQUEST);
-                    return new GroupNotFoundGqlError(groupId);
-                }
-                if (!user) {
-                    res.status(status.BAD_REQUEST);
-                    return new UserNotFoundError(userId.toString()).graphqlError;
-                }
-                if (!(await group.$has("rAdmins", self)) && (await group.creator()) !== self.id) {
+                if (group && !(await group.$has("rAdmins", self)) && (await group.creator()) !== self.id) {
                     res.status(status.FORBIDDEN);
                     return new GraphQLError("You are not a group admin!");
                 }
-                await group.$add("rAdmins", user);
-                return group;
+                try {
+                    return await dataaccess
+                        .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.OP);
+                } catch (err) {
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError;
+                }
 
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -299,25 +288,23 @@ export function resolver(req: any, res: any): any {
         async removeGroupAdmin({groupId, userId}: {groupId: number, userId: number}) {
             if (req.session.userId) {
                 const group = await models.Group.findByPk(groupId);
-                const user = await models.User.findByPk(userId);
-                if (!group) {
-                    res.status(status.BAD_REQUEST);
-                    return new GroupNotFoundGqlError(groupId);
-                }
-                if (!user) {
-                    res.status(status.BAD_REQUEST);
-                    return new UserNotFoundError(userId.toString()).graphqlError;
-                }
-                if ((await group.creator()).id === userId) {
+                const isCreator = Number(group.creatorId) === Number(req.session.userId);
+                const userIsCreator = Number(group.creatorId) === Number(userId) ;
+                if (group && !isCreator && Number(userId) !== Number(req.session.userId)) {
                     res.status(status.FORBIDDEN);
-                    return new GraphQLError("You can't remove the creator of a group.");
-                }
-                if ((await group.creator()).id !== req.session.userId) {
+                    return new GraphQLError("You are not the group creator!");
+                } else if (userIsCreator) {
                     res.status(status.FORBIDDEN);
-                    return new GraphQLError("You are not a group admin!");
+                    return new GraphQLError("You are not allowed to remove a creator as an admin.");
                 }
-                await group.$remove("rAdmins", user);
-                return group;
+
+                try {
+                    return await dataaccess
+                        .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.DEOP);
+                } catch (err) {
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError;
+                }
 
             } else {
                 res.status(status.UNAUTHORIZED);

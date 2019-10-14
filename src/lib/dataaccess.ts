@@ -1,7 +1,11 @@
 import * as crypto from "crypto";
+import * as status from "http-status";
 import {Sequelize} from "sequelize-typescript";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
+import {GroupNotFoundGqlError, NotLoggedInGqlError} from "./errors/graphqlErrors";
+import {GroupNotFoundError} from "./errors/GroupNotFoundError";
+import {NoActionSpecifiedError} from "./errors/NoActionSpecifiedError";
 import {UserNotFoundError} from "./errors/UserNotFoundError";
 import globals from "./globals";
 import {InternalEvents} from "./InternalEvents";
@@ -235,6 +239,38 @@ namespace dataaccess {
     }
 
     /**
+     * Changes the membership of a user
+     * @param groupId
+     * @param userId
+     * @param action
+     */
+    export async function changeGroupMembership(groupId: number, userId: number, action: MembershipChangeAction):
+        Promise<models.Group> {
+        const group = await models.Group.findByPk(groupId);
+        if (group) {
+            const user = await models.User.findByPk(userId);
+            if (user) {
+                if (action === MembershipChangeAction.ADD) {
+                    await group.$add("rMembers", user);
+                } else if (action === MembershipChangeAction.REMOVE) {
+                    await group.$remove("rMembers", user);
+                } else if (action === MembershipChangeAction.OP) {
+                    await group.$add("rAdmins", user);
+                } else if (action === MembershipChangeAction.DEOP) {
+                    await group.$remove("rAdmins", user);
+                } else {
+                    throw new NoActionSpecifiedError(MembershipChangeAction);
+                }
+                return group;
+            } else {
+                throw new UserNotFoundError(userId);
+            }
+        } else {
+            throw new GroupNotFoundError(groupId);
+        }
+    }
+
+    /**
      * Enum representing the types of votes that can be performed on a post.
      */
     export enum VoteType {
@@ -257,6 +293,13 @@ namespace dataaccess {
     export enum SortType {
         TOP = "TOP",
         NEW = "NEW",
+    }
+
+    export enum MembershipChangeAction {
+        ADD,
+        REMOVE,
+        OP,
+        DEOP,
     }
 }
 
