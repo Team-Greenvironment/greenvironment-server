@@ -6,3 +6,6 @@ export {Post} from "./Post";
 export {PostVote} from "./PostVote";
 export {Request} from "./Request";
 export {User} from "./User";
+export {Group} from "./Group";
+export {GroupAdmin} from "./GroupAdmin";
+export {GroupMember} from "./GroupMember";

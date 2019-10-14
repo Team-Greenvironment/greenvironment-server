@@ -60,6 +60,21 @@ type Mutation {
 
     "Creates a chat between the user (and optional an other user)"
     createChat(members: [ID!]): ChatRoom
+
+    "Creates a new group with a given name and additional members"
+    createGroup(name: String!, members: [ID!]): Group
+
+    "Joins a group with the given id"
+    joinGroup(id: ID!): Group
+
+    "leaves the group with the given id"
+    leaveGroup(id: ID!): Group
+
+    "adds an admin to the group"
+    addGroupAdmin(groupId: ID!, userId: ID!): Group
+
+    "removes an admin from the group"
+    removeGroupAdmin(groupId: ID!, userId: ID!): Group
 }
 
 interface UserData {
@@ -148,6 +163,16 @@ type Profile implements UserData {
 
     "all received request for groupChats/friends/events"
     receivedRequests: [Request]
+
+    "all groups the user is an admin of"
+    administratedGroups: [Group]
+
+    "all groups the user has created"
+    createdGroups: [Group]
+
+    "all groups the user has joined"
+    groups: [Group]
+
 }
 
 "represents a single user post"
@@ -223,6 +248,26 @@ type ChatMessage {
 
     "The content of the message rendered by markdown-it."
     htmlContent: String
+}
+
+type Group {
+    "ID of the group"
+    id: ID!
+
+    "name of the group"
+    name: String!
+
+    "the creator of the group"
+    creator: User
+
+    "all admins of the group"
+    admins: [User]!
+
+    "the members of the group with pagination"
+    members(first: Int = 10, offset: Int = 0): [User]!
+
+    "the groups chat"
+    chat: ChatRoom
 }
 
 "represents the type of vote performed on a post"
