@@ -90,6 +90,14 @@ export class User extends Model<User> {
         return this.getDataValue("createdAt");
     }
 
+    public get points(): number {
+        return this.rankpoints;
+    }
+
+    public get level(): number {
+        return Math.ceil(this.rankpoints / 100);
+    }
+
     public async friends(): Promise<User[]> {
         return await this.$get("rFriends") as User[];
     }

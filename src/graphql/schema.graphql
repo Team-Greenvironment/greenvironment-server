@@ -101,6 +101,12 @@ interface UserData {
 
     "all friends of the user"
     friends: [User]
+
+    "the points of the user"
+    points: Int
+
+    "the levels of the user depending on the points"
+    level: Int
 }
 
 "represents a single user account"
@@ -128,6 +134,12 @@ type User implements UserData{
 
     "all friends of the user"
     friends: [User]
+
+    "the points of the user"
+    points: Int
+
+    "the levels of the user depending on the points"
+    level: Int
 }
 
 type Profile implements UserData {
@@ -173,6 +185,11 @@ type Profile implements UserData {
     "all groups the user has joined"
     groups: [Group]
 
+    "the points of the user"
+    points: Int
+
+    "the levels of the user depending on the points"
+    level: Int
 }
 
 "represents a single user post"
