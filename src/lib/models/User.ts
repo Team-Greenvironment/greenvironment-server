@@ -1,5 +1,6 @@
 import * as sqz from "sequelize";
 import {
+    BelongsTo,
     BelongsToMany,
     Column,
     CreatedAt,
@@ -11,9 +12,12 @@ import {
     UpdatedAt,
 } from "sequelize-typescript";
 import {RequestNotFoundError} from "../errors/RequestNotFoundError";
+import {UserNotFoundError} from "../errors/UserNotFoundError";
 import {ChatMember} from "./ChatMember";
 import {ChatMessage} from "./ChatMessage";
 import {ChatRoom} from "./ChatRoom";
+import {Event} from "./Event";
+import {EventParticipant} from "./EventParticipant";
 import {Friendship} from "./Friendship";
 import {Group} from "./Group";
 import {GroupAdmin} from "./GroupAdmin";
@@ -46,8 +50,11 @@ export class User extends Model<User> {
     @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
 
-    @BelongsToMany(() => User, () => Friendship)
+    @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
+
+    @BelongsToMany(() => User, () => Friendship, "friendId")
+    public rFriendOf: User[];
 
     @BelongsToMany(() => Post, () => PostVote)
     public votes: Array<Post & {PostVote: PostVote}>;
@@ -58,13 +65,16 @@ export class User extends Model<User> {
     @BelongsToMany(() => Group, () => GroupAdmin)
     public rAdministratedGroups: Group[];
 
+    @BelongsToMany(() => Event, () => EventParticipant)
+    public rEvents: Event[];
+
     @BelongsToMany(() => Group, () => GroupMember)
     public rGroups: Group[];
 
     @HasMany(() => Post, "authorId")
     public rPosts: Post[];
 
-    @HasMany(() => Request, "receiverId")
+    @HasMany(() => Request, "senderId")
     public rSentRequests: Request[];
 
     @HasMany(() => Request, "receiverId")
@@ -90,8 +100,16 @@ export class User extends Model<User> {
         return this.getDataValue("createdAt");
     }
 
+    public get points(): number {
+        return this.rankpoints;
+    }
+
+    public get level(): number {
+        return Math.ceil(this.rankpoints / 100);
+    }
+
     public async friends(): Promise<User[]> {
-        return await this.$get("rFriends") as User[];
+        return await this.$get("rFriendOf") as User[];
     }
 
     public async chats(): Promise<ChatRoom[]> {
@@ -126,6 +144,10 @@ export class User extends Model<User> {
         return await this.$get("rGroups") as Group[];
     }
 
+    public async events(): Promise<Event[]> {
+        return await this.$get("rEvents") as Event[];
+    }
+
     public async denyRequest(sender: number, type: RequestType) {
         const request = await this.$get("rReceivedRequests",
             {where: {senderId: sender, requestType: type}}) as Request[];
@@ -140,11 +162,25 @@ export class User extends Model<User> {
         if (requests.length > 0) {
             const request = requests[0];
             if (request.requestType === RequestType.FRIENDREQUEST) {
-                await this.$add("friends", sender);
+                await Friendship.bulkCreate([
+                    {userId: this.id, friendId: sender},
+                    {userId: sender, friendId: this.id},
+                ], {ignoreDuplicates: true});
                 await request.destroy();
             }
         } else {
             throw new RequestNotFoundError(sender, this.id, type);
+        }
+    }
+
+    public async removeFriend(friendId: number) {
+        const friend = await User.findByPk(friendId);
+        if (friend) {
+            await this.$remove("rFriends", friend);
+            await this.$remove("rFriendOf", friend);
+            return true;
+        } else {
+            throw new UserNotFoundError(friendId);
         }
     }
 }
