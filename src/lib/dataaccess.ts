@@ -5,6 +5,7 @@ import {ChatNotFoundError} from "./errors/ChatNotFoundError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
 import {GroupNotFoundGqlError, NotLoggedInGqlError} from "./errors/graphqlErrors";
 import {GroupNotFoundError} from "./errors/GroupNotFoundError";
+import {InvalidLoginError} from "./errors/InvalidLoginError";
 import {NoActionSpecifiedError} from "./errors/NoActionSpecifiedError";
 import {UserNotFoundError} from "./errors/UserNotFoundError";
 import globals from "./globals";
@@ -75,9 +76,13 @@ namespace dataaccess {
         const hash = crypto.createHash("sha512");
         hash.update(password);
         password = hash.digest("hex");
-        const user = await models.User.findOne({where: {email, password}});
+        const user = await models.User.findOne({where: {email}});
         if (user) {
-            return user;
+            if (user.password === password) {
+                return user;
+            } else {
+                throw new InvalidLoginError(email);
+            }
         } else {
             throw new UserNotFoundError(email);
         }
