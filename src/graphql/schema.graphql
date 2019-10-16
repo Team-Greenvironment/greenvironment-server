@@ -11,6 +11,12 @@ type Query {
     "returns the chat object for a chat id"
     getChat(chatId: ID!): ChatRoom
 
+    "return shte group object for its id"
+    getGroup(groupId: ID!): Group
+
+    "returns the request object for its id"
+    getRequest(requestId: ID!): Request
+
     "find a post by the posted date or content"
     findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
 
@@ -228,6 +234,10 @@ type Post {
 
 "represents a request of any type"
 type Request {
+
+    "Id of the request."
+    id: ID!
+
     "Id of the user who sended the request"
     sender: User!
 

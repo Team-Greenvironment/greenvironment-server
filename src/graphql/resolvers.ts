@@ -49,6 +49,22 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No chatId given.");
             }
         },
+        async getGroup({groupId}: {groupId: number}) {
+            if (groupId) {
+                return models.Group.findByPk(groupId);
+            } else {
+                res.status(status.BAD_REQUEST);
+                return new GraphQLError("No group id given.");
+            }
+        },
+        async getRequest({requestId}: {requestId: number}) {
+            if (requestId) {
+                return models.Request.findByPk(requestId);
+            } else {
+                res.status(status.BAD_REQUEST);
+                return new GraphQLError("No requestId given.");
+            }
+        },
         acceptCookies() {
             req.session.cookiesAccepted = true;
             return true;
@@ -307,7 +323,6 @@ export function resolver(req: any, res: any): any {
                     res.status(status.FORBIDDEN);
                     return new GraphQLError("You are not allowed to remove a creator as an admin.");
                 }
-
                 try {
                     return await dataaccess
                         .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.DEOP);
@@ -315,7 +330,15 @@ export function resolver(req: any, res: any): any {
                     res.status(status.BAD_REQUEST);
                     return err.graphqlError;
                 }
-
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async createEvent({name, dueDate, groupId}: {name: string, dueDate: Date, groupId: number}) {
+            if (req.session.userId) {
+                const group = await models.Group.findByPk(groupId);
+                const event = await group.$create<models.Event>("rEvents", {name, dueDate});
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
