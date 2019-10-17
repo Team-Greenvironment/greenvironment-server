@@ -170,6 +170,9 @@ type Profile implements UserData {
     "name of the User"
     name: String!
 
+    "the email of the user"
+    email: String!
+
     "returns the chatrooms the user joined."
     chats(first: Int=10, offset: Int): [ChatRoom]
 
