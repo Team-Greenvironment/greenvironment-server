@@ -335,10 +335,33 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async createEvent({name, dueDate, groupId}: {name: string, dueDate: Date, groupId: number}) {
+        async createEvent({name, dueDate, groupId}: {name: string, dueDate: string, groupId: number}) {
             if (req.session.userId) {
+                const date = new Date(dueDate);
                 const group = await models.Group.findByPk(groupId);
-                const event = await group.$create<models.Event>("rEvents", {name, dueDate});
+                return group.$create<models.Event>("rEvent", {name, dueDate: date});
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async joinEvent({eventId}: {eventId: number}) {
+            if (req.session.userId) {
+                const event = await models.Event.findByPk(eventId);
+                const self = await models.User.findByPk(req.session.userId);
+                await event.$add("rParticipants", self);
+                return event;
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async leaveEvent({eventId}: {eventId: number}) {
+            if (req.session.userId) {
+                const event = await models.Event.findByPk(eventId);
+                const self = await models.User.findByPk(req.session.userId);
+                await event.$remove("rParticipants", self);
+                return event;
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
