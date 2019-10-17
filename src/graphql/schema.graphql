@@ -84,6 +84,15 @@ type Mutation {
 
     "removes an admin from the group"
     removeGroupAdmin(groupId: ID!, userId: ID!): Group
+
+    "Creates a new event with a epoch due date on a group."
+    createEvent(name: String, dueDate: String, groupId: ID!): Event
+
+    "Joins a event."
+    joinEvent(eventId: ID!): Event
+
+    "Leaves a event."
+    leaveEvent(eventId: ID!): Event
 }
 
 interface UserData {
@@ -160,6 +169,9 @@ type Profile implements UserData {
 
     "name of the User"
     name: String!
+
+    "the email of the user"
+    email: String!
 
     "returns the chatrooms the user joined."
     chats(first: Int=10, offset: Int): [ChatRoom]
@@ -301,6 +313,26 @@ type Group {
 
     "the groups chat"
     chat: ChatRoom
+
+    "the events of the group"
+    events: [Event!]!
+}
+
+type Event {
+    "ID of the event"
+    id: ID!
+
+    "Name of the event"
+    name: String!
+
+    "The date of the event."
+    dueDate: String!
+
+    "The group the event belongs to."
+    group: Group!
+
+    "The participants of the event."
+    participants: [User!]!
 }
 
 "represents the type of vote performed on a post"

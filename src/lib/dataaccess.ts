@@ -229,6 +229,7 @@ namespace dataaccess {
      * @param members
      */
     export async function createGroup(name: string, creator: number, members: number[]): Promise<models.Group> {
+        members = members || [];
         return sequelize.transaction(async (t) => {
             members.push(creator);
             const groupChat = await createChat(...members);
