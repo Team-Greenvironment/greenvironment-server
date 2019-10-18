@@ -8,3 +8,4 @@ dist
 config.yaml
 sqz-force
 greenvironment.db
+logs

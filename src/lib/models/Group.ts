@@ -40,8 +40,10 @@ export class Group extends Model<Group> {
         return await this.$get("rCreator") as User;
     }
 
-    public async admins(): Promise<User[]> {
-        return await this.$get("rAdmins") as User[];
+    public async admins({first, offset}: { first: number, offset: number }): Promise<User[]> {
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rAdmins", {limit, offset}) as User[];
     }
 
     public async members({first, offset}: { first: number, offset: number }): Promise<User[]> {
@@ -54,7 +56,9 @@ export class Group extends Model<Group> {
         return await this.$get("rChat") as ChatRoom;
     }
 
-    public async events(): Promise<Event[]> {
-        return await this.$get("rEvents") as Event[];
+    public async events({first, offset}: { first: number, offset: number }): Promise<Event[]> {
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rEvents", {limit, offset}) as Event[];
     }
 }

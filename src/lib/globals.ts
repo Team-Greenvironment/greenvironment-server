@@ -9,6 +9,7 @@ import {EventEmitter} from "events";
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
 import * as winston from "winston";
+require('winston-daily-rotate-file');
 
 const configPath = "config.yaml";
 const defaultConfig = __dirname + "/../default-config.yaml";
@@ -27,6 +28,7 @@ if (!(fsx.pathExistsSync(configPath))) {
  */
 namespace globals {
     export const config = yaml.safeLoad(fsx.readFileSync("config.yaml", "utf-8"));
+    // @ts-ignore
     export const logger = winston.createLogger({
         transports: [
             new winston.transports.Console({
@@ -38,6 +40,20 @@ namespace globals {
                     }),
                 ),
                 level: config.logging.level,
+            }),
+            // @ts-ignore
+            new (winston.transports.DailyRotateFile)({
+                dirname: "logs",
+                filename: "gv-%DATE%.log",
+                format: winston.format.combine(
+                    winston.format.timestamp(),
+                    winston.format.printf(({level, message, timestamp}) => {
+                        return `${timestamp} ${level}: ${message}`;
+                    }),
+                ),
+                json: false,
+                maxFiles: "7d",
+                zippedArchive: true,
             }),
         ],
     });

@@ -1,6 +1,7 @@
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
+import {Request, Response} from "express";
 import * as express from "express";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
@@ -9,6 +10,7 @@ import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
 import * as http from "http";
+import * as httpStatus from "http-status";
 import * as path from "path";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
@@ -84,6 +86,14 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
+        this.app.use((req: any, res: Response) => {
+            res.status(httpStatus.NOT_FOUND);
+            res.render("errors/404.pug", {url: req.url});
+        });
+        this.app.use((err, req: Request, res: Response) => {
+            res.status(httpStatus.INTERNAL_SERVER_ERROR);
+            res.render("errors/500.pug");
+        });
     }
 
     /**

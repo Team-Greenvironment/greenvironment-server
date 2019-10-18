@@ -92,62 +92,156 @@ export class User extends Model<User> {
     @UpdatedAt
     public readonly updatedAt!: Date;
 
+    /**
+     * The name of the user
+     */
     public get name(): string {
         return this.getDataValue("username");
     }
 
+    /**
+     * The date the user joined the network
+     */
     public get joinedAt(): Date {
         return this.getDataValue("createdAt");
     }
 
+    /**
+     * The points of the user
+     */
     public get points(): number {
         return this.rankpoints;
     }
 
+    /**
+     * The level of the user which is the points divided by 100
+     */
     public get level(): number {
         return Math.ceil(this.rankpoints / 100);
     }
 
-    public async friends(): Promise<User[]> {
-        return await this.$get("rFriendOf") as User[];
+    /**
+     * All friends of the user
+     * @param first
+     * @param offset
+     */
+    public async friends({first, offset}: {first: number, offset: number}): Promise<User[]> {
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rFriendOf", {limit, offset}) as User[];
     }
 
-    public async chats(): Promise<ChatRoom[]> {
-        return await this.$get("rChats") as ChatRoom[];
+    /**
+     * The total number of the users friends.
+     */
+    public async friendCount(): Promise<number> {
+        return this.$count("rFriends");
     }
 
+    /**
+     * The chats the user has joined
+     * @param first
+     * @param offset
+     */
+    public async chats({first, offset}: {first: number, offset: number}): Promise<ChatRoom[]> {
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rChats", {limit, offset}) as ChatRoom[];
+    }
+
+    /**
+     * the number of chats the user has
+     */
+    public async chatCount(): Promise<number> {
+        return this.$count("rChats");
+    }
+
+    /**
+     * All active requests the user ha ssent
+     */
     public async sentRequests(): Promise<Request[]> {
         return await this.$get("rSentRequests") as Request[];
     }
 
+    /**
+     * All requests the user has received
+     */
     public async receivedRequests(): Promise<Request[]> {
         return await this.$get("rReceivedRequests") as Request[];
     }
 
     public async posts({first, offset}: {first: number, offset: number}): Promise<Post[]> {
-        return await this.$get("rPosts", {limit: first, offset}) as Post[];
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rPosts", {limit, offset}) as Post[];
     }
 
+    /**
+     * @deprecated
+     * use {@link postCount} instead
+     */
     public async numberOfPosts(): Promise<number> {
+        return this.postCount();
+    }
+
+    /**
+     * number of posts the user created
+     */
+    public async postCount(): Promise<number> {
         return this.$count("rPosts");
     }
 
+    /**
+     * Groups the user is the admin of
+     */
     public async administratedGroups(): Promise<Group[]> {
         return await this.$get("rAdministratedGroups") as Group[];
     }
 
+    /**
+     * Groups the user has created
+     */
     public async createdGroups(): Promise<Group[]> {
         return await this.$get("rCreatedGroups") as Group[];
     }
 
-    public async groups(): Promise<Group[]> {
-        return await this.$get("rGroups") as Group[];
+    /**
+     * Groups the user is a member of
+     * @param first
+     * @param offset
+     */
+    public async groups({first, offset}: {first: number, offset: number}): Promise<Group[]> {
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rGroups", {limit, offset}) as Group[];
     }
 
+    /**
+     * The number of groups the user has joined
+     */
+    public async groupCount(): Promise<number> {
+        return this.$count("rGroups");
+    }
+
+    /**
+     * Events the user has joined
+     */
     public async events(): Promise<Event[]> {
         return await this.$get("rEvents") as Event[];
     }
 
+    /**
+     * The number of events the user is participating in.
+     */
+    public async eventCount(): Promise<number> {
+        return this.$count("rEvents");
+    }
+
+    /**
+     * Denys a request the user has received
+     * @param sender
+     * @param type
+     */
     public async denyRequest(sender: number, type: RequestType) {
         const request = await this.$get("rReceivedRequests",
             {where: {senderId: sender, requestType: type}}) as Request[];
@@ -156,6 +250,11 @@ export class User extends Model<User> {
         }
     }
 
+    /**
+     * Accepts a request the user has received
+     * @param sender
+     * @param type
+     */
     public async acceptRequest(sender: number, type: RequestType) {
         const requests = await this.$get("rReceivedRequests",
             {where: {senderId: sender, requestType: type}}) as Request[];
@@ -173,6 +272,10 @@ export class User extends Model<User> {
         }
     }
 
+    /**
+     * Removes a user from the users friends
+     * @param friendId
+     */
     public async removeFriend(friendId: number) {
         const friend = await User.findByPk(friendId);
         if (friend) {

@@ -29,6 +29,8 @@ export class Event extends Model<Event> {
     }
 
     public async participants({first, offset}: {first: number, offset: number}): Promise<User[]> {
-        return await this.$get("rParticipants") as User[];
+        const limit = first || 10;
+        offset = offset || 0;
+        return await this.$get("rParticipants", {limit, offset}) as User[];
     }
 }
