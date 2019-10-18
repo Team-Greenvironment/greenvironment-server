@@ -15,3 +15,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - session management
 - Sequelize models and integration
 - Sequelize-typescript integration
+- error pages
+- pagination for most list types

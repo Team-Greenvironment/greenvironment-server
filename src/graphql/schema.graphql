@@ -21,7 +21,7 @@ type Query {
     findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
 
     "find a user by user name or handle"
-    findUser(first: Int, offset: Int, name: String!, handle: String!): [User]
+    findUser(first: Int, offset: Int, name: String, handle: String): [User]
 
     "returns the post filtered by the sort type with pagination."
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
@@ -62,16 +62,16 @@ type Mutation {
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
     "create the post"
-    createPost(content: String!): Post
+    createPost(content: String!): Post!
 
     "delete the post for a given post id"
-    deletePost(postId: ID!): Boolean
+    deletePost(postId: ID!): Boolean!
 
     "Creates a chat between the user (and optional an other user)"
-    createChat(members: [ID!]): ChatRoom
+    createChat(members: [ID!]): ChatRoom!
 
     "Creates a new group with a given name and additional members"
-    createGroup(name: String!, members: [ID!]): Group
+    createGroup(name: String!, members: [ID!]): Group!
 
     "Joins a group with the given id"
     joinGroup(id: ID!): Group
@@ -108,23 +108,35 @@ interface UserData {
     "Id of the User"
     id: ID!
 
-    "the total number of posts the user posted"
-    numberOfPosts: Int
+    "DEPRECATED! the total number of posts the user posted"
+    numberOfPosts: Int!
+
+    "the number of posts the user has created"
+    postCount: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int): [Post]
+    posts(first: Int=10, offset: Int=0): [Post]
 
     "creation date of the user account"
     joinedAt: String!
 
     "all friends of the user"
-    friends: [User]
+    friends(first: Int=10, offset: Int=0): [User]
+
+    "The number of friends the user has"
+    friendCount: Int!
+
+    "The groups the user has joined"
+    groups(first: Int=10, offset: Int=0): [Group]
+
+    "The numbef of groups the user has joined"
+    groupCount: Int!
 
     "the points of the user"
-    points: Int
+    points: Int!
 
     "the levels of the user depending on the points"
-    level: Int
+    level: Int!
 }
 
 "represents a single user account"
@@ -142,25 +154,34 @@ type User implements UserData{
     id: ID!
 
     "the total number of posts the user posted"
-    numberOfPosts: Int
+    numberOfPosts: Int!
 
     "returns a given number of posts of a user"
     posts(first: Int=10, offset: Int): [Post]
+
+    "the number of posts the user has created"
+    postCount: Int!
 
     "creation date of the user account"
     joinedAt: String!
 
     "all friends of the user"
-    friends: [User]
+    friends(first: Int=10, offset: Int=0): [User]
+
+    "The number of friends the user has"
+    friendCount: Int!
 
     "the points of the user"
-    points: Int
+    points: Int!
 
     "the groups the user has joined"
-    groups: [Group]
+    groups(first: Int=10, offset: Int=0): [Group]
+
+    "The numbef of groups the user has joined"
+    groupCount: Int!
 
     "the levels of the user depending on the points"
-    level: Int
+    level: Int!
 }
 
 type Profile implements UserData {
@@ -176,6 +197,9 @@ type Profile implements UserData {
     "returns the chatrooms the user joined."
     chats(first: Int=10, offset: Int): [ChatRoom]
 
+    "the count of the users chats"
+    chatCount: Int!
+
     "unique identifier name from the User"
     handle: String!
 
@@ -183,37 +207,46 @@ type Profile implements UserData {
     id: ID!
 
     "the total number of posts the user posted"
-    numberOfPosts: Int
+    numberOfPosts: Int!
+
+    "the number of posts the user has created"
+    postCount: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int): [Post]
+    posts(first: Int=10, offset: Int): [Post!]!
 
     "creation date of the user account"
     joinedAt: String!
 
     "all friends of the user"
-    friends: [User]
+    friends(first: Int=10, offset: Int=0): [User!]!
+
+    "The number of friends the user has"
+    friendCount: Int!
 
     "all sent request for groupChats/friends/events"
-    sentRequests: [Request]
+    sentRequests: [Request!]!
 
     "all received request for groupChats/friends/events"
-    receivedRequests: [Request]
+    receivedRequests: [Request!]!
 
     "all groups the user is an admin of"
-    administratedGroups: [Group]
+    administratedGroups: [Group!]!
 
     "all groups the user has created"
-    createdGroups: [Group]
+    createdGroups: [Group!]!
 
     "all groups the user has joined"
-    groups: [Group]
+    groups(first: Int=10, offset: Int=0): [Group!]!
+
+    "The numbef of groups the user has joined"
+    groupCount: Int!
 
     "the points of the user"
-    points: Int
+    points: Int!
 
     "the levels of the user depending on the points"
-    level: Int
+    level: Int!
 }
 
 "represents a single user post"
@@ -266,7 +299,7 @@ type ChatRoom {
     namespace: String
 
     "the members of the chatroom"
-    members: [User!]
+    members(first: Int=10, offset: Int=0): [User!]
 
     "return a specfic range of messages posted in the chat"
     messages(first: Int = 10, offset: Int, containing: String): [ChatMessage]!
@@ -306,7 +339,7 @@ type Group {
     creator: User
 
     "all admins of the group"
-    admins: [User]!
+    admins(first: Int=10, offset: Int=0): [User]!
 
     "the members of the group with pagination"
     members(first: Int = 10, offset: Int = 0): [User]!
@@ -315,7 +348,7 @@ type Group {
     chat: ChatRoom
 
     "the events of the group"
-    events: [Event!]!
+    events(first: Int=10, offset: Int=0): [Event!]!
 }
 
 type Event {
@@ -332,7 +365,7 @@ type Event {
     group: Group!
 
     "The participants of the event."
-    participants: [User!]!
+    participants(first: Int=10, offset: Int=0): [User!]!
 }
 
 "represents the type of vote performed on a post"

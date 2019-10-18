@@ -7,13 +7,16 @@ server:
   port: 8080
   cors: false
 
+# configuration of sessions
 session:
   secret: REPLACE WITH SAFE RANDOM GENERATED SECRET
   cookieMaxAge: 604800000‬ # 7 days
 
+# configuration of the markdown parser
 markdown:
   plugins:
     - 'markdown-it-emoji'
 
+# configuration for logging
 logging:
   level: info
