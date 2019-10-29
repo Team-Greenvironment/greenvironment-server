@@ -1,5 +1,6 @@
 import * as crypto from "crypto";
 import * as status from "http-status";
+import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
@@ -16,8 +17,14 @@ import * as models from "./models";
  * Generates a new handle from the username and a base64 string of the current time.
  * @param username
  */
-function generateHandle(username: string) {
-    return `${username}.${Buffer.from(Date.now().toString()).toString("base64")}`;
+async function generateHandle(username: string) {
+    username = username.toLowerCase();
+    const count = await models.User.count({where: {handle: {[sqz.Op.like]: `%${username}%`}}});
+    if (count > 0) {
+        return `${username}${count}`;
+    } else {
+        return username;
+    }
 }
 
 /**
@@ -99,7 +106,7 @@ namespace dataaccess {
         hash.update(password);
         password = hash.digest("hex");
         const existResult = !!(await models.User.findOne({where: {username, email, password}}));
-        const handle = generateHandle(username);
+        const handle = await generateHandle(username);
         if (!existResult) {
             return models.User.create({username, email, password, handle});
         } else {
