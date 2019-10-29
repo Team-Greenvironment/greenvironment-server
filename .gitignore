@@ -9,3 +9,4 @@ config.yaml
 sqz-force
 greenvironment.db
 logs
+logs*

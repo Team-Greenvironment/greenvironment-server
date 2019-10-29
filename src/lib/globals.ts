@@ -9,7 +9,7 @@ import {EventEmitter} from "events";
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
 import * as winston from "winston";
-require('winston-daily-rotate-file');
+require("winston-daily-rotate-file");
 
 const configPath = "config.yaml";
 const defaultConfig = __dirname + "/../default-config.yaml";
