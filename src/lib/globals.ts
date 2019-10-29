@@ -52,6 +52,7 @@ namespace globals {
                     }),
                 ),
                 json: false,
+                level: config.logging.level,
                 maxFiles: "7d",
                 zippedArchive: true,
             }),
