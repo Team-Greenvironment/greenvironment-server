@@ -11,8 +11,12 @@ export enum RequestType {
 @Table({underscored: true})
 export class Request extends Model<Request> {
     @NotNull
-    @Column({type: sqz.ENUM, values: ["FRIENDREQUEST", "GROUPINVITE", "EVENTINVITE"],
-        defaultValue: "FRIENDREQUEST", allowNull: false})
+    @Column({
+        allowNull: false,
+        defaultValue: "FRIENDREQUEST",
+        type: sqz.ENUM,
+        values: ["FRIENDREQUEST", "GROUPINVITE", "EVENTINVITE"],
+    })
     public requestType: RequestType;
 
     @ForeignKey(() => User)

@@ -1,10 +1,3 @@
-/**
- * @author Trivernis
- * @remarks
- *
- * Taken from {@link https://github.com/Trivernis/whooshy}
- */
-
 import {Router} from "express";
 import {Namespace, Server} from "socket.io";
 

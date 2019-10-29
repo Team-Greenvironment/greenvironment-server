@@ -1,10 +1,8 @@
 import * as crypto from "crypto";
-import * as status from "http-status";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
-import {GroupNotFoundGqlError, NotLoggedInGqlError} from "./errors/graphqlErrors";
 import {GroupNotFoundError} from "./errors/GroupNotFoundError";
 import {InvalidLoginError} from "./errors/InvalidLoginError";
 import {NoActionSpecifiedError} from "./errors/NoActionSpecifiedError";

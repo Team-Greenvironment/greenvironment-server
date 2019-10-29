@@ -1,4 +1,3 @@
-import {AggregateError} from "bluebird";
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import dataaccess from "../lib/dataaccess";
@@ -49,7 +48,7 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No chatId given.");
             }
         },
-        async getGroup({groupId}: {groupId: number}) {
+        async getGroup({groupId}: { groupId: number }) {
             if (groupId) {
                 return models.Group.findByPk(groupId);
             } else {
@@ -57,7 +56,7 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No group id given.");
             }
         },
-        async getRequest({requestId}: {requestId: number}) {
+        async getRequest({requestId}: { requestId: number }) {
             if (requestId) {
                 return models.Request.findByPk(requestId);
             } else {
@@ -253,7 +252,7 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No sender or type given.");
             }
         },
-        async removeFriend({friendId}: {friendId: number}) {
+        async removeFriend({friendId}: { friendId: number }) {
             if (req.session.userId) {
                 const self = await models.User.findByPk(req.session.userId);
                 return await self.removeFriend(friendId);
@@ -262,17 +261,17 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async getPosts({first, offset, sort}: {first: number, offset: number, sort: dataaccess.SortType}) {
+        async getPosts({first, offset, sort}: { first: number, offset: number, sort: dataaccess.SortType }) {
             return await dataaccess.getPosts(first, offset, sort);
         },
-        async createGroup({name, members}: {name: string, members: number[]}) {
+        async createGroup({name, members}: { name: string, members: number[] }) {
             if (req.session.userId) {
                 return await dataaccess.createGroup(name, req.session.userId, members);
             } else {
                 return new NotLoggedInGqlError();
             }
         },
-        async joinGroup({id}: {id: number}) {
+        async joinGroup({id}: { id: number }) {
             if (req.session.userId) {
                 try {
                     return await dataaccess
@@ -286,7 +285,7 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async leaveGroup({id}: {id: number}) {
+        async leaveGroup({id}: { id: number }) {
             if (req.session.userId) {
                 try {
                     return await dataaccess
@@ -300,7 +299,7 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async addGroupAdmin({groupId, userId}: {groupId: number, userId: number}) {
+        async addGroupAdmin({groupId, userId}: { groupId: number, userId: number }) {
             if (req.session.userId) {
                 const group = await models.Group.findByPk(groupId);
                 const self = await models.User.findByPk(req.session.userId);
@@ -321,11 +320,11 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async removeGroupAdmin({groupId, userId}: {groupId: number, userId: number}) {
+        async removeGroupAdmin({groupId, userId}: { groupId: number, userId: number }) {
             if (req.session.userId) {
                 const group = await models.Group.findByPk(groupId);
                 const isCreator = Number(group.creatorId) === Number(req.session.userId);
-                const userIsCreator = Number(group.creatorId) === Number(userId) ;
+                const userIsCreator = Number(group.creatorId) === Number(userId);
                 if (group && !isCreator && Number(userId) !== Number(req.session.userId)) {
                     res.status(status.FORBIDDEN);
                     return new GraphQLError("You are not the group creator!");
@@ -345,7 +344,7 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async createEvent({name, dueDate, groupId}: {name: string, dueDate: string, groupId: number}) {
+        async createEvent({name, dueDate, groupId}: { name: string, dueDate: string, groupId: number }) {
             if (req.session.userId) {
                 const date = new Date(dueDate);
                 const group = await models.Group.findByPk(groupId);
@@ -355,7 +354,7 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async joinEvent({eventId}: {eventId: number}) {
+        async joinEvent({eventId}: { eventId: number }) {
             if (req.session.userId) {
                 const event = await models.Event.findByPk(eventId);
                 const self = await models.User.findByPk(req.session.userId);
@@ -366,7 +365,7 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async leaveEvent({eventId}: {eventId: number}) {
+        async leaveEvent({eventId}: { eventId: number }) {
             if (req.session.userId) {
                 const event = await models.Event.findByPk(eventId);
                 const self = await models.User.findByPk(req.session.userId);
