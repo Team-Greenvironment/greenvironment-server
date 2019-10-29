@@ -144,9 +144,13 @@ export function resolver(req: any, res: any): any {
         async createPost({content}: { content: string }) {
             if (content) {
                 if (req.session.userId) {
-                    const post = await dataaccess.createPost(content, req.session.userId);
-                    globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
-                    return post;
+                    if (content.length > 2048) {
+                        return new GraphQLError("Content too long.");
+                    } else {
+                        const post = await dataaccess.createPost(content, req.session.userId);
+                        globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
+                        return post;
+                    }
                 } else {
                     res.status(status.UNAUTHORIZED);
                     return new NotLoggedInGqlError();
