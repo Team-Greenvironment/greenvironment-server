@@ -1,41 +1,45 @@
 import * as compression from "compression";
-import connectPgSimple = require("connect-pg-simple");
 import * as cookieParser from "cookie-parser";
+import * as cors from "cors";
+import {Request, Response} from "express";
 import * as express from "express";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
 import sharedsession = require("express-socket.io-session");
+import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
 import * as http from "http";
+import * as httpStatus from "http-status";
 import * as path from "path";
+import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import {resolver} from "./graphql/resolvers";
-import dataaccess, {queryHelper} from "./lib/dataaccess";
+import dataaccess from "./lib/dataaccess";
 import globals from "./lib/globals";
 import routes from "./routes";
 
+const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
-
-const PgSession = connectPgSimple(session);
 
 class App {
     public app: express.Application;
     public io: socketIo.Server;
     public server: http.Server;
+    public readonly sequelize: Sequelize;
 
     constructor() {
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
+        this.sequelize = new Sequelize(globals.config.database.connectionUri );
     }
 
     /**
      * initializes everything that needs to be initialized asynchronous.
      */
     public async init() {
-        await dataaccess.init();
-        await routes.ioListeners(this.io);
+        await dataaccess.init(this.sequelize);
 
         const appSession = session({
             cookie: {
@@ -45,11 +49,13 @@ class App {
             resave: false,
             saveUninitialized: false,
             secret: globals.config.session.secret,
-            store: new PgSession({
-                pool: dataaccess.pool,
-                tableName: "user_sessions",
-            }),
+            store: new SequelizeStore({db: this.sequelize}),
         });
+
+        const force = fsx.existsSync("sqz-force");
+        logger.info(`Sequelize Table force: ${force}`);
+        await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
+        await routes.ioListeners(this.io);
 
         this.io.use(sharedsession(appSession, {autoSave: true}));
 
@@ -63,6 +69,9 @@ class App {
         this.app.use(express.static(path.join(__dirname, "public")));
         this.app.use(cookieParser());
         this.app.use(appSession);
+        if (globals.config.server.cors) {
+            this.app.use(cors());
+        }
         this.app.use((req, res, next) => {
             logger.verbose(`${req.method} ${req.url}`);
             next();
@@ -77,6 +86,18 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
+        this.app.use((req: any, res: Response) => {
+            if (globals.config.frontend.angularIndex) {
+                res.sendFile(path.join(__dirname, globals.config.frontend.angularIndex));
+            } else {
+                res.status(httpStatus.NOT_FOUND);
+                res.render("errors/404.pug", {url: req.url});
+            }
+        });
+        this.app.use((err, req: Request, res: Response) => {
+            res.status(httpStatus.INTERNAL_SERVER_ERROR);
+            res.render("errors/500.pug");
+        });
     }
 
     /**

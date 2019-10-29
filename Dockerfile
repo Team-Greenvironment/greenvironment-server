@@ -8,5 +8,4 @@ RUN npm rebuild node-sass
 RUN gulp
 COPY . .
 EXPOSE 8080
-EXPOSE 5432
 CMD ["npm" , "run"]

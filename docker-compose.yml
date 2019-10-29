@@ -1,15 +1,11 @@
 version: "3"
 services:
   greenvironment:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    user: "node"
+    build: .
+    user: "root"
     working_dir: /home/node/green
     environment:
       - NODE_ENV=production
-    volumes:
-      - ./:/home/node/green
     ports:
       - "8080:8080"
     command: "npm start"

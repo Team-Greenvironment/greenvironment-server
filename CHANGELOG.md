@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Connection to Postgres Database
 - Graphql Schema
 - default-config file and generation of config file on startup
 - DTOs
 - Home Route
+- session management
+- Sequelize models and integration
+- Sequelize-typescript integration
+- error pages
+- pagination for most list types
