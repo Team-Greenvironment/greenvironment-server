@@ -87,8 +87,14 @@ export function resolver(req: any, res: any): any {
             }
         },
         logout() {
-            if (req.session.user) {
-                delete req.session.user;
+            if (req.session.userId) {
+                delete req.session.userId;
+                req.session.save((err: any) => {
+                    if (err) {
+                        globals.logger.error(err.message);
+                        globals.logger.debug(err.stack);
+                    }
+                });
                 return true;
             } else {
                 res.status(status.UNAUTHORIZED);
