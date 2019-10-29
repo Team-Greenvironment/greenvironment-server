@@ -18,7 +18,7 @@ import * as models from "./models";
  * @param username
  */
 async function generateHandle(username: string) {
-    username = username.toLowerCase();
+    username = username.toLowerCase().replace(/\s/g, "_");
     const count = await models.User.count({where: {handle: {[sqz.Op.like]: `%${username}%`}}});
     if (count > 0) {
         return `${username}${count}`;
