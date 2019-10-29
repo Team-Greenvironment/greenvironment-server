@@ -87,8 +87,12 @@ class App {
             };
         }));
         this.app.use((req: any, res: Response) => {
-            res.status(httpStatus.NOT_FOUND);
-            res.render("errors/404.pug", {url: req.url});
+            if (globals.config.frontend.angularIndex) {
+                res.sendFile(path.join(__dirname, globals.config.frontend.angularIndex));
+            } else {
+                res.status(httpStatus.NOT_FOUND);
+                res.render("errors/404.pug", {url: req.url});
+            }
         });
         this.app.use((err, req: Request, res: Response) => {
             res.status(httpStatus.INTERNAL_SERVER_ERROR);

@@ -20,3 +20,6 @@ markdown:
 # configuration for logging
 logging:
   level: info
+
+frontend:
+  angularIndex:
