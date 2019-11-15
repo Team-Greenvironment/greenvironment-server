@@ -51,6 +51,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "@types/socket.io-redis": "^1.0.25",
     "compression": "^1.7.4",
     "connect-session-sequelize": "^6.0.0",
     "cookie-parser": "^1.4.4",
@@ -72,6 +73,7 @@
     "sequelize": "^5.19.6",
     "sequelize-typescript": "^1.0.0",
     "socket.io": "^2.2.0",
+    "socket.io-redis": "^5.2.0",
     "sqlite3": "^4.1.0",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.2.1"

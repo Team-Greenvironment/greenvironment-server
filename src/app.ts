@@ -14,6 +14,7 @@ import * as httpStatus from "http-status";
 import * as path from "path";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
+import * as socketIoRedis from "socket.io-redis";
 import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataaccess";
 import globals from "./lib/globals";
@@ -26,9 +27,11 @@ class App {
     public app: express.Application;
     public io: socketIo.Server;
     public server: http.Server;
+    public readonly id?: number;
     public readonly sequelize: Sequelize;
 
-    constructor() {
+    constructor(id?: number) {
+        this.id = id;
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
@@ -56,7 +59,7 @@ class App {
         logger.info(`Sequelize Table force: ${force}`);
         await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
         await routes.ioListeners(this.io);
-
+        this.io.adapter(socketIoRedis());
         this.io.use(sharedsession(appSession, {autoSave: true}));
 
         this.app.set("views", path.join(__dirname, "views"));
@@ -69,6 +72,7 @@ class App {
         this.app.use(express.static(path.join(__dirname, "public")));
         this.app.use(cookieParser());
         this.app.use(appSession);
+        // enable cross origin requests if enabled in the config
         if (globals.config.server.cors) {
             this.app.use(cors());
         }
@@ -77,6 +81,7 @@ class App {
             next();
         });
         this.app.use(routes.router);
+        // listen for graphql requrest
         this.app.use("/graphql",  graphqlHTTP((request, response) => {
             return {
                 // @ts-ignore all
@@ -86,14 +91,28 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
+        // allow access to cluster information
+        this.app.use("/cluster-info", (req: Request, res: Response) => {
+            res.json({
+                id: this.id,
+            });
+        });
+        // redirect all request to the angular file
         this.app.use((req: any, res: Response) => {
             if (globals.config.frontend.angularIndex) {
-                res.sendFile(path.join(__dirname, globals.config.frontend.angularIndex));
+                const angularIndex = path.join(__dirname, globals.config.frontend.angularIndex);
+                if (fsx.existsSync(path.join(angularIndex))) {
+                    res.sendFile(angularIndex);
+                } else {
+                    res.status(httpStatus.NOT_FOUND);
+                    res.render("errors/404.pug", {url: req.url});
+                }
             } else {
                 res.status(httpStatus.NOT_FOUND);
                 res.render("errors/404.pug", {url: req.url});
             }
         });
+        // show an error page for internal errors
         this.app.use((err, req: Request, res: Response) => {
             res.status(httpStatus.INTERNAL_SERVER_ERROR);
             res.render("errors/500.pug");
