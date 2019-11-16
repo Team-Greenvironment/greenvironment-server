@@ -35,7 +35,7 @@ namespace dataaccess {
     /**
      * Initializes everything that needs to be initialized asynchronous.
      */
-    export async function init(seq: Sequelize) {
+    export async function init(seq: Sequelize): Promise<void> {
         sequelize = seq;
         try {
             await sequelize.addModels([
@@ -131,7 +131,7 @@ namespace dataaccess {
      * @param offset
      * @param sort
      */
-    export async function getPosts(first: number, offset: number, sort: SortType) {
+    export async function getPosts(first: number, offset: number, sort: SortType): Promise<models.Post[]> {
         if (sort === SortType.NEW) {
             return models.Post.findAll({
                 include: [{association: "rVotes"}],
@@ -140,6 +140,7 @@ namespace dataaccess {
                 order: [["createdAt", "DESC"]],
             });
         } else {
+            // more performant way to get the votes with plain sql
             return await sequelize.query(
                     `SELECT * FROM (
                  SELECT *,

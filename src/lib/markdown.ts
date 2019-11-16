@@ -20,7 +20,7 @@ namespace markdown {
      * Renders the markdown string inline (without blocks).
      * @param markdownString
      */
-    export function renderInline(markdownString: string) {
+    export function renderInline(markdownString: string): string {
         return md.renderInline(markdownString);
     }
 
@@ -28,7 +28,7 @@ namespace markdown {
      * Renders the markdown string.
      * @param markdownString
      */
-    export function render(markdownString: string) {
+    export function render(markdownString: string): string {
         return md.render(markdownString);
     }
 }

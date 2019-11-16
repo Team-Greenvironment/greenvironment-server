@@ -16,7 +16,7 @@ import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import {resolver} from "./graphql/resolvers";
-import dataaccess from "./lib/dataaccess";
+import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
 import routes from "./routes";
 
@@ -41,12 +41,13 @@ class App {
     /**
      * initializes everything that needs to be initialized asynchronous.
      */
-    public async init() {
+    public async init(): Promise<void> {
         await dataaccess.init(this.sequelize);
 
         const appSession = session({
             cookie: {
                 maxAge: Number(globals.config.session.cookieMaxAge) || 604800000,
+                // @ts-ignore
                 secure: "auto",
             },
             resave: false,
@@ -56,12 +57,14 @@ class App {
         });
 
         const force = fsx.existsSync("sqz-force");
-        logger.info(`Sequelize Table force: ${force}`);
+        logger.info(`Syncinc database. Sequelize Table force: ${force}.`);
         await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
+        logger.info("Setting up socket.io");
         await routes.ioListeners(this.io);
         this.io.adapter(socketIoRedis());
         this.io.use(sharedsession(appSession, {autoSave: true}));
 
+        logger.info("Configuring express app.");
         this.app.set("views", path.join(__dirname, "views"));
         this.app.set("view engine", "pug");
         this.app.set("trust proxy", 1);
@@ -73,11 +76,12 @@ class App {
         this.app.use(cookieParser());
         this.app.use(appSession);
         // enable cross origin requests if enabled in the config
-        if (globals.config.server.cors) {
+        if (globals.config.server?.cors) {
             this.app.use(cors());
         }
         this.app.use((req, res, next) => {
             logger.verbose(`${req.method} ${req.url}`);
+            process.send({cmd: "notifyRequest"});
             next();
         });
         this.app.use(routes.router);
@@ -117,13 +121,14 @@ class App {
             res.status(httpStatus.INTERNAL_SERVER_ERROR);
             res.render("errors/500.pug");
         });
+        logger.info("Server configured.");
     }
 
     /**
      * Starts the web server.
      */
-    public start() {
-        if (globals.config.server.port) {
+    public start(): void {
+        if (globals.config.server?.port) {
             logger.info(`Starting server...`);
             this.app.listen(globals.config.server.port);
             logger.info(`Server running on port ${globals.config.server.port}`);
