@@ -59,6 +59,7 @@ class App {
         const force = fsx.existsSync("sqz-force");
         logger.info(`Syncinc database. Sequelize Table force: ${force}.`);
         await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
+        this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
         await routes.ioListeners(this.io);
         this.io.adapter(socketIoRedis());

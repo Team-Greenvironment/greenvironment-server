@@ -31,22 +31,23 @@ if (cluster.isMaster) {
     }, 1000);
 
     const log = (msg: string) => {
-        process.stdout.write(" ".padEnd(50) + "\r");
+        process.stdout.write(" ".padEnd(100) + "\r");
         process.stdout.write(msg);
         process.stdout.write(
-            `[C] W: ${clusterData.workerCount()}, Rq: ${clusterData.reqCount}, Mem: ${(() => {
+            `W: ${clusterData.workerCount()},R: ${clusterData.reqCount},M: ${(() => {
                 let usageString = "";
                 for (const [key, value] of Object.entries(clusterData.workerRes)) {
-                    usageString += `[${key}] ${
-                        Math.round((value as IResourceUsage).mem.heapUsed / 10000) / 100}MB,`.padEnd(13);
+                    usageString += `${
+                        Math.round((value as IResourceUsage).mem.heapUsed / 100000) / 10}MB,`.padEnd(8);
                 }
                 return usageString;
-            })()}`.padEnd(49) + "\r");
+            })()}`.padEnd(99) + "\r");
     };
     cluster.settings.silent = true;
 
     cluster.on("exit", (worker, code, signal) => {
         log(`[CLUSTER-M] Worker ${worker.process.pid} died!\n`);
+        delete clusterData.workerRes[worker.id];
         log("[CLUSTER-M] Starting new worker\n");
         cluster.fork();
     });
