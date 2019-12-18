@@ -274,7 +274,7 @@ type Post {
     createdAt: String!
 
     "the type of vote the user performed on the post"
-    userVote: VoteType
+    userVote(userId: ID!): VoteType
 }
 
 "represents a request of any type"
