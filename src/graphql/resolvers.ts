@@ -1,11 +1,12 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
-import dataaccess from "../lib/dataaccess";
+import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
+import * as yaml from "js-yaml";
 
 /**
  * Returns the resolvers for the graphql api.
@@ -119,6 +120,22 @@ export function resolver(req: any, res: any): any {
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No username, email or password given.");
+            }
+        },
+        async setUserSettings({settings}: {settings: string}) {
+            if (req.session.userId) {
+                const user = await models.User.findByPk(req.session.userId);
+                try {
+                    user.frontendSettings = yaml.safeLoad(settings);
+                    await user.save();
+                    return user.settings;
+                } catch (err) {
+                    res.status(400);
+                    return new GraphQLError("Invalid settings json.");
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
             }
         },
         async vote({postId, type}: { postId: number, type: dataaccess.VoteType }) {

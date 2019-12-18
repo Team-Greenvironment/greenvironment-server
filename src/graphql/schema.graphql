@@ -37,6 +37,9 @@ type Mutation {
     "Registers the user."
     register(username: String, email: String, passwordHash: String): Profile
 
+    "Sets the user settings to the specified settings string. The settings parameter should be a valid yaml."
+    setUserSettings(settings: String!): String!
+
     "Logout of the user."
     logout: Boolean
 
@@ -247,6 +250,9 @@ type Profile implements UserData {
 
     "the levels of the user depending on the points"
     level: Int!
+
+    "the custom settings for the frontend"
+    settings: String!
 }
 
 "represents a single user post"
@@ -274,7 +280,7 @@ type Post {
     createdAt: String!
 
     "the type of vote the user performed on the post"
-    userVote: VoteType
+    userVote(userId: ID!): VoteType
 }
 
 "represents a request of any type"
