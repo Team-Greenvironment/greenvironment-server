@@ -1,6 +1,6 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
-import dataaccess from "../lib/dataaccess";
+import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";

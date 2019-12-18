@@ -45,14 +45,14 @@ export class Post extends Model<Post> {
     }
 
     public async vote(userId: number, type: VoteType): Promise<VoteType> {
-        type = type || VoteType.UPVOTE;
+        type = type ?? VoteType.UPVOTE;
         let votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
-        let vote = votes[0] || null;
+        let vote = votes[0] ?? null;
         let created = false;
         if (!vote) {
             await this.$add("rVote", userId);
             votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
-            vote = votes[0] || null;
+            vote = votes[0] ?? null;
             created = true;
         }
         if (vote) {
