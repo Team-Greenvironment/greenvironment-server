@@ -49,6 +49,10 @@ export class User extends Model<User> {
     @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
 
+    @NotNull
+    @Column({defaultValue: {}, allowNull: false, type: sqz.JSON})
+    public frontendSettings: any;
+
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
 
@@ -117,6 +121,13 @@ export class User extends Model<User> {
      */
     public get level(): number {
         return Math.ceil(this.rankpoints / 100);
+    }
+
+    /**
+     * returns the settings of the user as a jston string
+     */
+    public get settings(): string {
+        return JSON.stringify(this.getDataValue("frontendSettings"));
     }
 
     /**
