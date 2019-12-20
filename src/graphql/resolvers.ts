@@ -1,12 +1,12 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
+import * as yaml from "js-yaml";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
-import * as yaml from "js-yaml";
 
 /**
  * Returns the resolvers for the graphql api.
