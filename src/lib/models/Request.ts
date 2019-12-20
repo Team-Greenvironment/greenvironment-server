@@ -1,5 +1,5 @@
 import * as sqz from "sequelize";
-import {BelongsTo, Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import {BelongsTo, Column, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import {User} from "./User";
 
 export enum RequestType {
