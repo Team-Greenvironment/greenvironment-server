@@ -24,6 +24,8 @@ pipeline {
                 nodejs(nodeJSInstallationName: 'Node 12.x') {
                     sh 'gulp'
                 }
+                sh '/bin/tar -zcvf greenvironment-server.tar.gz dist'
+                archiveArtifacts artifacts: 'greenvironment-server.tar.gz', fingerprint: true
             }
         }
     }
