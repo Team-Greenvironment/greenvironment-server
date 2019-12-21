@@ -28,5 +28,13 @@ pipeline {
                 archiveArtifacts artifacts: 'greenvironment-server.tar.gz', fingerprint: true
             }
         }
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+                nodejs(nodeJSInstallationName: 'Node 12.x') {
+                    sh 'yarn test'
+                }
+            }
+        }
     }
 }
