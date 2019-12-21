@@ -49,6 +49,10 @@ export class User extends Model<User> {
     @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
 
+    @NotNull
+    @Column({defaultValue: {}, allowNull: false, type: sqz.JSON})
+    public frontendSettings: any;
+
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
 
@@ -120,13 +124,20 @@ export class User extends Model<User> {
     }
 
     /**
+     * returns the settings of the user as a jston string
+     */
+    public get settings(): string {
+        return JSON.stringify(this.getDataValue("frontendSettings"));
+    }
+
+    /**
      * All friends of the user
      * @param first
      * @param offset
      */
     public async friends({first, offset}: { first: number, offset: number }): Promise<User[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rFriendOf", {limit, offset}) as User[];
     }
 
@@ -143,8 +154,8 @@ export class User extends Model<User> {
      * @param offset
      */
     public async chats({first, offset}: { first: number, offset: number }): Promise<ChatRoom[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rChats", {limit, offset}) as ChatRoom[];
     }
 
@@ -170,8 +181,8 @@ export class User extends Model<User> {
     }
 
     public async posts({first, offset}: { first: number, offset: number }): Promise<Post[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rPosts", {limit, offset}) as Post[];
     }
 
@@ -210,8 +221,8 @@ export class User extends Model<User> {
      * @param offset
      */
     public async groups({first, offset}: { first: number, offset: number }): Promise<Group[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rGroups", {limit, offset}) as Group[];
     }
 

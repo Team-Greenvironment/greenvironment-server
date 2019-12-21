@@ -1,5 +1,5 @@
 import * as sqz from "sequelize";
-import {BelongsTo, Column, CreatedAt, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import {BelongsTo, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import markdown from "../markdown";
 import {ChatRoom} from "./ChatRoom";
 import {User} from "./User";

@@ -14,8 +14,9 @@ import * as httpStatus from "http-status";
 import * as path from "path";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
+import * as socketIoRedis from "socket.io-redis";
 import {resolver} from "./graphql/resolvers";
-import dataaccess from "./lib/dataaccess";
+import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
 import routes from "./routes";
 
@@ -26,9 +27,11 @@ class App {
     public app: express.Application;
     public io: socketIo.Server;
     public server: http.Server;
+    public readonly id?: number;
     public readonly sequelize: Sequelize;
 
-    constructor() {
+    constructor(id?: number) {
+        this.id = id;
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
@@ -38,12 +41,13 @@ class App {
     /**
      * initializes everything that needs to be initialized asynchronous.
      */
-    public async init() {
+    public async init(): Promise<void> {
         await dataaccess.init(this.sequelize);
 
         const appSession = session({
             cookie: {
                 maxAge: Number(globals.config.session.cookieMaxAge) || 604800000,
+                // @ts-ignore
                 secure: "auto",
             },
             resave: false,
@@ -53,12 +57,15 @@ class App {
         });
 
         const force = fsx.existsSync("sqz-force");
-        logger.info(`Sequelize Table force: ${force}`);
+        logger.info(`Syncinc database. Sequelize Table force: ${force}.`);
         await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
+        this.sequelize.options.logging = (msg) => logger.silly(msg);
+        logger.info("Setting up socket.io");
         await routes.ioListeners(this.io);
-
+        this.io.adapter(socketIoRedis());
         this.io.use(sharedsession(appSession, {autoSave: true}));
 
+        logger.info("Configuring express app.");
         this.app.set("views", path.join(__dirname, "views"));
         this.app.set("view engine", "pug");
         this.app.set("trust proxy", 1);
@@ -69,14 +76,17 @@ class App {
         this.app.use(express.static(path.join(__dirname, "public")));
         this.app.use(cookieParser());
         this.app.use(appSession);
-        if (globals.config.server.cors) {
+        // enable cross origin requests if enabled in the config
+        if (globals.config.server?.cors) {
             this.app.use(cors());
         }
         this.app.use((req, res, next) => {
             logger.verbose(`${req.method} ${req.url}`);
+            process.send({cmd: "notifyRequest"});
             next();
         });
         this.app.use(routes.router);
+        // listen for graphql requrest
         this.app.use("/graphql",  graphqlHTTP((request, response) => {
             return {
                 // @ts-ignore all
@@ -86,25 +96,40 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
+        // allow access to cluster information
+        this.app.use("/cluster-info", (req: Request, res: Response) => {
+            res.json({
+                id: this.id,
+            });
+        });
+        // redirect all request to the angular file
         this.app.use((req: any, res: Response) => {
             if (globals.config.frontend.angularIndex) {
-                res.sendFile(path.join(__dirname, globals.config.frontend.angularIndex));
+                const angularIndex = path.join(__dirname, globals.config.frontend.angularIndex);
+                if (fsx.existsSync(path.join(angularIndex))) {
+                    res.sendFile(angularIndex);
+                } else {
+                    res.status(httpStatus.NOT_FOUND);
+                    res.render("errors/404.pug", {url: req.url});
+                }
             } else {
                 res.status(httpStatus.NOT_FOUND);
                 res.render("errors/404.pug", {url: req.url});
             }
         });
+        // show an error page for internal errors
         this.app.use((err, req: Request, res: Response) => {
             res.status(httpStatus.INTERNAL_SERVER_ERROR);
             res.render("errors/500.pug");
         });
+        logger.info("Server configured.");
     }
 
     /**
      * Starts the web server.
      */
-    public start() {
-        if (globals.config.server.port) {
+    public start(): void {
+        if (globals.config.server?.port) {
             logger.info(`Starting server...`);
             this.app.listen(globals.config.server.port);
             logger.info(`Server running on port ${globals.config.server.port}`);

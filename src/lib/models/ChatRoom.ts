@@ -1,4 +1,4 @@
-import {BelongsToMany, CreatedAt, HasMany, Model, Table,} from "sequelize-typescript";
+import {BelongsToMany, CreatedAt, HasMany, Model, Table} from "sequelize-typescript";
 import {ChatMember} from "./ChatMember";
 import {ChatMessage} from "./ChatMessage";
 import {User} from "./User";

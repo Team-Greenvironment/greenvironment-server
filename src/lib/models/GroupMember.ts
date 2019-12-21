@@ -1,4 +1,4 @@
-import {Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import {Column, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import {Group} from "./Group";
 import {User} from "./User";
 

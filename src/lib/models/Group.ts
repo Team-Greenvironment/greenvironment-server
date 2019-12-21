@@ -41,14 +41,14 @@ export class Group extends Model<Group> {
     }
 
     public async admins({first, offset}: { first: number, offset: number }): Promise<User[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rAdmins", {limit, offset}) as User[];
     }
 
     public async members({first, offset}: { first: number, offset: number }): Promise<User[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rMembers", {limit, offset}) as User[];
     }
 
@@ -57,8 +57,8 @@ export class Group extends Model<Group> {
     }
 
     public async events({first, offset}: { first: number, offset: number }): Promise<Event[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rEvents", {limit, offset}) as Event[];
     }
 }

@@ -1,5 +1,5 @@
 import * as sqz from "sequelize";
-import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import markdown from "../markdown";
 import {PostVote, VoteType} from "./PostVote";
 import {User} from "./User";
@@ -44,15 +44,20 @@ export class Post extends Model<Post> {
         return (await this.votes()).filter((v) => v.PostVote.voteType === VoteType.DOWNVOTE).length;
     }
 
+    /**
+     * Toggles the vote of the user.
+     * @param userId
+     * @param type
+     */
     public async vote(userId: number, type: VoteType): Promise<VoteType> {
-        type = type || VoteType.UPVOTE;
+        type = type ?? VoteType.UPVOTE;
         let votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
-        let vote = votes[0] || null;
+        let vote = votes[0] ?? null;
         let created = false;
         if (!vote) {
             await this.$add("rVote", userId);
             votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
-            vote = votes[0] || null;
+            vote = votes[0] ?? null;
             created = true;
         }
         if (vote) {
@@ -66,5 +71,14 @@ export class Post extends Model<Post> {
         }
 
         return vote.PostVote.voteType;
+    }
+
+    /**
+     * Returns the type of vote that was performend on the post by the user specified by the user id.
+     * @param userId
+     */
+    public async userVote({userId}: {userId: number}): Promise<VoteType> {
+        const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+        return votes[0]?.PostVote?.voteType;
     }
 }
