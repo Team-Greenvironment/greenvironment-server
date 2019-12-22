@@ -25,6 +25,9 @@ type Query {
 
     "returns the post filtered by the sort type with pagination."
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
+
+    "Returns an access token for the user that can be used in requests. To user the token in requests, it has to be set in the HTTP header 'Authorization' with the format Bearer <token>."
+    getToken(email: String!, passwordHash: String!): Token!
 }
 
 type Mutation {
@@ -32,10 +35,13 @@ type Mutation {
     acceptCookies: Boolean
 
     "Login of the user. The passwordHash should be a sha512 hash of the password."
-    login(email: String, passwordHash: String): Profile
+    login(email: String!, passwordHash: String!): Profile
 
     "Registers the user."
     register(username: String, email: String, passwordHash: String): Profile
+
+    "Sets the user settings to the specified settings string. The settings parameter should be a valid yaml."
+    setUserSettings(settings: String!): String!
 
     "Logout of the user."
     logout: Boolean
@@ -247,6 +253,9 @@ type Profile implements UserData {
 
     "the levels of the user depending on the points"
     level: Int!
+
+    "the custom settings for the frontend"
+    settings: String!
 }
 
 "represents a single user post"
@@ -274,7 +283,7 @@ type Post {
     createdAt: String!
 
     "the type of vote the user performed on the post"
-    userVote: VoteType
+    userVote(userId: ID!): VoteType
 }
 
 "represents a request of any type"
@@ -366,6 +375,12 @@ type Event {
 
     "The participants of the event."
     participants(first: Int=10, offset: Int=0): [User!]!
+}
+
+"respresents an access token entry with the value as the acutal token and expires as the date the token expires."
+type Token {
+    value: String!
+    expires: String!
 }
 
 "represents the type of vote performed on a post"

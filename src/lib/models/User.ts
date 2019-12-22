@@ -10,6 +10,7 @@ import {
     Unique,
     UpdatedAt,
 } from "sequelize-typescript";
+import * as uuidv4 from "uuid/v4";
 import {RequestNotFoundError} from "../errors/RequestNotFoundError";
 import {UserNotFoundError} from "../errors/UserNotFoundError";
 import {ChatMember} from "./ChatMember";
@@ -48,6 +49,17 @@ export class User extends Model<User> {
     @NotNull
     @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
+
+    @NotNull
+    @Column({defaultValue: {}, allowNull: false, type: sqz.JSON})
+    public frontendSettings: any;
+
+    @Unique
+    @Column({defaultValue: uuidv4, unique: true})
+    public authToken: string;
+
+    @Column({defaultValue: () => Date.now() + 7200000})
+    public authExpire: Date;
 
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
@@ -120,13 +132,32 @@ export class User extends Model<User> {
     }
 
     /**
+     * returns the settings of the user as a jston string
+     */
+    public get settings(): string {
+        return JSON.stringify(this.getDataValue("frontendSettings"));
+    }
+
+    /**
+     * Returns the token for the user that can be used as a bearer in requests
+     */
+    public async token(): Promise<string> {
+        if (this.getDataValue("authExpire") < new Date(Date.now())) {
+            this.authToken = null;
+            this.authExpire = null;
+            await this.save();
+        }
+        return this.getDataValue("authToken");
+    }
+
+    /**
      * All friends of the user
      * @param first
      * @param offset
      */
     public async friends({first, offset}: { first: number, offset: number }): Promise<User[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rFriendOf", {limit, offset}) as User[];
     }
 
@@ -143,8 +174,8 @@ export class User extends Model<User> {
      * @param offset
      */
     public async chats({first, offset}: { first: number, offset: number }): Promise<ChatRoom[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rChats", {limit, offset}) as ChatRoom[];
     }
 
@@ -170,8 +201,8 @@ export class User extends Model<User> {
     }
 
     public async posts({first, offset}: { first: number, offset: number }): Promise<Post[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rPosts", {limit, offset}) as Post[];
     }
 
@@ -210,8 +241,8 @@ export class User extends Model<User> {
      * @param offset
      */
     public async groups({first, offset}: { first: number, offset: number }): Promise<Group[]> {
-        const limit = first || 10;
-        offset = offset || 0;
+        const limit = first ?? 10;
+        offset = offset ?? 0;
         return await this.$get("rGroups", {limit, offset}) as Group[];
     }
 

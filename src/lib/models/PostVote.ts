@@ -1,5 +1,5 @@
 import * as sqz from "sequelize";
-import {Column, ForeignKey, Model, NotNull, Table,} from "sequelize-typescript";
+import {Column, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import {Post} from "./Post";
 import {User} from "./User";
 

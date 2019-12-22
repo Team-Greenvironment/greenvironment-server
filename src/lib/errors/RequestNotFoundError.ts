@@ -1,4 +1,4 @@
-import dataaccess from "../dataaccess";
+import dataaccess from "../dataAccess";
 import {BaseError} from "./BaseError";
 
 export class RequestNotFoundError extends BaseError {

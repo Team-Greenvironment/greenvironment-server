@@ -1,12 +1,13 @@
 import {EventEmitter} from "events";
 import * as fsx from "fs-extra";
 import * as yaml from "js-yaml";
+import * as path from "path";
 import * as winston from "winston";
 
 require("winston-daily-rotate-file");
 
 const configPath = "config.yaml";
-const defaultConfig = __dirname + "/../default-config.yaml";
+const defaultConfig = path.join(__dirname, "/../default-config.yaml");
 
 // ensure that the config exists by copying the default config.
 if (!(fsx.pathExistsSync(configPath))) {
@@ -21,9 +22,9 @@ if (!(fsx.pathExistsSync(configPath))) {
  * Defines global variables to be used.
  */
 namespace globals {
-    export const config = yaml.safeLoad(fsx.readFileSync("config.yaml", "utf-8"));
+    export const config: IConfig = yaml.safeLoad(fsx.readFileSync("config.yaml", "utf-8"));
     // @ts-ignore
-    export const logger = winston.createLogger({
+    export const logger: winston.Logger = winston.createLogger({
         transports: [
             new winston.transports.Console({
                 format: winston.format.combine(
@@ -33,7 +34,7 @@ namespace globals {
                         return `${timestamp} ${level}: ${message}`;
                     }),
                 ),
-                level: config.logging.level,
+                level: config.logging?.level ?? "info",
             }),
             // @ts-ignore
             new (winston.transports.DailyRotateFile)({
@@ -46,13 +47,13 @@ namespace globals {
                     }),
                 ),
                 json: false,
-                level: config.logging.level,
+                level: config.logging?.level ?? "info",
                 maxFiles: "7d",
                 zippedArchive: true,
             }),
         ],
     });
-    export const internalEmitter = new EventEmitter();
+    export const internalEmitter: EventEmitter = new EventEmitter();
 }
 
 export default globals;

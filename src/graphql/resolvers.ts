@@ -1,6 +1,7 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
-import dataaccess from "../lib/dataaccess";
+import * as yaml from "js-yaml";
+import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
@@ -100,6 +101,23 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
+        async getToken({email, passwordHash}: {email: string, passwordHash: string}) {
+            if (email && passwordHash) {
+                try {
+                    const user = await dataaccess.getUserByLogin(email, passwordHash);
+                    return {
+                        expires: Number(user.authExpire),
+                        value: user.token(),
+                    };
+                } catch (err) {
+                    res.status(400);
+                    return err.graphqlError;
+                }
+            } else {
+                res.status(400);
+                return new GraphQLError("No email or password specified.");
+            }
+        },
         async register({username, email, passwordHash}: { username: string, email: string, passwordHash: string }) {
             if (username && email && passwordHash) {
                 if (!is.email(email)) {
@@ -119,6 +137,22 @@ export function resolver(req: any, res: any): any {
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No username, email or password given.");
+            }
+        },
+        async setUserSettings({settings}: {settings: string}) {
+            if (req.session.userId) {
+                const user = await models.User.findByPk(req.session.userId);
+                try {
+                    user.frontendSettings = yaml.safeLoad(settings);
+                    await user.save();
+                    return user.settings;
+                } catch (err) {
+                    res.status(400);
+                    return new GraphQLError("Invalid settings json.");
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
             }
         },
         async vote({postId, type}: { postId: number, type: dataaccess.VoteType }) {
