@@ -10,6 +10,7 @@ import {
     Unique,
     UpdatedAt,
 } from "sequelize-typescript";
+import * as uuidv4 from "uuid/v4";
 import {RequestNotFoundError} from "../errors/RequestNotFoundError";
 import {UserNotFoundError} from "../errors/UserNotFoundError";
 import {ChatMember} from "./ChatMember";
@@ -52,6 +53,13 @@ export class User extends Model<User> {
     @NotNull
     @Column({defaultValue: {}, allowNull: false, type: sqz.JSON})
     public frontendSettings: any;
+
+    @Unique
+    @Column({defaultValue: uuidv4, unique: true})
+    public authToken: string;
+
+    @Column({defaultValue: () => Date.now() + 7200000})
+    public authExpire: Date;
 
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
@@ -128,6 +136,18 @@ export class User extends Model<User> {
      */
     public get settings(): string {
         return JSON.stringify(this.getDataValue("frontendSettings"));
+    }
+
+    /**
+     * Returns the token for the user that can be used as a bearer in requests
+     */
+    public async token(): Promise<string> {
+        if (this.getDataValue("authExpire") < new Date(Date.now())) {
+            this.authToken = null;
+            this.authExpire = null;
+            await this.save();
+        }
+        return this.getDataValue("authToken");
     }
 
     /**

@@ -24,22 +24,37 @@ export class Post extends Model<Post> {
     @CreatedAt
     public readonly createdAt!: Date;
 
+    /**
+     * Returns the author of a post
+     */
     public async author(): Promise<User> {
         return await this.$get("rAuthor") as User;
     }
 
+    /**
+     * Returns the votes on a post
+     */
     public async votes(): Promise<Array<User & {PostVote: PostVote}>> {
         return await this.$get("rVotes") as Array<User & {PostVote: PostVote}>;
     }
 
+    /**
+     * Returns the markdown-rendered html content of the post
+     */
     public get htmlContent() {
         return markdown.render(this.getDataValue("content"));
     }
 
+    /**
+     * Returns the number of upvotes on the post
+     */
     public async upvotes() {
         return (await this.votes()).filter((v) => v.PostVote.voteType === VoteType.UPVOTE).length;
     }
 
+    /**
+     * Returns the number of downvotes on the post
+     */
     public async downvotes() {
         return (await this.votes()).filter((v) => v.PostVote.voteType === VoteType.DOWNVOTE).length;
     }
