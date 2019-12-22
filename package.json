@@ -54,6 +54,7 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
+    "@types/uuid": "^3.4.6",
     "compression": "^1.7.4",
     "connect-session-sequelize": "^6.0.0",
     "cookie-parser": "^1.4.4",
@@ -77,6 +78,7 @@
     "socket.io": "^2.2.0",
     "socket.io-redis": "^5.2.0",
     "sqlite3": "^4.1.0",
+    "uuid": "^3.3.3",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.2.1"
   }
