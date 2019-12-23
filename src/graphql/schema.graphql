@@ -17,11 +17,8 @@ type Query {
     "returns the request object for its id"
     getRequest(requestId: ID!): Request
 
-    "find a post by the posted date or content"
-    findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
-
     "find a user by user name or handle"
-    findUser(first: Int, offset: Int, name: String, handle: String): [User]
+    findUser(first: Int = 20, offset: Int = 0, name: String, handle: String): [User]
 
     "returns the post filtered by the sort type with pagination."
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]

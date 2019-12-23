@@ -7,6 +7,7 @@ import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
+import {Op} from "sequelize";
 
 /**
  * Returns the resolvers for the graphql api.
@@ -15,6 +16,17 @@ import {is} from "../lib/regex";
  */
 export function resolver(req: any, res: any): any {
     return {
+        async findUser({first, offset, name, handle}:
+                           {first: number, offset: number, name: string, handle: string}) {
+            if (name) {
+                return models.User.findAll({where: {username: {[Op.like]: `%${name}%`}}, offset, limit: first});
+            } else if (handle) {
+                return models.User.findAll({where: {handle: {[Op.like]: `%${handle}%`}}, offset, limit: first});
+            } else {
+                res.status(status.BAD_REQUEST);
+                return new GraphQLError("No search parameters provided.");
+            }
+        },
         async getSelf() {
             if (req.session.userId) {
                 return models.User.findByPk(req.session.userId);
