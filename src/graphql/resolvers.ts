@@ -113,6 +113,23 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
+        async getToken({email, passwordHash}: {email: string, passwordHash: string}) {
+            if (email && passwordHash) {
+                try {
+                    const user = await dataaccess.getUserByLogin(email, passwordHash);
+                    return {
+                        expires: Number(user.authExpire),
+                        value: user.token(),
+                    };
+                } catch (err) {
+                    res.status(400);
+                    return err.graphqlError;
+                }
+            } else {
+                res.status(400);
+                return new GraphQLError("No email or password specified.");
+            }
+        },
         async register({username, email, passwordHash}: { username: string, email: string, passwordHash: string }) {
             if (username && email && passwordHash) {
                 if (!is.email(email)) {
