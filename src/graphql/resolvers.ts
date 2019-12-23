@@ -1,6 +1,7 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import * as yaml from "js-yaml";
+import {Op} from "sequelize";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
@@ -15,6 +16,17 @@ import {is} from "../lib/regex";
  */
 export function resolver(req: any, res: any): any {
     return {
+        async findUser({first, offset, name, handle}:
+                           {first: number, offset: number, name: string, handle: string}) {
+            if (name) {
+                return models.User.findAll({where: {username: {[Op.like]: `%${name}%`}}, offset, limit: first});
+            } else if (handle) {
+                return models.User.findAll({where: {handle: {[Op.like]: `%${handle}%`}}, offset, limit: first});
+            } else {
+                res.status(status.BAD_REQUEST);
+                return new GraphQLError("No search parameters provided.");
+            }
+        },
         async getSelf() {
             if (req.session.userId) {
                 return models.User.findByPk(req.session.userId);

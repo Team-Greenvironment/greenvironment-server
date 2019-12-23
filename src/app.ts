@@ -35,7 +35,7 @@ class App {
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
-        this.sequelize = new Sequelize(globals.config.database.connectionUri );
+        this.sequelize = new Sequelize(globals.config.database.connectionUri);
     }
 
     /**
@@ -94,11 +94,10 @@ class App {
         });
         this.app.use((req, res, next) => {
             logger.verbose(`${req.method} ${req.url}`);
-            process.send({cmd: "notifyRequest"});
             next();
         });
         this.app.use(routes.router);
-        // listen for graphql requrest
+        // listen for graphql requests
         this.app.use("/graphql",  graphqlHTTP((request, response) => {
             return {
                 // @ts-ignore all
