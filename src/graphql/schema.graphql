@@ -17,8 +17,11 @@ type Query {
     "returns the request object for its id"
     getRequest(requestId: ID!): Request
 
-    "find a user by user name or handle"
+    "DEPRECATED! Find a user by user name or handle"
     findUser(first: Int = 20, offset: Int = 0, name: String, handle: String): [User]
+
+    "searches for users, groups, events, posts and returns a search result"
+    search(query: String!, first: Int = 20, offset: Int = 0): SearchResult!
 
     "returns the post filtered by the sort type with pagination."
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
@@ -376,8 +379,26 @@ type Event {
 
 "respresents an access token entry with the value as the acutal token and expires as the date the token expires."
 type Token {
+    "The token itself."
     value: String!
+
+    "The timestamp when the token expires."
     expires: String!
+}
+
+"The result of a search."
+type SearchResult {
+    "The users that were found in the search."
+    users: [User!]!
+
+    "The posts that were found in the search."
+    posts: [Post!]!
+
+    "The groups that were found in the search."
+    groups: [Group!]!
+
+    "The events that were found in the search."
+    events: [Event!]!
 }
 
 "represents the type of vote performed on a post"
