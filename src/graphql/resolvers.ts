@@ -9,6 +9,10 @@ import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
 
+class Resolver {
+
+}
+
 /**
  * Returns the resolvers for the graphql api.
  * @param req - the request object
@@ -16,8 +20,38 @@ import {is} from "../lib/regex";
  */
 export function resolver(req: any, res: any): any {
     return {
+        async search({first, offset, query}: { first: number, offset: number, query: string }) {
+            const limit = first;
+            const users = await models.User.findAll({
+                limit,
+                offset,
+                where: {
+                    [Op.or]: [
+                        {handle: {[Op.iRegexp]: query}},
+                        {username: {[Op.iRegexp]: query}},
+                    ],
+                },
+            });
+            const groups = await models.Group.findAll({
+                limit,
+                offset,
+                where: {name: {[Op.iRegexp]: query}},
+            });
+            const posts = await models.Post.findAll({
+                limit,
+                offset,
+                where: {content: {[Op.iRegexp]: query}},
+            });
+            const events = await models.Event.findAll({
+                limit,
+                offset,
+                where: {name: {[Op.iRegexp]: query}},
+            });
+            return {users, posts, groups, events};
+        },
         async findUser({first, offset, name, handle}:
-                           {first: number, offset: number, name: string, handle: string}) {
+                           { first: number, offset: number, name: string, handle: string }) {
+            res.status(status.MOVED_PERMANENTLY);
             if (name) {
                 return models.User.findAll({where: {username: {[Op.like]: `%${name}%`}}, offset, limit: first});
             } else if (handle) {
@@ -113,7 +147,7 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async getToken({email, passwordHash}: {email: string, passwordHash: string}) {
+        async getToken({email, passwordHash}: { email: string, passwordHash: string }) {
             if (email && passwordHash) {
                 try {
                     const user = await dataaccess.getUserByLogin(email, passwordHash);
@@ -151,7 +185,7 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No username, email or password given.");
             }
         },
-        async setUserSettings({settings}: {settings: string}) {
+        async setUserSettings({settings}: { settings: string }) {
             if (req.session.userId) {
                 const user = await models.User.findByPk(req.session.userId);
                 try {
@@ -392,7 +426,7 @@ export function resolver(req: any, res: any): any {
         },
         async createEvent({name, dueDate, groupId}: { name: string, dueDate: string, groupId: number }) {
             if (req.session.userId) {
-                const date = new Date(dueDate);
+                const date = new Date(Number(dueDate));
                 const group = await models.Group.findByPk(groupId);
                 return group.$create<models.Event>("rEvent", {name, dueDate: date});
             } else {

@@ -80,15 +80,20 @@ class App {
         if (globals.config.server?.cors) {
             this.app.use(cors());
         }
-        // handle authentification via bearer in the Authorization header
+        // handle authentication via bearer in the Authorization header
         this.app.use(async (req, res, next) => {
-            if (!req.session.userId && req.headers.authorization) {
-                const bearer = req.headers.authorization.split("Bearer ")[1];
-                if (bearer) {
-                    const user = await dataaccess.getUserByToken(bearer);
-                    // @ts-ignore
-                    req.session.userId = user.id;
+            try {
+                if (!req.session.userId && req.headers.authorization) {
+                    const bearer = req.headers.authorization.split("Bearer ")[1];
+                    if (bearer) {
+                        const user = await dataaccess.getUserByToken(bearer);
+                        // @ts-ignore
+                        req.session.userId = user.id;
+                    }
                 }
+            } catch (err) {
+                logger.error(err.message);
+                logger.debug(err.stack);
             }
             next();
         });
