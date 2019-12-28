@@ -59,7 +59,7 @@ type Mutation {
     acceptRequest(sender: ID!, type: RequestType): Boolean
 
     "lets you deny a request for a given request id"
-    denyRequest(requestId: ID!): Boolean
+    denyRequest(sender: ID!, type: RequestType): Boolean
 
     "removes a friend"
     removeFriend(friendId: ID!): Boolean
