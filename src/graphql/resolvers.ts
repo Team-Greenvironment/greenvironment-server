@@ -241,7 +241,10 @@ export function resolver(req: any, res: any): any {
         },
         async deletePost({postId}: { postId: number }) {
             if (postId) {
-                const post = await models.Post.findByPk(postId, {include: [models.User]});
+                const post = await models.Post.findByPk(postId, {include: [{
+                        as: "rAuthor",
+                        model: models.User,
+                }]});
                 if (post.rAuthor.id === req.session.userId) {
                     return await dataaccess.deletePost(post.id);
                 } else {
