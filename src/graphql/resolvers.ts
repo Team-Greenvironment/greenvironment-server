@@ -125,7 +125,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -156,11 +156,11 @@ export function resolver(req: any, res: any): any {
                         value: user.token(),
                     };
                 } catch (err) {
-                    res.status(400);
-                    return err.graphqlError;
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
-                res.status(400);
+                res.status(status.BAD_REQUEST);
                 return new GraphQLError("No email or password specified.");
             }
         },
@@ -178,7 +178,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -193,7 +193,7 @@ export function resolver(req: any, res: any): any {
                     await user.save();
                     return user.settings;
                 } catch (err) {
-                    res.status(400);
+                    res.status(status.BAD_REQUEST);
                     return new GraphQLError("Invalid settings json.");
                 }
             } else {
@@ -281,7 +281,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -294,7 +294,12 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
             if (receiver && type) {
-                return await dataaccess.createRequest(req.session.userId, receiver, type);
+                try {
+                    return await dataaccess.createRequest(req.session.userId, receiver, type);
+                } catch (err) {
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError ?? new GraphQLError(err.message);
+                }
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No receiver or type given.");
@@ -328,7 +333,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -349,7 +354,12 @@ export function resolver(req: any, res: any): any {
         },
         async createGroup({name, members}: { name: string, members: number[] }) {
             if (req.session.userId) {
-                return await dataaccess.createGroup(name, req.session.userId, members);
+                try {
+                    return await dataaccess.createGroup(name, req.session.userId, members);
+                } catch (err) {
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError ?? new GraphQLError(err.message);
+                }
             } else {
                 return new NotLoggedInGqlError();
             }
@@ -361,7 +371,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(id, req.session.userId, dataaccess.MembershipChangeAction.ADD);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -375,7 +385,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(id, req.session.userId, dataaccess.MembershipChangeAction.REMOVE);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -395,7 +405,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.OP);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
 
             } else {
@@ -420,7 +430,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.DEOP);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
