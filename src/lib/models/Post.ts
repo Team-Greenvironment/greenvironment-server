@@ -101,7 +101,7 @@ export class Post extends Model<Post> {
      * Returns if the post can be deleted by the user with the given id.
      * @param userId
      */
-    public async deleteable({userId}: {userId: number}): Promise<boolean> {
+    public async deletable({userId}: {userId: number}): Promise<boolean> {
         return Number(userId) === Number(this.authorId);
     }
 }
