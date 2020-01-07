@@ -286,7 +286,7 @@ type Post {
     userVote(userId: ID!): VoteType
 
     "if the post can be deleted by the specified user"
-    deleteable(userId: ID!): Boolean
+    deletable(userId: ID!): Boolean
 }
 
 "represents a request of any type"
