@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - findUser not being implemented
 - style issues
 - graphql schema for denyRequest using the wrong parameters
+- sendRequest allowing duplicates
+
+### Added
+
+- Added `deleteable' field on post
 
 
 ## [0.9] - 2019-10-29

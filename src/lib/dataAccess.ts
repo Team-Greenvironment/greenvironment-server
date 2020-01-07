@@ -2,7 +2,9 @@ import * as crypto from "crypto";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
+import {DuplicatedRequestError} from "./errors/DuplicatedRequestError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
+import {GroupAlreadyExistsError} from "./errors/GroupAlreadyExistsError";
 import {GroupNotFoundError} from "./errors/GroupNotFoundError";
 import {InvalidLoginError} from "./errors/InvalidLoginError";
 import {NoActionSpecifiedError} from "./errors/NoActionSpecifiedError";
@@ -231,9 +233,16 @@ namespace dataaccess {
     export async function createRequest(sender: number, receiver: number, requestType?: RequestType) {
         requestType = requestType || RequestType.FRIENDREQUEST;
 
-        const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
-        globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, request);
-        return request;
+        const requestExists = !!await models.Request.findOne({where:
+                {senderId: sender, receiverId: receiver, requestType}});
+
+        if (!requestExists) {
+            const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
+            globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, request);
+            return request;
+        } else {
+            throw new DuplicatedRequestError();
+        }
     }
 
     /**
@@ -243,19 +252,25 @@ namespace dataaccess {
      * @param members
      */
     export async function createGroup(name: string, creator: number, members: number[]): Promise<models.Group> {
-        members = members || [];
-        return sequelize.transaction(async (t) => {
-            members.push(creator);
-            const groupChat = await createChat(...members);
-            const group = await models.Group.create({name, creatorId: creator, chatId: groupChat.id}, {transaction: t});
-            const creatorUser = await models.User.findByPk(creator, {transaction: t});
-            await group.$add("rAdmins", creatorUser, {transaction: t});
-            for (const member of members) {
-                const user = await models.User.findByPk(member, {transaction: t});
-                await group.$add("rMembers", user, {transaction: t});
-            }
-            return group;
-        });
+        const groupNameExists = !!await models.Group.findOne({where: {name}});
+        if (!groupNameExists) {
+            members = members || [];
+            return sequelize.transaction(async (t) => {
+                members.push(creator);
+                const groupChat = await createChat(...members);
+                const group = await models.Group
+                    .create({name, creatorId: creator, chatId: groupChat.id}, {transaction: t});
+                const creatorUser = await models.User.findByPk(creator, {transaction: t});
+                await group.$add("rAdmins", creatorUser, {transaction: t});
+                for (const member of members) {
+                    const user = await models.User.findByPk(member, {transaction: t});
+                    await group.$add("rMembers", user, {transaction: t});
+                }
+                return group;
+            });
+        } else {
+            throw new GroupAlreadyExistsError(name);
+        }
     }
 
     /**

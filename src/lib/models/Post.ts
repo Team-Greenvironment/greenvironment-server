@@ -96,4 +96,12 @@ export class Post extends Model<Post> {
         const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
         return votes[0]?.PostVote?.voteType;
     }
+
+    /**
+     * Returns if the post can be deleted by the user with the given id.
+     * @param userId
+     */
+    public async deleteable({userId}: {userId: number}): Promise<boolean> {
+        return Number(userId) === Number(this.authorId);
+    }
 }
