@@ -3,6 +3,8 @@ import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import {Request, Response} from "express";
 import * as express from "express";
+import {UploadedFile} from "express-fileupload";
+import * as fileUpload from "express-fileupload";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
 import sharedsession = require("express-socket.io-session");
@@ -13,6 +15,7 @@ import * as http from "http";
 import * as httpStatus from "http-status";
 import * as path from "path";
 import {Sequelize} from "sequelize-typescript";
+import * as sharp from "sharp";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import {resolver} from "./graphql/resolvers";
@@ -22,6 +25,7 @@ import routes from "./routes";
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
+const dataDir = path.join(__dirname, "public/data");
 
 class App {
     public app: express.Application;
@@ -112,6 +116,29 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
+        this.app.use("/upload", fileUpload());
+        this.app.use("/upload", async (req, res) => {
+            const profilePic = req.files.profilePicture as UploadedFile;
+            let success = false;
+            let fileName = undefined;
+            if (profilePic && req.session.userId) {
+                const dir = path.join(dataDir, "profilePictures");
+                await fsx.ensureDir(dir);
+                await sharp(profilePic.data)
+                    .resize(512, 512)
+                    .normalise()
+                    .png()
+                    .toFile(path.join(dir, req.session.userId + ".png"));
+                success = true;
+                fileName = `/data/profilePictures/${req.session.userId}.png`;
+            } else {
+                res.status(400);
+            }
+            res.json({
+                fileName,
+                success,
+            });
+        });
         // allow access to cluster information
         this.app.use("/cluster-info", (req: Request, res: Response) => {
             res.json({

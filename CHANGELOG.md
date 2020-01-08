@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `deletable' field on post
 - Admin field that for admin users
 - ability for admins to delete posts
+- ability to upload file at `/upload` with the name profilePicture
 
 ### Removed
 
