@@ -102,6 +102,11 @@ export class Post extends Model<Post> {
      * @param userId
      */
     public async deletable({userId}: {userId: number}): Promise<boolean> {
-        return Number(userId) === Number(this.authorId);
+
+        const isAuthor =  Number(userId) === Number(this.authorId);
+        if (!isAuthor) {
+            return (await User.findOne({where: {id: userId}})).isAdmin;
+        }
+        return isAuthor;
     }
 }

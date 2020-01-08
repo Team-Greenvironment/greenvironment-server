@@ -61,6 +61,10 @@ export class User extends Model<User> {
     @Column({defaultValue: () => Date.now() + 7200000})
     public authExpire: Date;
 
+    @NotNull
+    @Column({defaultValue: false, allowNull: false})
+    public isAdmin: boolean;
+
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
 

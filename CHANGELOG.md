@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - worker initialization error handling
 - bearer token authentification for testing purposes
 - Added `deletable' field on post
+- Admin field that for admin users
+- ability for admins to delete posts
 
 ### Removed
 
