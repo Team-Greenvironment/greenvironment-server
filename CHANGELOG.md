@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed the running behaviour to run in cluster threads via node.js cluster api
 - gql field userVote requires a userId
 - default findUser param limit to 20
+- only group admins can create group events
 
 ### Fixed
 

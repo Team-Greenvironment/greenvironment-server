@@ -441,8 +441,13 @@ export function resolver(req: any, res: any): any {
         async createEvent({name, dueDate, groupId}: { name: string, dueDate: string, groupId: number }) {
             if (req.session.userId) {
                 const date = new Date(Number(dueDate));
-                const group = await models.Group.findByPk(groupId);
-                return group.$create<models.Event>("rEvent", {name, dueDate: date});
+                const group = await models.Group.findByPk(groupId, {include: [{association: "rAdmins"}]});
+                if (group.rAdmins.find((x) => x.id === req.session.userId)) {
+                    return group.$create<models.Event>("rEvent", {name, dueDate: date});
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not a group admin!");
+                }
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
