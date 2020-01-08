@@ -4,6 +4,8 @@ import * as yaml from "js-yaml";
 import {Op} from "sequelize";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
+import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
+import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
@@ -151,10 +153,15 @@ export function resolver(req: any, res: any): any {
             if (email && passwordHash) {
                 try {
                     const user = await dataaccess.getUserByLogin(email, passwordHash);
-                    return {
-                        expires: Number(user.authExpire),
-                        value: user.token(),
-                    };
+                    if (!user) {
+                        res.status(status.BAD_REQUEST);
+                        return new InvalidLoginError(email);
+                    } else {
+                        return {
+                            expires: Number(user.authExpire),
+                            value: user.token(),
+                        };
+                    }
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
                     return err.graphqlError ?? new GraphQLError(err.message);
