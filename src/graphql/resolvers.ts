@@ -245,7 +245,8 @@ export function resolver(req: any, res: any): any {
                         as: "rAuthor",
                         model: models.User,
                 }]});
-                if (post.rAuthor.id === req.session.userId) {
+                const isAdmin = (await models.User.findOne({where: {id: req.session.userId}})).isAdmin;
+                if (post.rAuthor.id === req.session.userId || isAdmin) {
                     return await dataaccess.deletePost(post.id);
                 } else {
                     res.status(status.FORBIDDEN);

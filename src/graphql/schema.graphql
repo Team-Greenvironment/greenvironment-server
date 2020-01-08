@@ -256,6 +256,9 @@ type Profile implements UserData {
 
     "the custom settings for the frontend"
     settings: String!
+
+    "if the user is an admin"
+    isAdmin: Boolean
 }
 
 "represents a single user post"
