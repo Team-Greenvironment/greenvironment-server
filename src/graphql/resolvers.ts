@@ -258,7 +258,12 @@ export function resolver(req: any, res: any): any {
                 }]});
                 const isAdmin = (await models.User.findOne({where: {id: req.session.userId}})).isAdmin;
                 if (post.rAuthor.id === req.session.userId || isAdmin) {
-                    return await dataaccess.deletePost(post.id);
+                    try {
+                        return await dataaccess.deletePost(post.id);
+                    } catch (err) {
+                        res.status(status.BAD_REQUEST);
+                        return err.graphqlError ?? new GraphQLError(err.message);
+                    }
                 } else {
                     res.status(status.FORBIDDEN);
                     return new GraphQLError("User is not author of the post.");
