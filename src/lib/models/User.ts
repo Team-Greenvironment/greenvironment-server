@@ -207,18 +207,15 @@ export class User extends Model<User> {
         return await this.$get("rReceivedRequests") as Request[];
     }
 
+    /**
+     * a list of posts the user has created
+     * @param first
+     * @param offset
+     */
     public async posts({first, offset}: { first: number, offset: number }): Promise<Post[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
         return await this.$get("rPosts", {limit, offset}) as Post[];
-    }
-
-    /**
-     * @deprecated
-     * use {@link postCount} instead
-     */
-    public async numberOfPosts(): Promise<number> {
-        return this.postCount();
     }
 
     /**

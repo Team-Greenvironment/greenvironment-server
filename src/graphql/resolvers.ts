@@ -5,7 +5,6 @@ import {Op} from "sequelize";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
-import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
@@ -227,15 +226,20 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No postId or type given.");
             }
         },
-        async createPost({content}: { content: string }) {
+        async createPost({content, activityId}: { content: string, activityId: number }) {
             if (content) {
                 if (req.session.userId) {
                     if (content.length > 2048) {
                         return new GraphQLError("Content too long.");
                     } else {
-                        const post = await dataaccess.createPost(content, req.session.userId);
-                        globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
-                        return post;
+                        try {
+                            const post = await dataaccess.createPost(content, req.session.userId, activityId);
+                            globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
+                            return post;
+                        } catch (err) {
+                            res.status(status.BAD_REQUEST);
+                            return err.graphqlError ?? new GraphQLError(err.message);
+                        }
                     }
                 } else {
                     res.status(status.UNAUTHORIZED);
@@ -477,6 +481,29 @@ export function resolver(req: any, res: any): any {
                 const self = await models.User.findByPk(req.session.userId);
                 await event.$remove("rParticipants", self);
                 return event;
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async getActivities() {
+            return models.Activity.findAll();
+        },
+        async createActivity({name, description, points}:
+                                 {name: string, description: string, points: number}) {
+            if (req.session.userId) {
+                const user = await models.User.findByPk(req.session.userId);
+                if (user.isAdmin) {
+                    const nameExists = await models.Activity.findOne({where: {name}});
+                    if (!nameExists) {
+                        return models.Activity.create({name, description, points});
+                    } else {
+                        return new GraphQLError(`An activity with the name '${name}'`);
+                    }
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not an admin.");
+                }
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();

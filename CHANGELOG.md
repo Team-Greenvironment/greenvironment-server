@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ability to upload file at `/upload` with the name profilePicture
 - publicPath to config file to configure the directory for public files
 - profilePicture property to User model which is an url to the users profile picture
+- activities to posts
+- getActivities field to receive all activities
+- activities table
 
 ### Removed
 
