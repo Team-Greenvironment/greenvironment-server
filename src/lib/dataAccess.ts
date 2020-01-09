@@ -197,10 +197,15 @@ namespace dataaccess {
             const post = await models.Post.findByPk(postId, {include: [{model: Activity}, {association: "rAuthor"}]});
             const activity = await post.activity();
             const author = await post.author();
-            author.rankpoints -= activity.points;
-            await author.save();
+            if (activity && author) {
+                author.rankpoints -= activity.points;
+                await author.save();
+            }
+            await post.destroy();
         } catch (err) {
-            return new PostNotFoundGqlError(postId);
+            globals.logger.error(err.message);
+            globals.logger.debug(err.stack);
+            throw new PostNotFoundGqlError(postId);
         }
         return true;
     }
