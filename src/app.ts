@@ -3,8 +3,6 @@ import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import {Request, Response} from "express";
 import * as express from "express";
-import {UploadedFile} from "express-fileupload";
-import * as fileUpload from "express-fileupload";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
 import sharedsession = require("express-socket.io-session");
@@ -15,14 +13,13 @@ import * as http from "http";
 import * as httpStatus from "http-status";
 import * as path from "path";
 import {Sequelize} from "sequelize-typescript";
-import * as sharp from "sharp";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
-import {User} from "./lib/models";
-import routes from "./routes";
+import HomeRoute from "./routes/HomeRoute";
+import {UploadRoute} from "./routes/UploadRoute";
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
@@ -65,12 +62,9 @@ class App {
             store: new SequelizeStore({db: this.sequelize}),
         });
 
-        const force = fsx.existsSync("sqz-force");
-        logger.info(`Syncinc database. Sequelize Table force: ${force}.`);
-        await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
+        await this.sequelize.sync({ logging: (msg) => logger.silly(msg)});
         this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
-        await routes.ioListeners(this.io);
         try {
             this.io.adapter(socketIoRedis());
         } catch (err) {
@@ -115,7 +109,18 @@ class App {
             logger.verbose(`${req.method} ${req.url}`);
             next();
         });
-        this.app.use(routes.router);
+
+        // add custom routes
+
+        const uploadRoute = new UploadRoute(this.publicPath);
+        const homeRoute = new HomeRoute();
+        await uploadRoute.init();
+        await homeRoute.init(this.io);
+
+        this.app.use("/home", homeRoute.router);
+        this.app.use("/upload", uploadRoute.router);
+
+
         // listen for graphql requests
         this.app.use("/graphql",  graphqlHTTP((request, response) => {
             return {
@@ -126,32 +131,6 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
-        this.app.use("/upload", fileUpload());
-        this.app.use("/upload", async (req, res) => {
-            const profilePic = req.files.profilePicture as UploadedFile;
-            let success = false;
-            let fileName;
-            if (profilePic && req.session.userId) {
-                const dir = path.join(this.publicPath, "data/profilePictures");
-                await fsx.ensureDir(dir);
-                await sharp(profilePic.data)
-                    .resize(512, 512)
-                    .normalise()
-                    .png()
-                    .toFile(path.join(dir, req.session.userId + ".png"));
-                success = true;
-                fileName = `/data/profilePictures/${req.session.userId}.png`;
-                const user = await User.findByPk(req.session.userId);
-                user.profilePicture = fileName;
-                await user.save();
-            } else {
-                res.status(400);
-            }
-            res.json({
-                fileName,
-                success,
-            });
-        });
         // allow access to cluster information
         this.app.use("/cluster-info", (req: Request, res: Response) => {
             res.json({
