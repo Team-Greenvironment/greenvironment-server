@@ -12,7 +12,7 @@ import Route from "../lib/Route";
 
 const dataDirName = "data";
 
-interface UploadConfirmation {
+interface IUploadConfirmation {
     /**
      * Indicates the error that might have occured during the upload
      */
