@@ -94,6 +94,14 @@ namespace dataaccess {
     }
 
     /**
+     * Returns the user by auth token.
+     * @param token
+     */
+    export async function getUserByToken(token: string): Promise<models.User> {
+        return models.User.findOne({where: {authToken: token}});
+    }
+
+    /**
      * Registers a user with a username and password returning a user
      * @param username
      * @param email

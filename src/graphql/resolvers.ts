@@ -1,12 +1,12 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
+import * as yaml from "js-yaml";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
-import * as yaml from "js-yaml";
 
 /**
  * Returns the resolvers for the graphql api.
@@ -99,6 +99,23 @@ export function resolver(req: any, res: any): any {
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
+            }
+        },
+        async getToken({email, passwordHash}: {email: string, passwordHash: string}) {
+            if (email && passwordHash) {
+                try {
+                    const user = await dataaccess.getUserByLogin(email, passwordHash);
+                    return {
+                        expires: Number(user.authExpire),
+                        value: user.token(),
+                    };
+                } catch (err) {
+                    res.status(400);
+                    return err.graphqlError;
+                }
+            } else {
+                res.status(400);
+                return new GraphQLError("No email or password specified.");
             }
         },
         async register({username, email, passwordHash}: { username: string, email: string, passwordHash: string }) {
