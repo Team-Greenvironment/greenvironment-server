@@ -23,6 +23,7 @@ import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
 import {User} from "./lib/models";
 import routes from "./routes";
+import {UploadRoute} from "./routes/upload";
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
@@ -64,10 +65,10 @@ class App {
             secret: globals.config.session.secret,
             store: new SequelizeStore({db: this.sequelize}),
         });
+        const uploadRoute = new UploadRoute(this.publicPath);
+        await uploadRoute.init();
 
-        const force = fsx.existsSync("sqz-force");
-        logger.info(`Syncinc database. Sequelize Table force: ${force}.`);
-        await this.sequelize.sync({force, logging: (msg) => logger.silly(msg)});
+        await this.sequelize.sync({ logging: (msg) => logger.silly(msg)});
         this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
         await routes.ioListeners(this.io);
@@ -116,6 +117,7 @@ class App {
             next();
         });
         this.app.use(routes.router);
+        this.app.use("/upload", uploadRoute.router);
         // listen for graphql requests
         this.app.use("/graphql",  graphqlHTTP((request, response) => {
             return {
@@ -126,32 +128,6 @@ class App {
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
             };
         }));
-        this.app.use("/upload", fileUpload());
-        this.app.use("/upload", async (req, res) => {
-            const profilePic = req.files.profilePicture as UploadedFile;
-            let success = false;
-            let fileName;
-            if (profilePic && req.session.userId) {
-                const dir = path.join(this.publicPath, "data/profilePictures");
-                await fsx.ensureDir(dir);
-                await sharp(profilePic.data)
-                    .resize(512, 512)
-                    .normalise()
-                    .png()
-                    .toFile(path.join(dir, req.session.userId + ".png"));
-                success = true;
-                fileName = `/data/profilePictures/${req.session.userId}.png`;
-                const user = await User.findByPk(req.session.userId);
-                user.profilePicture = fileName;
-                await user.save();
-            } else {
-                res.status(400);
-            }
-            res.json({
-                fileName,
-                success,
-            });
-        });
         // allow access to cluster information
         this.app.use("/cluster-info", (req: Request, res: Response) => {
             res.json({

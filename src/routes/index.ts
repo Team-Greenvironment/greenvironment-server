@@ -9,6 +9,7 @@ import {Router} from "express";
 import {Server} from "socket.io";
 
 import HomeRoute from "./home";
+import {UploadRoute} from "./upload";
 
 const homeRoute = new HomeRoute();
 
