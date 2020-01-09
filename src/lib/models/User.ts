@@ -65,6 +65,9 @@ export class User extends Model<User> {
     @Column({defaultValue: false, allowNull: false})
     public isAdmin: boolean;
 
+    @Column({type: sqz.STRING(512)})
+    public profilePicture: string;
+
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
 
