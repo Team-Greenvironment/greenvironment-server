@@ -63,5 +63,10 @@ interface IConfig {
          * Points to the index.html which is loaded as a fallback for angular to work
          */
         angularIndex?: string;
+
+        /**
+         * The path of the public folder
+         */
+        publicPath?: string;
     };
 }

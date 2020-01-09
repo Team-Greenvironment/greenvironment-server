@@ -4,6 +4,8 @@ import * as yaml from "js-yaml";
 import {Op} from "sequelize";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
+import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
+import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
@@ -151,10 +153,15 @@ export function resolver(req: any, res: any): any {
             if (email && passwordHash) {
                 try {
                     const user = await dataaccess.getUserByLogin(email, passwordHash);
-                    return {
-                        expires: Number(user.authExpire),
-                        value: user.token(),
-                    };
+                    if (!user) {
+                        res.status(status.BAD_REQUEST);
+                        return new InvalidLoginError(email);
+                    } else {
+                        return {
+                            expires: Number(user.authExpire),
+                            value: user.token(),
+                        };
+                    }
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
                     return err.graphqlError ?? new GraphQLError(err.message);
@@ -441,8 +448,13 @@ export function resolver(req: any, res: any): any {
         async createEvent({name, dueDate, groupId}: { name: string, dueDate: string, groupId: number }) {
             if (req.session.userId) {
                 const date = new Date(Number(dueDate));
-                const group = await models.Group.findByPk(groupId);
-                return group.$create<models.Event>("rEvent", {name, dueDate: date});
+                const group = await models.Group.findByPk(groupId, {include: [{association: "rAdmins"}]});
+                if (group.rAdmins.find((x) => x.id === req.session.userId)) {
+                    return group.$create<models.Event>("rEvent", {name, dueDate: date});
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not a group admin!");
+                }
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
