@@ -40,12 +40,12 @@ export class UploadRoute extends Route {
             if (req.session.userId) {
                 if (profilePic) {
                     try {
-                        const fileBasename = this.getFileName() + ".png";
+                        const fileBasename = this.getFileName() + ".webp";
                         const filePath = path.join(this.dataDir, fileBasename);
                         await sharp(profilePic.data)
                             .resize(512, 512)
                             .normalise()
-                            .png()
+                            .webp()
                             .toFile(filePath);
                         fileName = `/${dataDirName}/${fileBasename}`;
                         const user = await User.findByPk(req.session.userId);
