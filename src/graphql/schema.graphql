@@ -17,14 +17,17 @@ type Query {
     "returns the request object for its id"
     getRequest(requestId: ID!): Request
 
-    "find a post by the posted date or content"
-    findPost(first: Int, offset: Int, text: String!, postedDate: String): [Post]
+    "DEPRECATED! Find a user by user name or handle"
+    findUser(first: Int = 20, offset: Int = 0, name: String, handle: String): [User]
 
-    "find a user by user name or handle"
-    findUser(first: Int, offset: Int, name: String, handle: String): [User]
+    "searches for users, groups, events, posts and returns a search result"
+    search(query: String!, first: Int = 20, offset: Int = 0): SearchResult!
 
     "returns the post filtered by the sort type with pagination."
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
+
+    "returns all activities"
+    getActivities: [Activity]
 
     "Returns an access token for the user that can be used in requests. To user the token in requests, it has to be set in the HTTP header 'Authorization' with the format Bearer <token>."
     getToken(email: String!, passwordHash: String!): Token!
@@ -59,7 +62,7 @@ type Mutation {
     acceptRequest(sender: ID!, type: RequestType): Boolean
 
     "lets you deny a request for a given request id"
-    denyRequest(requestId: ID!): Boolean
+    denyRequest(sender: ID!, type: RequestType): Boolean
 
     "removes a friend"
     removeFriend(friendId: ID!): Boolean
@@ -67,8 +70,8 @@ type Mutation {
     "send a message in a Chatroom"
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
-    "create the post"
-    createPost(content: String!): Post!
+    "create a post that can belong to an activity"
+    createPost(content: String!, activityId: ID): Post!
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean!
@@ -99,6 +102,9 @@ type Mutation {
 
     "Leaves a event."
     leaveEvent(eventId: ID!): Event
+
+    "Creates an activity. Can only be used by admins."
+    createActivity(name: String!, description: String!, points: Int!): Activity
 }
 
 interface UserData {
@@ -113,9 +119,6 @@ interface UserData {
 
     "Id of the User"
     id: ID!
-
-    "DEPRECATED! the total number of posts the user posted"
-    numberOfPosts: Int!
 
     "the number of posts the user has created"
     postCount: Int!
@@ -256,6 +259,9 @@ type Profile implements UserData {
 
     "the custom settings for the frontend"
     settings: String!
+
+    "if the user is an admin"
+    isAdmin: Boolean
 }
 
 "represents a single user post"
@@ -284,6 +290,12 @@ type Post {
 
     "the type of vote the user performed on the post"
     userVote(userId: ID!): VoteType
+
+    "if the post can be deleted by the specified user"
+    deletable(userId: ID!): Boolean
+
+    "the activity that belongs to the post"
+    activity: Activity
 }
 
 "represents a request of any type"
@@ -379,8 +391,42 @@ type Event {
 
 "respresents an access token entry with the value as the acutal token and expires as the date the token expires."
 type Token {
+    "The token itself."
     value: String!
+
+    "The timestamp when the token expires."
     expires: String!
+}
+
+"The result of a search."
+type SearchResult {
+    "The users that were found in the search."
+    users: [User!]!
+
+    "The posts that were found in the search."
+    posts: [Post!]!
+
+    "The groups that were found in the search."
+    groups: [Group!]!
+
+    "The events that were found in the search."
+    events: [Event!]!
+}
+
+"An activity that grants points"
+type Activity {
+
+    "the id of the activity"
+    id: ID!
+
+    "the name of the activity"
+    name: String!
+
+    "the description of the activity"
+    description: String!
+
+    "the number of points the activity grants"
+    points: Int!
 }
 
 "represents the type of vote performed on a post"

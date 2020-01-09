@@ -22,4 +22,5 @@ logging:
   level: info
 
 frontend:
-  angularIndex:
+  angularIndex: index.html
+  publicPath: ./public

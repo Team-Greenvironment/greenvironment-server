@@ -1,4 +1,14 @@
-import {BelongsTo, BelongsToMany, Column, ForeignKey, HasMany, Model, NotNull, Table} from "sequelize-typescript";
+import {
+    BelongsTo,
+    BelongsToMany,
+    Column,
+    ForeignKey,
+    HasMany,
+    Model,
+    NotNull,
+    Table,
+    Unique,
+} from "sequelize-typescript";
 import {ChatRoom} from "./ChatRoom";
 import {Event} from "./Event";
 import {GroupAdmin} from "./GroupAdmin";
@@ -8,7 +18,8 @@ import {User} from "./User";
 @Table({underscored: true})
 export class Group extends Model<Group> {
     @NotNull
-    @Column({allowNull: false})
+    @Unique
+    @Column({allowNull: false, unique: true})
     public name: string;
 
     @NotNull

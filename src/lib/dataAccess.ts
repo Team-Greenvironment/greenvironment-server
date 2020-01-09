@@ -1,14 +1,20 @@
 import * as crypto from "crypto";
+import {GraphQLError} from "graphql";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
+import {ActivityNotFoundError} from "./errors/ActivityNotFoundError";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
+import {DuplicatedRequestError} from "./errors/DuplicatedRequestError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
+import {PostNotFoundGqlError} from "./errors/graphqlErrors";
+import {GroupAlreadyExistsError} from "./errors/GroupAlreadyExistsError";
 import {GroupNotFoundError} from "./errors/GroupNotFoundError";
 import {InvalidLoginError} from "./errors/InvalidLoginError";
 import {NoActionSpecifiedError} from "./errors/NoActionSpecifiedError";
 import {UserNotFoundError} from "./errors/UserNotFoundError";
 import globals from "./globals";
 import {InternalEvents} from "./InternalEvents";
+import {Activity} from "./models";
 import * as models from "./models";
 
 /**
@@ -52,6 +58,7 @@ namespace dataaccess {
                 models.GroupMember,
                 models.EventParticipant,
                 models.Event,
+                models.Activity,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
@@ -163,21 +170,38 @@ namespace dataaccess {
      * Creates a post
      * @param content
      * @param authorId
-     * @param type
+     * @param activityId
      */
-    export async function createPost(content: string, authorId: number, type?: string): Promise<models.Post> {
-        type = type || "MISC";
-        const post = await models.Post.create({content, authorId});
-        globals.internalEmitter.emit(InternalEvents.POSTCREATE, post);
-        return post;
+    export async function createPost(content: string, authorId: number, activityId?: number): Promise<models.Post> {
+        const activity = await models.Activity.findByPk(activityId);
+        if (!activityId || activity) {
+            const post = await models.Post.create({content, authorId, activityId});
+            globals.internalEmitter.emit(InternalEvents.POSTCREATE, post);
+            if (activity) {
+                const user = await models.User.findByPk(authorId);
+                user.rankpoints += activity.points;
+                await user.save();
+            }
+            return post;
+        } else {
+            throw new ActivityNotFoundError(activityId);
+        }
     }
 
     /**
      * Deletes a post
      * @param postId
      */
-    export async function deletePost(postId: number): Promise<boolean> {
-        await (await models.Post.findByPk(postId)).destroy();
+    export async function deletePost(postId: number): Promise<boolean|GraphQLError> {
+        try {
+            const post = await models.Post.findByPk(postId, {include: [{model: Activity}, {association: "rAuthor"}]});
+            const activity = await post.activity();
+            const author = await post.author();
+            author.rankpoints -= activity.points;
+            await author.save();
+        } catch (err) {
+            return new PostNotFoundGqlError(postId);
+        }
         return true;
     }
 
@@ -231,9 +255,16 @@ namespace dataaccess {
     export async function createRequest(sender: number, receiver: number, requestType?: RequestType) {
         requestType = requestType || RequestType.FRIENDREQUEST;
 
-        const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
-        globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, request);
-        return request;
+        const requestExists = !!await models.Request.findOne({where:
+                {senderId: sender, receiverId: receiver, requestType}});
+
+        if (!requestExists) {
+            const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});
+            globals.internalEmitter.emit(InternalEvents.REQUESTCREATE, request);
+            return request;
+        } else {
+            throw new DuplicatedRequestError();
+        }
     }
 
     /**
@@ -243,19 +274,25 @@ namespace dataaccess {
      * @param members
      */
     export async function createGroup(name: string, creator: number, members: number[]): Promise<models.Group> {
-        members = members || [];
-        return sequelize.transaction(async (t) => {
-            members.push(creator);
-            const groupChat = await createChat(...members);
-            const group = await models.Group.create({name, creatorId: creator, chatId: groupChat.id}, {transaction: t});
-            const creatorUser = await models.User.findByPk(creator, {transaction: t});
-            await group.$add("rAdmins", creatorUser, {transaction: t});
-            for (const member of members) {
-                const user = await models.User.findByPk(member, {transaction: t});
-                await group.$add("rMembers", user, {transaction: t});
-            }
-            return group;
-        });
+        const groupNameExists = !!await models.Group.findOne({where: {name}});
+        if (!groupNameExists) {
+            members = members || [];
+            return sequelize.transaction(async (t) => {
+                members.push(creator);
+                const groupChat = await createChat(...members);
+                const group = await models.Group
+                    .create({name, creatorId: creator, chatId: groupChat.id}, {transaction: t});
+                const creatorUser = await models.User.findByPk(creator, {transaction: t});
+                await group.$add("rAdmins", creatorUser, {transaction: t});
+                for (const member of members) {
+                    const user = await models.User.findByPk(member, {transaction: t});
+                    await group.$add("rMembers", user, {transaction: t});
+                }
+                return group;
+            });
+        } else {
+            throw new GroupAlreadyExistsError(name);
+        }
     }
 
     /**

@@ -1,12 +1,18 @@
 import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import * as yaml from "js-yaml";
+import {Op} from "sequelize";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
+import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
+
+class Resolver {
+
+}
 
 /**
  * Returns the resolvers for the graphql api.
@@ -15,6 +21,47 @@ import {is} from "../lib/regex";
  */
 export function resolver(req: any, res: any): any {
     return {
+        async search({first, offset, query}: { first: number, offset: number, query: string }) {
+            const limit = first;
+            const users = await models.User.findAll({
+                limit,
+                offset,
+                where: {
+                    [Op.or]: [
+                        {handle: {[Op.iRegexp]: query}},
+                        {username: {[Op.iRegexp]: query}},
+                    ],
+                },
+            });
+            const groups = await models.Group.findAll({
+                limit,
+                offset,
+                where: {name: {[Op.iRegexp]: query}},
+            });
+            const posts = await models.Post.findAll({
+                limit,
+                offset,
+                where: {content: {[Op.iRegexp]: query}},
+            });
+            const events = await models.Event.findAll({
+                limit,
+                offset,
+                where: {name: {[Op.iRegexp]: query}},
+            });
+            return {users, posts, groups, events};
+        },
+        async findUser({first, offset, name, handle}:
+                           { first: number, offset: number, name: string, handle: string }) {
+            res.status(status.MOVED_PERMANENTLY);
+            if (name) {
+                return models.User.findAll({where: {username: {[Op.like]: `%${name}%`}}, offset, limit: first});
+            } else if (handle) {
+                return models.User.findAll({where: {handle: {[Op.like]: `%${handle}%`}}, offset, limit: first});
+            } else {
+                res.status(status.BAD_REQUEST);
+                return new GraphQLError("No search parameters provided.");
+            }
+        },
         async getSelf() {
             if (req.session.userId) {
                 return models.User.findByPk(req.session.userId);
@@ -79,7 +126,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -101,20 +148,25 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
-        async getToken({email, passwordHash}: {email: string, passwordHash: string}) {
+        async getToken({email, passwordHash}: { email: string, passwordHash: string }) {
             if (email && passwordHash) {
                 try {
                     const user = await dataaccess.getUserByLogin(email, passwordHash);
-                    return {
-                        expires: Number(user.authExpire),
-                        value: user.token(),
-                    };
+                    if (!user) {
+                        res.status(status.BAD_REQUEST);
+                        return new InvalidLoginError(email);
+                    } else {
+                        return {
+                            expires: Number(user.authExpire),
+                            value: user.token(),
+                        };
+                    }
                 } catch (err) {
-                    res.status(400);
-                    return err.graphqlError;
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
-                res.status(400);
+                res.status(status.BAD_REQUEST);
                 return new GraphQLError("No email or password specified.");
             }
         },
@@ -132,14 +184,14 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No username, email or password given.");
             }
         },
-        async setUserSettings({settings}: {settings: string}) {
+        async setUserSettings({settings}: { settings: string }) {
             if (req.session.userId) {
                 const user = await models.User.findByPk(req.session.userId);
                 try {
@@ -147,7 +199,7 @@ export function resolver(req: any, res: any): any {
                     await user.save();
                     return user.settings;
                 } catch (err) {
-                    res.status(400);
+                    res.status(status.BAD_REQUEST);
                     return new GraphQLError("Invalid settings json.");
                 }
             } else {
@@ -174,15 +226,20 @@ export function resolver(req: any, res: any): any {
                 return new GraphQLError("No postId or type given.");
             }
         },
-        async createPost({content}: { content: string }) {
+        async createPost({content, activityId}: { content: string, activityId: number }) {
             if (content) {
                 if (req.session.userId) {
                     if (content.length > 2048) {
                         return new GraphQLError("Content too long.");
                     } else {
-                        const post = await dataaccess.createPost(content, req.session.userId);
-                        globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
-                        return post;
+                        try {
+                            const post = await dataaccess.createPost(content, req.session.userId, activityId);
+                            globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
+                            return post;
+                        } catch (err) {
+                            res.status(status.BAD_REQUEST);
+                            return err.graphqlError ?? new GraphQLError(err.message);
+                        }
                     }
                 } else {
                     res.status(status.UNAUTHORIZED);
@@ -195,8 +252,12 @@ export function resolver(req: any, res: any): any {
         },
         async deletePost({postId}: { postId: number }) {
             if (postId) {
-                const post = await models.Post.findByPk(postId, {include: [models.User]});
-                if (post.rAuthor.id === req.session.userId) {
+                const post = await models.Post.findByPk(postId, {include: [{
+                        as: "rAuthor",
+                        model: models.User,
+                }]});
+                const isAdmin = (await models.User.findOne({where: {id: req.session.userId}})).isAdmin;
+                if (post.rAuthor.id === req.session.userId || isAdmin) {
                     return await dataaccess.deletePost(post.id);
                 } else {
                     res.status(status.FORBIDDEN);
@@ -232,7 +293,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -245,7 +306,12 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
             if (receiver && type) {
-                return await dataaccess.createRequest(req.session.userId, receiver, type);
+                try {
+                    return await dataaccess.createRequest(req.session.userId, receiver, type);
+                } catch (err) {
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError ?? new GraphQLError(err.message);
+                }
             } else {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No receiver or type given.");
@@ -279,7 +345,7 @@ export function resolver(req: any, res: any): any {
                     globals.logger.warn(err.message);
                     globals.logger.debug(err.stack);
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError || err.message;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.BAD_REQUEST);
@@ -300,7 +366,12 @@ export function resolver(req: any, res: any): any {
         },
         async createGroup({name, members}: { name: string, members: number[] }) {
             if (req.session.userId) {
-                return await dataaccess.createGroup(name, req.session.userId, members);
+                try {
+                    return await dataaccess.createGroup(name, req.session.userId, members);
+                } catch (err) {
+                    res.status(status.BAD_REQUEST);
+                    return err.graphqlError ?? new GraphQLError(err.message);
+                }
             } else {
                 return new NotLoggedInGqlError();
             }
@@ -312,7 +383,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(id, req.session.userId, dataaccess.MembershipChangeAction.ADD);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -326,7 +397,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(id, req.session.userId, dataaccess.MembershipChangeAction.REMOVE);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -346,7 +417,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.OP);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
 
             } else {
@@ -371,7 +442,7 @@ export function resolver(req: any, res: any): any {
                         .changeGroupMembership(groupId, userId, dataaccess.MembershipChangeAction.DEOP);
                 } catch (err) {
                     res.status(status.BAD_REQUEST);
-                    return err.graphqlError;
+                    return err.graphqlError ?? new GraphQLError(err.message);
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
@@ -380,9 +451,14 @@ export function resolver(req: any, res: any): any {
         },
         async createEvent({name, dueDate, groupId}: { name: string, dueDate: string, groupId: number }) {
             if (req.session.userId) {
-                const date = new Date(dueDate);
-                const group = await models.Group.findByPk(groupId);
-                return group.$create<models.Event>("rEvent", {name, dueDate: date});
+                const date = new Date(Number(dueDate));
+                const group = await models.Group.findByPk(groupId, {include: [{association: "rAdmins"}]});
+                if (group.rAdmins.find((x) => x.id === req.session.userId)) {
+                    return group.$create<models.Event>("rEvent", {name, dueDate: date});
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not a group admin!");
+                }
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
@@ -405,6 +481,29 @@ export function resolver(req: any, res: any): any {
                 const self = await models.User.findByPk(req.session.userId);
                 await event.$remove("rParticipants", self);
                 return event;
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async getActivities() {
+            return models.Activity.findAll();
+        },
+        async createActivity({name, description, points}:
+                                 {name: string, description: string, points: number}) {
+            if (req.session.userId) {
+                const user = await models.User.findByPk(req.session.userId);
+                if (user.isAdmin) {
+                    const nameExists = await models.Activity.findOne({where: {name}});
+                    if (!nameExists) {
+                        return models.Activity.create({name, description, points});
+                    } else {
+                        return new GraphQLError(`An activity with the name '${name}'`);
+                    }
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not an admin.");
+                }
             } else {
                 res.status(status.UNAUTHORIZED);
                 return new NotLoggedInGqlError();
