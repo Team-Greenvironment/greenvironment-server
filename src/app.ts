@@ -25,12 +25,12 @@ import routes from "./routes";
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
-const dataDir = path.join(__dirname, "public/data");
 
 class App {
     public app: express.Application;
     public io: socketIo.Server;
     public server: http.Server;
+    public readonly publicPath: string;
     public readonly id?: number;
     public readonly sequelize: Sequelize;
 
@@ -40,6 +40,10 @@ class App {
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
         this.sequelize = new Sequelize(globals.config.database.connectionUri);
+        this.publicPath = globals.config.frontend.publicPath;
+        if (!path.isAbsolute(this.publicPath)) {
+            this.publicPath = path.normalize(path.join(__dirname, this.publicPath));
+        }
     }
 
     /**
@@ -66,7 +70,12 @@ class App {
         this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
         await routes.ioListeners(this.io);
-        this.io.adapter(socketIoRedis());
+        try {
+            this.io.adapter(socketIoRedis());
+        } catch (err) {
+            logger.error(err.message);
+            logger.debug(err.stack);
+        }
         this.io.use(sharedsession(appSession, {autoSave: true}));
 
         logger.info("Configuring express app.");
@@ -77,7 +86,7 @@ class App {
         this.app.use(compression());
         this.app.use(express.json());
         this.app.use(express.urlencoded({extended: false}));
-        this.app.use(express.static(path.join(__dirname, "public")));
+        this.app.use(express.static(this.publicPath));
         this.app.use(cookieParser());
         this.app.use(appSession);
         // enable cross origin requests if enabled in the config
@@ -120,9 +129,9 @@ class App {
         this.app.use("/upload", async (req, res) => {
             const profilePic = req.files.profilePicture as UploadedFile;
             let success = false;
-            let fileName = undefined;
+            let fileName;
             if (profilePic && req.session.userId) {
-                const dir = path.join(dataDir, "profilePictures");
+                const dir = path.join(this.publicPath, "data/profilePictures");
                 await fsx.ensureDir(dir);
                 await sharp(profilePic.data)
                     .resize(512, 512)
@@ -148,7 +157,7 @@ class App {
         // redirect all request to the angular file
         this.app.use((req: any, res: Response) => {
             if (globals.config.frontend.angularIndex) {
-                const angularIndex = path.join(__dirname, globals.config.frontend.angularIndex);
+                const angularIndex = path.join(this.publicPath, globals.config.frontend.angularIndex);
                 if (fsx.existsSync(path.join(angularIndex))) {
                     res.sendFile(angularIndex);
                 } else {
