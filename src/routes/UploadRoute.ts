@@ -105,12 +105,12 @@ export class UploadRoute extends Route {
             await sharp(profilePic.data)
                 .resize(512, 512)
                 .normalise()
-                .webp()
+                .webp({smartSubsample: true, reductionEffort: 6})
                 .toFile(filePath);
             fileName = `/${dataDirName}/${fileBasename}`;
             const user = await User.findByPk(request.session.userId);
             const oldProfilePicture = path.join(this.dataDir, path.basename(user.profilePicture));
-            if ((await fsx.pathExists(oldProfilePicture))) {
+            if (await fsx.pathExists(oldProfilePicture)) {
                 await fsx.unlink(oldProfilePicture);
             } else {
                 globals.logger.warn(`Could not delete ${oldProfilePicture}: Not found!`);
