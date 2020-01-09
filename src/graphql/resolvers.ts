@@ -498,7 +498,7 @@ export function resolver(req: any, res: any): any {
                     if (!nameExists) {
                         return models.Activity.create({name, description, points});
                     } else {
-                        return new GraphQLError(`An activity with the name '${name}'`);
+                        return new GraphQLError(`An activity with the name '${name}' already exists.`);
                     }
                 } else {
                     res.status(status.FORBIDDEN);
