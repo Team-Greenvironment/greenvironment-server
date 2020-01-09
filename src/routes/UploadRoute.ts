@@ -12,10 +12,36 @@ import Route from "../lib/Route";
 
 const dataDirName = "data";
 
+interface UploadConfirmation {
+    /**
+     * Indicates the error that might have occured during the upload
+     */
+    error?: string;
+
+    /**
+     * The file that has been uploaded
+     */
+    fileName?: string;
+
+    /**
+     * If the upload was successful
+     */
+    success: boolean;
+}
+
 /**
  * Represents an upload handler.
  */
 export class UploadRoute extends Route {
+
+    /**
+     * Returns the hash of the current time to be used as a filename.
+     */
+    private static getFileName() {
+        const hash = crypto.createHash("md5");
+        hash.update(Number(Date.now()).toString());
+        return hash.digest("hex");
+    }
 
     public readonly dataDir: string;
 
@@ -33,49 +59,25 @@ export class UploadRoute extends Route {
         this.router.use(fileUpload());
         // Uploads a file to the data directory and returns the filename
         this.router.use(async (req, res) => {
-            let success = false;
-            let fileName: string;
-            let error: string;
-            const profilePic = req.files.profilePicture as UploadedFile;
+            let uploadConfirmation: UploadConfirmation;
             if (req.session.userId) {
-                if (profilePic) {
-                    try {
-                        const fileBasename = this.getFileName() + ".webp";
-                        const filePath = path.join(this.dataDir, fileBasename);
-                        await sharp(profilePic.data)
-                            .resize(512, 512)
-                            .normalise()
-                            .webp()
-                            .toFile(filePath);
-                        fileName = `/${dataDirName}/${fileBasename}`;
-                        const user = await User.findByPk(req.session.userId);
-                        const oldProfilePicture = path.join(this.dataDir, path.basename(user.profilePicture));
-                        if (await fsx.pathExists(oldProfilePicture)) {
-                            await fsx.unlink(oldProfilePicture);
-                        } else {
-                            globals.logger.warn(`Could not delete ${oldProfilePicture}: Not found!`);
-                        }
-                        user.profilePicture = fileName;
-                        await user.save();
-                        success = true;
-                    } catch (err) {
-                        globals.logger.error(err.message);
-                        globals.logger.debug(err.stack);
-                        error = err.message;
-                    }
+                if (req.files.profilePicture) {
+                    uploadConfirmation = await this.uploadProfilePicture(req);
                 } else {
                     res.status(status.BAD_REQUEST);
-                    error = "You did not provide a (valid) file.";
+                    uploadConfirmation = {
+                        error: "You did not provide a (valid) file.",
+                        success: false,
+                    };
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
-                error = "You are not logged in.";
+                uploadConfirmation = {
+                    error: "You are not logged in.",
+                    success: false,
+                };
             }
-            res.json({
-                error,
-                fileName,
-                success,
-            });
+            res.json(uploadConfirmation);
         });
     }
 
@@ -88,11 +90,43 @@ export class UploadRoute extends Route {
     }
 
     /**
-     * Returns the hash of the current time to be used as a filename.
+     * Uploads a file as a users profile picture and deletes the old one.
+     * The user gets updated with the new profile picture url.
+     * @param request
      */
-    private getFileName() {
-        const hash = crypto.createHash("md5");
-        hash.update(Number(Date.now()).toString());
-        return hash.digest("hex");
+    private async uploadProfilePicture(request: any): Promise<UploadConfirmation> {
+        let success = false;
+        let error: string;
+        let fileName: string;
+        const profilePic = request.files.profilePicture as UploadedFile;
+        try {
+            const fileBasename = UploadRoute.getFileName() + ".webp";
+            const filePath = path.join(this.dataDir, fileBasename);
+            await sharp(profilePic.data)
+                .resize(512, 512)
+                .normalise()
+                .webp()
+                .toFile(filePath);
+            fileName = `/${dataDirName}/${fileBasename}`;
+            const user = await User.findByPk(request.session.userId);
+            const oldProfilePicture = path.join(this.dataDir, path.basename(user.profilePicture));
+            if ((await fsx.pathExists(oldProfilePicture))) {
+                await fsx.unlink(oldProfilePicture);
+            } else {
+                globals.logger.warn(`Could not delete ${oldProfilePicture}: Not found!`);
+            }
+            user.profilePicture = fileName;
+            await user.save();
+            success = true;
+        } catch (err) {
+            globals.logger.error(err.message);
+            globals.logger.debug(err.stack);
+            error = err.message;
+        }
+        return {
+            error,
+            fileName,
+            success,
+        };
     }
 }
