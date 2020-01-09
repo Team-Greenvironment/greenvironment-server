@@ -59,7 +59,7 @@ export class UploadRoute extends Route {
         this.router.use(fileUpload());
         // Uploads a file to the data directory and returns the filename
         this.router.use(async (req, res) => {
-            let uploadConfirmation: UploadConfirmation;
+            let uploadConfirmation: IUploadConfirmation;
             if (req.session.userId) {
                 if (req.files.profilePicture) {
                     uploadConfirmation = await this.uploadProfilePicture(req);
@@ -94,7 +94,7 @@ export class UploadRoute extends Route {
      * The user gets updated with the new profile picture url.
      * @param request
      */
-    private async uploadProfilePicture(request: any): Promise<UploadConfirmation> {
+    private async uploadProfilePicture(request: any): Promise<IUploadConfirmation> {
         let success = false;
         let error: string;
         let fileName: string;
