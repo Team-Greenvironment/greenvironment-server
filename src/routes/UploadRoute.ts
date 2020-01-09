@@ -1,14 +1,14 @@
+import * as crypto from "crypto";
 import {Router} from "express";
+import * as fileUpload from "express-fileupload";
 import {UploadedFile} from "express-fileupload";
+import * as fsx from "fs-extra";
+import * as status from "http-status";
+import * as path from "path";
+import * as sharp from "sharp";
+import globals from "../lib/globals";
 import {User} from "../lib/models";
 import Route from "../lib/Route";
-import * as fsx from "fs-extra";
-import globals from "../lib/globals";
-import * as path from "path";
-import * as crypto from "crypto";
-import * as fileUpload from "express-fileupload";
-import * as status from "http-status";
-import * as sharp from "sharp";
 
 const dataDirName = "data";
 
