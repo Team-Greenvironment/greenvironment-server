@@ -26,6 +26,9 @@ type Query {
     "returns the post filtered by the sort type with pagination."
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
 
+    "returns all activities"
+    getActivities: [Activity]
+
     "Returns an access token for the user that can be used in requests. To user the token in requests, it has to be set in the HTTP header 'Authorization' with the format Bearer <token>."
     getToken(email: String!, passwordHash: String!): Token!
 }
@@ -67,8 +70,8 @@ type Mutation {
     "send a message in a Chatroom"
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
-    "create the post"
-    createPost(content: String!): Post!
+    "create a post that can belong to an activity"
+    createPost(content: String!, activityId: ID): Post!
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean!
@@ -99,6 +102,9 @@ type Mutation {
 
     "Leaves a event."
     leaveEvent(eventId: ID!): Event
+
+    "Creates an activity. Can only be used by admins."
+    createActivity(name: String!, description: String!, points: Int!): Activity
 }
 
 interface UserData {
@@ -113,9 +119,6 @@ interface UserData {
 
     "Id of the User"
     id: ID!
-
-    "DEPRECATED! the total number of posts the user posted"
-    numberOfPosts: Int!
 
     "the number of posts the user has created"
     postCount: Int!
@@ -290,6 +293,9 @@ type Post {
 
     "if the post can be deleted by the specified user"
     deletable(userId: ID!): Boolean
+
+    "the activity that belongs to the post"
+    activity: Activity
 }
 
 "represents a request of any type"
@@ -405,6 +411,22 @@ type SearchResult {
 
     "The events that were found in the search."
     events: [Event!]!
+}
+
+"An activity that grants points"
+type Activity {
+
+    "the id of the activity"
+    id: ID!
+
+    "the name of the activity"
+    name: String!
+
+    "the description of the activity"
+    description: String!
+
+    "the number of points the activity grants"
+    points: Int!
 }
 
 "represents the type of vote performed on a post"

@@ -11,3 +11,4 @@ export {GroupAdmin} from "./GroupAdmin";
 export {GroupMember} from "./GroupMember";
 export {Event} from "./Event";
 export {EventParticipant} from "./EventParticipant";
+export {Activity} from "./Activity";

@@ -1,6 +1,7 @@
 import * as sqz from "sequelize";
 import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import markdown from "../markdown";
+import {Activity} from "./Activity";
 import {PostVote, VoteType} from "./PostVote";
 import {User} from "./User";
 
@@ -15,8 +16,15 @@ export class Post extends Model<Post> {
     @Column({allowNull: false})
     public authorId: number;
 
+    @ForeignKey(() => Activity)
+    @Column({allowNull: true})
+    public activityId: number;
+
     @BelongsTo(() => User, "authorId")
     public rAuthor: User;
+
+    @BelongsTo(() => Activity, "activityId")
+    public rActivity?: Activity;
 
     @BelongsToMany(() => User, () => PostVote)
     public rVotes: Array<User & {PostVote: PostVote}>;
@@ -29,6 +37,13 @@ export class Post extends Model<Post> {
      */
     public async author(): Promise<User> {
         return await this.$get("rAuthor") as User;
+    }
+
+    /**
+     * Returns the activity of the post.
+     */
+    public async activity(): Promise<Activity|undefined> {
+        return await this.$get("rActivity") as Activity;
     }
 
     /**
@@ -89,7 +104,7 @@ export class Post extends Model<Post> {
     }
 
     /**
-     * Returns the type of vote that was performend on the post by the user specified by the user id.
+     * Returns the type of vote that was performed on the post by the user specified by the user id.
      * @param userId
      */
     public async userVote({userId}: {userId: number}): Promise<VoteType> {

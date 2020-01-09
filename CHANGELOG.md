@@ -12,12 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Jenkinsfile
 - Mocha Tests
 - worker initialization error handling
-- bearer token authentification for testing purposes
+- bearer token authentication for testing purposes
 - Added `deletable' field on post
 - Admin field that for admin users
 - ability for admins to delete posts
 - ability to upload file at `/upload` with the name profilePicture
 - publicPath to config file to configure the directory for public files
+- profilePicture property to User model which is an url to the users profile picture
+- activities to posts
+- getActivities field to receive all activities
+- createActivity mutation
+- activities table
 
 ### Removed
 

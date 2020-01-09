@@ -21,6 +21,7 @@ import * as socketIoRedis from "socket.io-redis";
 import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
+import {User} from "./lib/models";
 import routes from "./routes";
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
@@ -140,6 +141,9 @@ class App {
                     .toFile(path.join(dir, req.session.userId + ".png"));
                 success = true;
                 fileName = `/data/profilePictures/${req.session.userId}.png`;
+                const user = await User.findByPk(req.session.userId);
+                user.profilePicture = fileName;
+                await user.save();
             } else {
                 res.status(400);
             }
