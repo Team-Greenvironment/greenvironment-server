@@ -3,24 +3,43 @@ import {EventParticipant} from "./EventParticipant";
 import {Group} from "./Group";
 import {User} from "./User";
 
+/**
+ * Represents an event
+ */
 @Table({underscored: true})
 export class Event extends Model<Event> {
+
+    /**
+     * The name of the event
+     */
     @NotNull
     @Column({allowNull: false})
     public name: string;
 
+    /**
+     * The date the event takes place
+     */
     @NotNull
     @Column({allowNull: false})
     public dueDate: Date;
 
+    /**
+     * The group id the event belongs to
+     */
     @NotNull
     @ForeignKey(() => Group)
     @Column({allowNull: false})
     public groupId: number;
 
+    /**
+     * The group the event belongs to
+     */
     @BelongsTo(() => Group, "groupId")
     public rGroup: Group;
 
+    /**
+     * The participants in the event
+     */
     @BelongsToMany(() => User, () => EventParticipant)
     public rParticipants: User[];
 

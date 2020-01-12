@@ -10,9 +10,7 @@ import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
 
-class Resolver {
-
-}
+// tslint:disable:completed-docs
 
 /**
  * Returns the resolvers for the graphql api.

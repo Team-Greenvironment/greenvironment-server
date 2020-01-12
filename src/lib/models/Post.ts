@@ -5,30 +5,56 @@ import {Activity} from "./Activity";
 import {PostVote, VoteType} from "./PostVote";
 import {User} from "./User";
 
+/**
+ * A single post of a user
+ */
 @Table({underscored: true})
 export class Post extends Model<Post> {
+
+    /**
+     * The markdown formatted utf-8 content of the post
+     */
     @NotNull
     @Column({type: sqz.STRING(2048), allowNull: false})
     public content: string;
 
+    /**
+     * The id of the post author
+     */
     @ForeignKey(() => User)
     @NotNull
     @Column({allowNull: false})
     public authorId: number;
 
+    /**
+     * The id of the activiy of the post if one was provided during creation
+     */
     @ForeignKey(() => Activity)
     @Column({allowNull: true})
     public activityId: number;
 
+    /**
+     * The author of the post
+     */
     @BelongsTo(() => User, "authorId")
     public rAuthor: User;
 
+    /**
+     * The activiy of the post
+     */
     @BelongsTo(() => Activity, "activityId")
     public rActivity?: Activity;
 
+    /**
+     * The votes that were performed on the post
+     */
     @BelongsToMany(() => User, () => PostVote)
+    // tslint:disable-next-line:completed-docs
     public rVotes: Array<User & {PostVote: PostVote}>;
 
+    /**
+     * The date the post was created at
+     */
     @CreatedAt
     public readonly createdAt!: Date;
 

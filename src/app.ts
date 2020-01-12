@@ -24,12 +24,39 @@ import {UploadRoute} from "./routes/UploadRoute";
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const logger = globals.logger;
 
+/**
+ * The main entry class for each cluster worker
+ */
 class App {
+
+    /**
+     * The corresponding express application
+     */
     public app: express.Application;
+
+    /**
+     * An instance of the socket.io server for websockets
+     */
     public io: socketIo.Server;
+
+    /**
+     * An instance of the http server where the site is served
+     */
     public server: http.Server;
+
+    /**
+     * The path to the public folder that is served statically
+     */
     public readonly publicPath: string;
+
+    /**
+     * The id of the worker
+     */
     public readonly id?: number;
+
+    /**
+     * The instance of sequelize for ORM
+     */
     public readonly sequelize: Sequelize;
 
     constructor(id?: number) {

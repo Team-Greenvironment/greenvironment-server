@@ -2,14 +2,24 @@ import * as sqz from "sequelize";
 import {BelongsTo, Column, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import {User} from "./User";
 
+/**
+ * An enum that represents all possible types of requests
+ */
 export enum RequestType {
     FRIENDREQUEST = "FRIENDREQUEST",
     GROUPINVITE = "GROUPINVITE",
     EVENTINVITE = "EVENTINVITE",
 }
 
+/**
+ * A single request for a friendship, group invide, event invite
+ */
 @Table({underscored: true})
 export class Request extends Model<Request> {
+
+    /**
+     * The type of the request
+     */
     @NotNull
     @Column({
         allowNull: false,
@@ -19,19 +29,31 @@ export class Request extends Model<Request> {
     })
     public requestType: RequestType;
 
+    /**
+     * The id of the user who sent the request
+     */
     @ForeignKey(() => User)
     @NotNull
     @Column({allowNull: false})
     public senderId: number;
 
+    /**
+     * The user who sent the request
+     */
     @BelongsTo(() => User, "senderId")
     public rSender: User;
 
+    /**
+     * The id of the user who received the request
+     */
     @ForeignKey(() => User)
     @NotNull
     @Column({allowNull: false})
     public receiverId: number;
 
+    /**
+     * The user who received the request
+     */
     @BelongsTo(() => User, "receiverId")
     public rReceiver: User;
 

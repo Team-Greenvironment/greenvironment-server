@@ -15,35 +15,63 @@ import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
 import {User} from "./User";
 
+/**
+ * A single group with members
+ */
 @Table({underscored: true})
 export class Group extends Model<Group> {
+
+    /**
+     * The name of the group
+     */
     @NotNull
     @Unique
     @Column({allowNull: false, unique: true})
     public name: string;
 
+    /**
+     * The id of the user who created the group
+     */
     @NotNull
     @ForeignKey(() => User)
     @Column({allowNull: false})
     public creatorId: number;
 
+    /**
+     * The id of the chat that belongs to the group
+     */
     @NotNull
     @ForeignKey(() => ChatRoom)
     @Column({allowNull: false})
     public chatId: number;
 
+    /**
+     * The creator of the group
+     */
     @BelongsTo(() => User, "creatorId")
     public rCreator: User;
 
+    /**
+     * The admins of the group
+     */
     @BelongsToMany(() => User, () => GroupAdmin)
     public rAdmins: User[];
 
+    /**
+     * The members of the group
+     */
     @BelongsToMany(() => User, () => GroupMember)
     public rMembers: User[];
 
+    /**
+     * The chatroom of the group
+     */
     @BelongsTo(() => ChatRoom)
     public rChat: ChatRoom;
 
+    /**
+     * The events that were created for the group
+     */
     @HasMany(() => Event, "groupId")
     public rEvents: Event[];
 

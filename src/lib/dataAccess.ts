@@ -17,6 +17,8 @@ import {InternalEvents} from "./InternalEvents";
 import {Activity} from "./models";
 import * as models from "./models";
 
+// tslint:disable:completed-docs
+
 /**
  * Generates a new handle from the username and a base64 string of the current time.
  * @param username
@@ -39,7 +41,8 @@ namespace dataaccess {
     let sequelize: Sequelize;
 
     /**
-     * Initializes everything that needs to be initialized asynchronous.
+     * An asynchronous init method for sequelize
+     * @param seq
      */
     export async function init(seq: Sequelize): Promise<void> {
         sequelize = seq;

@@ -43,6 +43,9 @@ export class UploadRoute extends Route {
         return hash.digest("hex");
     }
 
+    /**
+     * The directory where the uploaded data will be saved in
+     */
     public readonly dataDir: string;
 
     constructor(private publicPath: string) {
