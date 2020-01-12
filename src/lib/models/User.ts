@@ -26,87 +26,163 @@ import {Post} from "./Post";
 import {PostVote} from "./PostVote";
 import {Request, RequestType} from "./Request";
 
+/**
+ * A single user
+ */
 @Table({underscored: true})
 export class User extends Model<User> {
+
+    /**
+     * The name of the user
+     */
     @NotNull
     @Column({type: sqz.STRING(128), allowNull: false})
     public username: string;
 
+    /**
+     * The handle of the user
+     */
     @NotNull
     @Unique
     @Column({type: sqz.STRING(128), allowNull: false, unique: true})
     public handle: string;
 
+    /**
+     * The email address of the user
+     */
     @Unique
     @NotNull
     @Column({type: sqz.STRING(128), allowNull: false, unique: true})
     public email: string;
 
+    /**
+     * The password hash of the user
+     */
     @NotNull
     @Column({type: sqz.STRING(128), allowNull: false})
     public password: string;
 
+    /**
+     * The ranking points of the user
+     */
     @NotNull
     @Column({defaultValue: 0, allowNull: false})
     public rankpoints: number;
 
+    /**
+     * The JSON-Frontend settings of the user to provide a way to store custom settings in the backend
+     */
     @NotNull
     @Column({defaultValue: {}, allowNull: false, type: sqz.JSON})
     public frontendSettings: any;
 
+    /**
+     * The auth token for bearer authentication
+     */
     @Unique
     @Column({defaultValue: uuidv4, unique: true})
     public authToken: string;
 
+    /**
+     * The date and time the auth token expires
+     */
     @Column({defaultValue: () => Date.now() + 7200000})
     public authExpire: Date;
 
+    /**
+     * A flag if the user is a site admin
+     */
     @NotNull
     @Column({defaultValue: false, allowNull: false})
     public isAdmin: boolean;
 
+    /**
+     * The url of the users profile picture
+     */
     @Column({type: sqz.STRING(512)})
     public profilePicture: string;
 
+    /**
+     * The friends of the user
+     */
     @BelongsToMany(() => User, () => Friendship, "userId")
     public rFriends: User[];
 
+    /**
+     * The friends of the user
+     */
     @BelongsToMany(() => User, () => Friendship, "friendId")
     public rFriendOf: User[];
 
+    /**
+     * The votes the user performed
+     */
     @BelongsToMany(() => Post, () => PostVote)
     public votes: Array<Post & { PostVote: PostVote }>;
 
+    /**
+     * The chatrooms the user has joined
+     */
     @BelongsToMany(() => ChatRoom, () => ChatMember)
     public rChats: ChatRoom[];
 
+    /**
+     * The group the user is an admin in
+     */
     @BelongsToMany(() => Group, () => GroupAdmin)
     public rAdministratedGroups: Group[];
 
+    /**
+     * The events the user has joined
+     */
     @BelongsToMany(() => Event, () => EventParticipant)
     public rEvents: Event[];
 
+    /**
+     * The groups the user has joined
+     */
     @BelongsToMany(() => Group, () => GroupMember)
     public rGroups: Group[];
 
+    /**
+     * The posts the user has created
+     */
     @HasMany(() => Post, "authorId")
     public rPosts: Post[];
 
+    /**
+     * The requests the user has sent
+     */
     @HasMany(() => Request, "senderId")
     public rSentRequests: Request[];
 
+    /**
+     * The requests the user has received
+     */
     @HasMany(() => Request, "receiverId")
     public rReceivedRequests: Request[];
 
+    /**
+     * The messages the user has sent in a chatroom
+     */
     @HasMany(() => ChatMessage, "authorId")
     public messages: ChatMessage[];
 
+    /**
+     * The groups the user has created
+     */
     @HasMany(() => Group, "creatorId")
     public rCreatedGroups: Group[];
 
+    /**
+     * The date the account was created
+     */
     @CreatedAt
     public readonly createdAt!: Date;
 
+    /**
+     * The date of the last change to the user
+     */
     @UpdatedAt
     public readonly updatedAt!: Date;
 

@@ -22,7 +22,14 @@
     "no-namespace": false,
     "no-internal-module": false,
     "max-classes-per-file": false,
-    "no-var-requires": false
+    "no-var-requires": false,
+    "jsdoc-format": [true, "check-multiline-start"],
+    "completed-docs": [true, "classes", "enums", "methods", {
+      "properties": {
+        "privacies": "all",
+        "locations": "instance"
+      }
+    }]
   },
   "jsRules": {
     "max-line-length": {

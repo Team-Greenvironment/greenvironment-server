@@ -10,9 +10,7 @@ import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
 
-class Resolver {
-
-}
+// tslint:disable:completed-docs
 
 /**
  * Returns the resolvers for the graphql api.
@@ -212,7 +210,11 @@ export function resolver(req: any, res: any): any {
                 if (req.session.userId) {
                     const post = await models.Post.findByPk(postId);
                     if (post) {
-                        return await post.vote(req.session.userId, type);
+                        const voteType = await post.vote(req.session.userId, type);
+                        return {
+                            post,
+                            voteType,
+                        };
                     } else {
                         res.status(status.BAD_REQUEST);
                         return new PostNotFoundGqlError(postId);

@@ -3,17 +3,6 @@ import * as cluster from "cluster";
 import App from "./app";
 const numCPUs = require("os").cpus().length;
 
-interface IResourceUsage {
-    mem: {rss: number, heapTotal: number, heapUsed: number, external: number};
-    cpu: {user: number, system: number};
-}
-
-interface IClusterData {
-    reqCount: number;
-    workerCount: () => number;
-    workerRes: {[key: string]: IResourceUsage};
-}
-
 if (cluster.isMaster) {
     console.log(`[CLUSTER-M] Master ${process.pid} is running`);
 
