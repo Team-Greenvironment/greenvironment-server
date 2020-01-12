@@ -137,8 +137,12 @@ export class Post extends Model<Post> {
      */
     public async userVote({userId}: {userId: number}, request: any): Promise<VoteType> {
         userId = userId ?? request.session.userId;
-        const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
-        return votes[0]?.PostVote?.voteType;
+        if (userId) {
+            const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+            return votes[0]?.PostVote?.voteType;
+        } else {
+            return undefined;
+        }
     }
 
     /**
@@ -149,7 +153,7 @@ export class Post extends Model<Post> {
     public async deletable({userId}: {userId: number}, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         const isAuthor =  Number(userId) === Number(this.authorId);
-        if (!isAuthor) {
+        if (userId && !isAuthor) {
             return (await User.findOne({where: {id: userId}})).isAdmin;
         }
         return isAuthor;
