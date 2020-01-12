@@ -68,7 +68,11 @@ export class Event extends Model<Event> {
      */
     public async joined({userId}: {userId: number}, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
-        const participants = await this.$get("rParticipants", {where: {id: userId}}) as User[];
-        return participants.length !== 0;
+        if (userId) {
+            const participants = await this.$get("rParticipants", {where: {id: userId}}) as User[];
+            return participants.length !== 0;
+        } else {
+            return false;
+        }
     }
 }
