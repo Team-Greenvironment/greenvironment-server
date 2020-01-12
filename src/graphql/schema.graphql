@@ -304,10 +304,10 @@ type Post {
     createdAt: String!
 
     "the type of vote the user performed on the post"
-    userVote(userId: ID!): VoteType
+    userVote(userId: ID): VoteType
 
     "if the post can be deleted by the specified user"
-    deletable(userId: ID!): Boolean!
+    deletable(userId: ID): Boolean!
 
     "the activity that belongs to the post"
     activity: Activity
@@ -387,7 +387,7 @@ type Group {
     events(first: Int=10, offset: Int=0): [Event!]!
 
     "If the user with the specified id has joined the group"
-    joined(userId: Int!): Boolean!
+    joined(userId: Int): Boolean!
 }
 
 type Event {
@@ -407,7 +407,7 @@ type Event {
     participants(first: Int=10, offset: Int=0): [User!]!
 
     "Returns if the user with the specified id has joined the event"
-    joined(userId: Int!): Boolean
+    joined(userId: Int): Boolean
 }
 
 "respresents an access token entry with the value as the acutal token and expires as the date the token expires."
