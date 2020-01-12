@@ -138,8 +138,14 @@ interface UserData {
     "The groups the user has joined"
     groups(first: Int=10, offset: Int=0): [Group]
 
-    "The numbef of groups the user has joined"
+    "The number of groups the user has joined"
     groupCount: Int!
+
+    "The events the user is participating in"
+    events(first: Int=10, offset: Int=0): [Event]
+
+    "The number of events the user is participating in"
+    eventCount: Int!
 
     "the points of the user"
     points: Int!
@@ -188,6 +194,12 @@ type User implements UserData{
 
     "The numbef of groups the user has joined"
     groupCount: Int!
+
+    "The events the user is participating in"
+    events(first: Int=10, offset: Int=0): [Event]
+
+    "The number of events the user is participating in"
+    eventCount: Int!
 
     "the levels of the user depending on the points"
     level: Int!
@@ -250,6 +262,12 @@ type Profile implements UserData {
 
     "The numbef of groups the user has joined"
     groupCount: Int!
+
+    "The events the user is participating in"
+    events(first: Int=10, offset: Int=0): [Event]
+
+    "The number of events the user is participating in"
+    eventCount: Int!
 
     "the points of the user"
     points: Int!
