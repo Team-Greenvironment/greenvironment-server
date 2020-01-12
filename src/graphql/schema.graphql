@@ -405,6 +405,9 @@ type Event {
 
     "The participants of the event."
     participants(first: Int=10, offset: Int=0): [User!]!
+
+    "Returns if the user with the specified id has joined the event"
+    joined(userId: Int!): Boolean
 }
 
 "respresents an access token entry with the value as the acutal token and expires as the date the token expires."

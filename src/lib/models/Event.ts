@@ -24,13 +24,30 @@ export class Event extends Model<Event> {
     @BelongsToMany(() => User, () => EventParticipant)
     public rParticipants: User[];
 
+    /**
+     * Returns the group the event belongs to
+     */
     public async group(): Promise<Group> {
         return await this.$get("rGroup") as Group;
     }
 
+    /**
+     * Returns the participants of the event
+     * @param first
+     * @param offset
+     */
     public async participants({first, offset}: {first: number, offset: number}): Promise<User[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
         return await this.$get("rParticipants", {limit, offset}) as User[];
+    }
+
+    /**
+     * Returns if the specified user has joined the event
+     * @param userId
+     */
+    public async joined({userId}: {userId: number}): Promise<boolean> {
+        const participants = await this.$get("rParticipants", {where: {id: userId}}) as User[];
+        return participants.length !== 0;
     }
 }

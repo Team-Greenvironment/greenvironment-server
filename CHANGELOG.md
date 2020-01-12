@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - createActivity mutation
 - activities table
 - event and eventCount to UserData gql interface
+- joined field to Event gql type
 
 ### Removed
 
