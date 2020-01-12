@@ -125,8 +125,10 @@ export class Group extends Model<Group> {
     /**
      * Returns if a user has joined the group
      * @param userId
+     * @param request
      */
-    public async joined({userId}: {userId: number}): Promise<boolean> {
+    public async joined({userId}: {userId: number}, request: any): Promise<boolean> {
+        userId = userId ?? request.session.userId;
         const members = await this.$get("rMembers", {where: {id: userId}}) as User[];
         return members.length !== 0;
     }

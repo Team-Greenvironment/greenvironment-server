@@ -1,5 +1,6 @@
 import * as sqz from "sequelize";
 import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
+import globals from "../globals";
 import markdown from "../markdown";
 import {Activity} from "./Activity";
 import {PostVote, VoteType} from "./PostVote";
@@ -132,8 +133,10 @@ export class Post extends Model<Post> {
     /**
      * Returns the type of vote that was performed on the post by the user specified by the user id.
      * @param userId
+     * @param request
      */
-    public async userVote({userId}: {userId: number}): Promise<VoteType> {
+    public async userVote({userId}: {userId: number}, request: any): Promise<VoteType> {
+        userId = userId ?? request.session.userId;
         const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
         return votes[0]?.PostVote?.voteType;
     }
@@ -141,9 +144,10 @@ export class Post extends Model<Post> {
     /**
      * Returns if the post can be deleted by the user with the given id.
      * @param userId
+     * @param request
      */
-    public async deletable({userId}: {userId: number}): Promise<boolean> {
-
+    public async deletable({userId}: {userId: number}, request: any): Promise<boolean> {
+        userId = userId ?? request.session.userId;
         const isAuthor =  Number(userId) === Number(this.authorId);
         if (!isAuthor) {
             return (await User.findOne({where: {id: userId}})).isAdmin;
