@@ -17,14 +17,11 @@ type Query {
     "returns the request object for its id"
     getRequest(requestId: ID!): Request
 
-    "DEPRECATED! Find a user by user name or handle"
-    findUser(first: Int = 20, offset: Int = 0, name: String, handle: String): [User]
-
     "searches for users, groups, events, posts and returns a search result"
     search(query: String!, first: Int = 20, offset: Int = 0): SearchResult!
 
     "returns the post filtered by the sort type with pagination."
-    getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post]
+    getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post!]!
 
     "returns all activities"
     getActivities: [Activity]
@@ -38,10 +35,10 @@ type Mutation {
     acceptCookies: Boolean
 
     "Login of the user. The passwordHash should be a sha512 hash of the password."
-    login(email: String!, passwordHash: String!): Profile
+    login(email: String!, passwordHash: String!): Profile!
 
     "Registers the user."
-    register(username: String, email: String, passwordHash: String): Profile
+    register(username: String, email: String, passwordHash: String): Profile!
 
     "Sets the user settings to the specified settings string. The settings parameter should be a valid yaml."
     setUserSettings(settings: String!): String!
@@ -50,22 +47,22 @@ type Mutation {
     logout: Boolean
 
     "Upvote/downvote a Post"
-    vote(postId: ID!, type: VoteType!): VoteType
+    vote(postId: ID!, type: VoteType!): VoteResult
 
     "Report the post"
-    report(postId: ID!): Boolean
+    report(postId: ID!): Boolean!
 
    "send a request"
     sendRequest(receiver: ID!, type: RequestType): Request
 
     "lets you accept a request for a given request id"
-    acceptRequest(sender: ID!, type: RequestType): Boolean
+    acceptRequest(sender: ID!, type: RequestType): Boolean!
 
     "lets you deny a request for a given request id"
-    denyRequest(sender: ID!, type: RequestType): Boolean
+    denyRequest(sender: ID!, type: RequestType): Boolean!
 
     "removes a friend"
-    removeFriend(friendId: ID!): Boolean
+    removeFriend(friendId: ID!): Boolean!
 
     "send a message in a Chatroom"
     sendMessage(chatId: ID!, content: String!): ChatMessage
@@ -95,7 +92,7 @@ type Mutation {
     removeGroupAdmin(groupId: ID!, userId: ID!): Group
 
     "Creates a new event with a epoch due date on a group."
-    createEvent(name: String, dueDate: String, groupId: ID!): Event
+    createEvent(name: String, dueDate: String, groupId: ID!): Event!
 
     "Joins a event."
     joinEvent(eventId: ID!): Event
@@ -124,25 +121,25 @@ interface UserData {
     postCount: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int=0): [Post]
+    posts(first: Int=10, offset: Int=0): [Post!]!
 
     "creation date of the user account"
     joinedAt: String!
 
     "all friends of the user"
-    friends(first: Int=10, offset: Int=0): [User]
+    friends(first: Int=10, offset: Int=0): [User!]!
 
     "The number of friends the user has"
     friendCount: Int!
 
     "The groups the user has joined"
-    groups(first: Int=10, offset: Int=0): [Group]
+    groups(first: Int=10, offset: Int=0): [Group!]!
 
     "The number of groups the user has joined"
     groupCount: Int!
 
     "The events the user is participating in"
-    events(first: Int=10, offset: Int=0): [Event]
+    events(first: Int=10, offset: Int=0): [Event!]!
 
     "The number of events the user is participating in"
     eventCount: Int!
@@ -172,7 +169,7 @@ type User implements UserData{
     numberOfPosts: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int): [Post]
+    posts(first: Int=10, offset: Int): [Post!]!
 
     "the number of posts the user has created"
     postCount: Int!
@@ -181,7 +178,7 @@ type User implements UserData{
     joinedAt: String!
 
     "all friends of the user"
-    friends(first: Int=10, offset: Int=0): [User]
+    friends(first: Int=10, offset: Int=0): [User!]!
 
     "The number of friends the user has"
     friendCount: Int!
@@ -190,13 +187,13 @@ type User implements UserData{
     points: Int!
 
     "the groups the user has joined"
-    groups(first: Int=10, offset: Int=0): [Group]
+    groups(first: Int=10, offset: Int=0): [Group!]!
 
     "The numbef of groups the user has joined"
     groupCount: Int!
 
     "The events the user is participating in"
-    events(first: Int=10, offset: Int=0): [Event]
+    events(first: Int=10, offset: Int=0): [Event!]!
 
     "The number of events the user is participating in"
     eventCount: Int!
@@ -264,7 +261,7 @@ type Profile implements UserData {
     groupCount: Int!
 
     "The events the user is participating in"
-    events(first: Int=10, offset: Int=0): [Event]
+    events(first: Int=10, offset: Int=0): [Event!]!
 
     "The number of events the user is participating in"
     eventCount: Int!
@@ -310,7 +307,7 @@ type Post {
     userVote(userId: ID!): VoteType
 
     "if the post can be deleted by the specified user"
-    deletable(userId: ID!): Boolean
+    deletable(userId: ID!): Boolean!
 
     "the activity that belongs to the post"
     activity: Activity
@@ -338,10 +335,10 @@ type ChatRoom {
     namespace: String
 
     "the members of the chatroom"
-    members(first: Int=10, offset: Int=0): [User!]
+    members(first: Int=10, offset: Int=0): [User!]!
 
     "return a specfic range of messages posted in the chat"
-    messages(first: Int = 10, offset: Int): [ChatMessage]!
+    messages(first: Int = 10, offset: Int): [ChatMessage!]!
 
     "id of the chat"
     id: ID!
@@ -375,22 +372,22 @@ type Group {
     name: String!
 
     "the creator of the group"
-    creator: User
+    creator: User!
 
     "all admins of the group"
-    admins(first: Int=10, offset: Int=0): [User]!
+    admins(first: Int=10, offset: Int=0): [User!]!
 
     "the members of the group with pagination"
-    members(first: Int = 10, offset: Int = 0): [User]!
+    members(first: Int = 10, offset: Int = 0): [User!]!
 
     "the groups chat"
-    chat: ChatRoom
+    chat: ChatRoom!
 
     "the events of the group"
     events(first: Int=10, offset: Int=0): [Event!]!
 
     "If the user with the specified id has joined the group"
-    joined(userId: Int!): Boolean
+    joined(userId: Int!): Boolean!
 }
 
 type Event {
@@ -435,6 +432,16 @@ type SearchResult {
 
     "The events that were found in the search."
     events: [Event!]!
+}
+
+"The result of voting on a post"
+type VoteResult {
+
+    "The type of vote that was performed"
+    voteType: VoteType
+
+    "The post the vote was performed on"
+    post: Post!
 }
 
 "An activity that grants points"
