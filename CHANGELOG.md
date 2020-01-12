@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - activities table
 - event and eventCount to UserData gql interface
 - joined field to Event gql type
+- joined field to Group gql type
 
 ### Removed
 

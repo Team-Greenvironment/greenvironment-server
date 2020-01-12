@@ -388,6 +388,9 @@ type Group {
 
     "the events of the group"
     events(first: Int=10, offset: Int=0): [Event!]!
+
+    "If the user with the specified id has joined the group"
+    joined(userId: Int!): Boolean
 }
 
 type Event {
