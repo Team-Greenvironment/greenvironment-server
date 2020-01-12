@@ -341,7 +341,7 @@ type ChatRoom {
     members(first: Int=10, offset: Int=0): [User!]
 
     "return a specfic range of messages posted in the chat"
-    messages(first: Int = 10, offset: Int, containing: String): [ChatMessage]!
+    messages(first: Int = 10, offset: Int): [ChatMessage]!
 
     "id of the chat"
     id: ID!
