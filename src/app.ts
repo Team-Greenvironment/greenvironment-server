@@ -20,7 +20,6 @@ import * as redis from "redis";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
-import {query} from "winston";
 import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
@@ -194,6 +193,7 @@ class App {
 
         // @ts-ignore
         this.app.use("/graphql",  graphqlHTTP(async (request, response, {variables}) => {
+            response.setHeader("X-Max-Query-Complexity", config.get("api.maxQueryComplexity"));
             return {
                 // @ts-ignore all
                 context: {session: request.session},
@@ -209,6 +209,7 @@ class App {
                         maximumComplexity: config.get("api.maxQueryComplexity"),
                         onComplete: (complexity: number) => {
                             logger.debug(`QueryComplexity: ${complexity}`);
+                            response.setHeader("X-Query-Complexity", complexity);
                         },
                         variables,
                     }),
