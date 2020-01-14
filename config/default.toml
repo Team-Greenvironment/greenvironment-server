@@ -14,6 +14,8 @@ connectionUri = "redis://localhost:6379"
 port = 8080
 # Allow cross origin requests
 cors = false
+# The timeout for a server response
+timeout = 30000
 
 # Configuration for the sessions
 [session]
@@ -38,3 +40,23 @@ level = "info"
 angularIndex = "index.html"
 # The path to the public files
 publicPath = "./public"
+
+# Configuration for the api
+[api]
+    # if graphiql should be enabled
+    graphiql = true
+    # Configuration for the api rate limit
+    [api.rateLimit]
+        # rate limit of /upload
+        [api.rateLimit.upload]
+        # The time in milliseconds before the rate limit is reset
+        expire = 60000
+        # The total number of calls allowed before rate limiting
+        total = 10
+
+        # rate limit of /graphql
+        [api.rateLimit.graphql]
+        # The time in milliseconds before the rate limit is reset
+        expire = 60000
+        # The total number of calls allowed before rate limiting
+        total = 30

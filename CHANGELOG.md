@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - event and eventCount to UserData gql interface
 - joined field to Event gql type
 - joined field to Group gql type
+- rate limits with defaults of 10/min for `/upload` and 30/min for `/graphql`
 
 ### Removed
 
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - default findUser param limit to 20
 - only group admins can create group events
 - config behaviour to use all files that reside in the ./config directory with the .toml format
+- default response timeout from 2 minutes to 30 seconds
 
 ### Fixed
 
