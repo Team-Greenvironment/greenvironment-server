@@ -1,3 +1,4 @@
+import * as config from "config";
 import * as MarkdownIt from "markdown-it/lib";
 import globals from "./globals";
 
@@ -5,7 +6,7 @@ namespace markdown {
 
     const md = new MarkdownIt();
 
-    for (const pluginName of globals.config.markdown.plugins) {
+    for (const pluginName of config.get("markdown.plugins") as string[]) {
         try {
             const plugin = require(pluginName);
             if (plugin) {

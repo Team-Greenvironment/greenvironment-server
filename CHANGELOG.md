@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - special worker logging
+- public directory which only contained a stylesheet for the error pages
 
 ### Changed
 
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - gql field userVote requires a userId
 - default findUser param limit to 20
 - only group admins can create group events
+- config behaviour to use all files that reside in the ./config directory with the .toml format
 
 ### Fixed
 

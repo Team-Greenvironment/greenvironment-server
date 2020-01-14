@@ -1,6 +1,5 @@
 import * as sqz from "sequelize";
 import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
-import globals from "../globals";
 import markdown from "../markdown";
 import {Activity} from "./Activity";
 import {PostVote, VoteType} from "./PostVote";

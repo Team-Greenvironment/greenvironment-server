@@ -1,4 +1,5 @@
 import * as compression from "compression";
+import * as config from "config";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import {Request, Response} from "express";
@@ -64,8 +65,8 @@ class App {
         this.app = express();
         this.server = new http.Server(this.app);
         this.io = socketIo(this.server);
-        this.sequelize = new Sequelize(globals.config.database.connectionUri);
-        this.publicPath = globals.config.frontend.publicPath;
+        this.sequelize = new Sequelize(config.get("database.connectionUri"));
+        this.publicPath = config.get("frontend.publicPath");
         if (!path.isAbsolute(this.publicPath)) {
             this.publicPath = path.normalize(path.join(__dirname, this.publicPath));
         }
@@ -79,13 +80,13 @@ class App {
 
         const appSession = session({
             cookie: {
-                maxAge: Number(globals.config.session.cookieMaxAge) || 604800000,
+                maxAge: Number(config.get("session.cookieMaxAge")),
                 // @ts-ignore
                 secure: "auto",
             },
             resave: false,
             saveUninitialized: false,
-            secret: globals.config.session.secret,
+            secret: config.get("session.secret"),
             store: new SequelizeStore({db: this.sequelize}),
         });
 
@@ -93,7 +94,7 @@ class App {
         this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
         try {
-            this.io.adapter(socketIoRedis());
+            this.io.adapter(socketIoRedis(config.get("redis.connectionUri")));
         } catch (err) {
             logger.error(err.message);
             logger.debug(err.stack);
@@ -112,7 +113,7 @@ class App {
         this.app.use(cookieParser());
         this.app.use(appSession);
         // enable cross origin requests if enabled in the config
-        if (globals.config.server?.cors) {
+        if (config.get("server.cors")) {
             this.app.use(cors());
         }
         // handle authentication via bearer in the Authorization header
@@ -166,8 +167,8 @@ class App {
         });
         // redirect all request to the angular file
         this.app.use((req: any, res: Response) => {
-            if (globals.config.frontend.angularIndex) {
-                const angularIndex = path.join(this.publicPath, globals.config.frontend.angularIndex);
+            if (config.get("frontend.angularIndex")) {
+                const angularIndex = path.join(this.publicPath, config.get("frontend.angularIndex"));
                 if (fsx.existsSync(path.join(angularIndex))) {
                     res.sendFile(angularIndex);
                 } else {
@@ -191,10 +192,10 @@ class App {
      * Starts the web server.
      */
     public start(): void {
-        if (globals.config.server?.port) {
+        if (config.has("server.port")) {
             logger.info(`Starting server...`);
-            this.app.listen(globals.config.server.port);
-            logger.info(`Server running on port ${globals.config.server.port}`);
+            this.app.listen(config.get("server.port"));
+            logger.info(`Server running on port ${config.get("server.port")}`);
         } else {
             logger.error("No port specified in the config." +
                 "Please configure a port in the config.yaml.");
