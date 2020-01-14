@@ -10,3 +10,4 @@ sqz-force
 greenvironment.db
 logs
 logs*
+config/*

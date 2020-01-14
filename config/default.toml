@@ -1,0 +1,26 @@
+# Configuration of the database connection
+[database]
+connectionUri = "sqlite://greenvironment.db"
+
+# Configuration of the http server
+[server]
+port = 8080
+cors = false
+
+# Configuration for the sessions
+[session]
+secret = "REPLACE WITH SAFE RANDOM GENERATED SECRET"
+cookieMaxAge = 6048e+5  # 7 days
+
+# Configuration for markdown rendering
+[markdown]
+plugins = ["markdown-it-emoji"]
+
+# Configuration for logging
+[logging]
+level = "info"
+
+# Configuration for the frontend files
+[frontend]
+angularIndex = "index.html"
+publicPath = "./public"

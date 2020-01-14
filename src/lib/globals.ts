@@ -1,28 +1,13 @@
+import * as config from "config";
 import {EventEmitter} from "events";
-import * as fsx from "fs-extra";
-import * as yaml from "js-yaml";
-import * as path from "path";
 import * as winston from "winston";
 
 require("winston-daily-rotate-file");
-
-const configPath = "config.yaml";
-const defaultConfig = path.join(__dirname, "/../default-config.yaml");
-
-// ensure that the config exists by copying the default config.
-if (!(fsx.pathExistsSync(configPath))) {
-    fsx.copySync(defaultConfig, configPath);
-} else {
-    const conf = yaml.safeLoad(fsx.readFileSync(configPath, "utf-8"));
-    const defConf = yaml.safeLoad(fsx.readFileSync(defaultConfig, "utf-8"));
-    fsx.writeFileSync(configPath, yaml.safeDump(Object.assign(defConf, conf)));
-}
 
 /**
  * Defines global variables to be used.
  */
 namespace globals {
-    export const config: IConfig = yaml.safeLoad(fsx.readFileSync("config.yaml", "utf-8"));
     // @ts-ignore
     export const logger: winston.Logger = winston.createLogger({
         transports: [
@@ -34,7 +19,7 @@ namespace globals {
                         return `${timestamp} ${level}: ${message}`;
                     }),
                 ),
-                level: config.logging?.level ?? "info",
+                level: config.get("logging.level"),
             }),
             // @ts-ignore
             new (winston.transports.DailyRotateFile)({
@@ -47,7 +32,7 @@ namespace globals {
                     }),
                 ),
                 json: false,
-                level: config.logging?.level ?? "info",
+                level: config.get("logging.level"),
                 maxFiles: "7d",
                 zippedArchive: true,
             }),
