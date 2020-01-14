@@ -10,7 +10,7 @@ import sharedsession = require("express-socket.io-session");
 import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
-import queryComplexity, {simpleEstimator, directiveEstimator} from "graphql-query-complexity";
+import queryComplexity, {directiveEstimator, simpleEstimator} from "graphql-query-complexity";
 import {IncomingMessage, ServerResponse} from "http";
 import * as http from "http";
 import * as httpStatus from "http-status";
