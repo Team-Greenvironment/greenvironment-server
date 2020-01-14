@@ -1,35 +1,43 @@
 # Configuration of the database connection
 [database]
+
 # A connection uri string to the database
 connectionUri = "sqlite://greenvironment.db"
 
 
 # Configuration for the redis connection
 [redis]
+
 # A connection uri string to the redis server
 connectionUri = "redis://localhost:6379"
 
 
 # Configuration of the http server
 [server]
+
 # The port the server is running on
 port = 8080
+
 # Allow cross origin requests
 cors = false
+
 # The timeout for a server response
 timeout = 30000
 
 
 # Configuration for the sessions
 [session]
+
 # A secret that is used for the sessions. Must be secure
 secret = "REPLACE WITH SAFE RANDOM GENERATED SECRET"
+
 # The maximum age of a cookie. The age is reset with every request of the client
 cookieMaxAge = 6048e+5  # 7 days
 
 
 # Configuration for markdown rendering
 [markdown]
+
 # The plugins used in the markdown parser
 plugins = ["markdown-it-emoji"]
 
@@ -61,16 +69,22 @@ maxQueryComplexity = 5000
 
     # Configuration for the api rate limit
     [api.rateLimit]
+
         # rate limit of /upload
         [api.rateLimit.upload]
+
         # The time in milliseconds before the rate limit is reset
         expire = 60000
+
         # The total number of calls allowed before rate limiting
         total = 10
 
+
         # rate limit of /graphql
         [api.rateLimit.graphql]
+
         # The time in milliseconds before the rate limit is reset
         expire = 60000
+
         # The total number of calls allowed before rate limiting
         total = 30
