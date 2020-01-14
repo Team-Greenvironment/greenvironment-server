@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - special worker logging
+- public directory which only contained a stylesheet for the error pages
 
 ### Changed
 

@@ -1,5 +1,4 @@
 const {src, dest, watch, series, task} = require('gulp');
-const sass = require('gulp-sass');
 const ts = require('gulp-typescript');
 const minify = require('gulp-minify');
 const del = require('delete');
@@ -28,20 +27,13 @@ function minifyJs() {
         .pipe(dest('dist/public/javascripts'));
 }
 
-function compileSass() {
-    return src('src/public/stylesheets/sass/**/style.sass')
-        .pipe(sass().on('error', sass.logError))
-        .pipe(dest('dist/public/stylesheets'));
-}
-
 function moveRemaining() {
     return src(['src/**/*', '!src/**/*.ts', '!src/**/*.sass', '!src/**/*.js'])
         .pipe(dest('dist'));
 }
 
-task('default', series(clearDist, compileTypescript, minifyJs, compileSass, moveRemaining));
+task('default', series(clearDist, compileTypescript, minifyJs, moveRemaining));
 task('watch', () => {
-    watch('src/public/stylesheets/sass/**/*.sass', compileSass);
     watch('**/*.js', minifyJs);
     watch('**/*.ts', compileTypescript);
 });
