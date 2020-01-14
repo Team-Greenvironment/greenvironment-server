@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - joined field to Group gql type
 - rate limits with defaults of 10/min for `/upload` and 30/min for `/graphql`
 - complexity limits for graphql queries that can be configured with the `api.maxQueryComplexity` option
+- complexity headers `X-Query-Complexity` and `X-Max-Query-Complexity`
 
 ### Removed
 
