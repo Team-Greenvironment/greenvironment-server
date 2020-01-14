@@ -94,7 +94,7 @@ class App {
         this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
         try {
-            this.io.adapter(socketIoRedis());
+            this.io.adapter(socketIoRedis(config.get("redis.connectionUri")));
         } catch (err) {
             logger.error(err.message);
             logger.debug(err.stack);
