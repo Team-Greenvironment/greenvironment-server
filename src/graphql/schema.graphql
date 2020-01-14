@@ -1,3 +1,12 @@
+"a directive to assign a complexity to a query field"
+directive @complexity(
+    "The complexity value for the field"
+    value: Int!,
+
+    "Optional multipliers"
+    multipliers: [String!]
+) on FIELD_DEFINITION
+
 type Query {
     "returns the user object for a given user id or a handle (only one required)"
     getUser(userId: ID, handle: String): User
@@ -18,10 +27,10 @@ type Query {
     getRequest(requestId: ID!): Request
 
     "searches for users, groups, events, posts and returns a search result"
-    search(query: String!, first: Int = 20, offset: Int = 0): SearchResult!
+    search(query: String!, first: Int = 20, offset: Int = 0): SearchResult! @complexity(value: 1, multipliers: ["first"])
 
     "returns the post filtered by the sort type with pagination."
-    getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post!]!
+    getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post!]! @complexity(value: 1, multipliers: ["first"])
 
     "returns all activities"
     getActivities: [Activity]
@@ -121,25 +130,25 @@ interface UserData {
     postCount: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int=0): [Post!]!
+    posts(first: Int=10, offset: Int=0): [Post!]! @complexity(value: 1, multipliers: ["first"])
 
     "creation date of the user account"
     joinedAt: String!
 
     "all friends of the user"
-    friends(first: Int=10, offset: Int=0): [User!]!
+    friends(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of friends the user has"
     friendCount: Int!
 
     "The groups the user has joined"
-    groups(first: Int=10, offset: Int=0): [Group!]!
+    groups(first: Int=10, offset: Int=0): [Group!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of groups the user has joined"
     groupCount: Int!
 
     "The events the user is participating in"
-    events(first: Int=10, offset: Int=0): [Event!]!
+    events(first: Int=10, offset: Int=0): [Event!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of events the user is participating in"
     eventCount: Int!
@@ -169,7 +178,7 @@ type User implements UserData{
     numberOfPosts: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int): [Post!]!
+    posts(first: Int=10, offset: Int): [Post!]! @complexity(value: 1, multipliers: ["first"])
 
     "the number of posts the user has created"
     postCount: Int!
@@ -178,7 +187,7 @@ type User implements UserData{
     joinedAt: String!
 
     "all friends of the user"
-    friends(first: Int=10, offset: Int=0): [User!]!
+    friends(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of friends the user has"
     friendCount: Int!
@@ -187,13 +196,13 @@ type User implements UserData{
     points: Int!
 
     "the groups the user has joined"
-    groups(first: Int=10, offset: Int=0): [Group!]!
+    groups(first: Int=10, offset: Int=0): [Group!]! @complexity(value: 1, multipliers: ["first"])
 
     "The numbef of groups the user has joined"
     groupCount: Int!
 
     "The events the user is participating in"
-    events(first: Int=10, offset: Int=0): [Event!]!
+    events(first: Int=10, offset: Int=0): [Event!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of events the user is participating in"
     eventCount: Int!
@@ -213,7 +222,7 @@ type Profile implements UserData {
     email: String!
 
     "returns the chatrooms the user joined."
-    chats(first: Int=10, offset: Int): [ChatRoom]
+    chats(first: Int=10, offset: Int): [ChatRoom] @complexity(value: 1, multipliers: ["first"])
 
     "the count of the users chats"
     chatCount: Int!
@@ -231,13 +240,13 @@ type Profile implements UserData {
     postCount: Int!
 
     "returns a given number of posts of a user"
-    posts(first: Int=10, offset: Int): [Post!]!
+    posts(first: Int=10, offset: Int): [Post!]! @complexity(value: 1, multipliers: ["first"])
 
     "creation date of the user account"
     joinedAt: String!
 
     "all friends of the user"
-    friends(first: Int=10, offset: Int=0): [User!]!
+    friends(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of friends the user has"
     friendCount: Int!
@@ -255,13 +264,13 @@ type Profile implements UserData {
     createdGroups: [Group!]!
 
     "all groups the user has joined"
-    groups(first: Int=10, offset: Int=0): [Group!]!
+    groups(first: Int=10, offset: Int=0): [Group!]! @complexity(value: 1, multipliers: ["first"])
 
     "The numbef of groups the user has joined"
     groupCount: Int!
 
     "The events the user is participating in"
-    events(first: Int=10, offset: Int=0): [Event!]!
+    events(first: Int=10, offset: Int=0): [Event!]! @complexity(value: 1, multipliers: ["first"])
 
     "The number of events the user is participating in"
     eventCount: Int!
@@ -335,10 +344,10 @@ type ChatRoom {
     namespace: String
 
     "the members of the chatroom"
-    members(first: Int=10, offset: Int=0): [User!]!
+    members(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "return a specfic range of messages posted in the chat"
-    messages(first: Int = 10, offset: Int): [ChatMessage!]!
+    messages(first: Int = 10, offset: Int): [ChatMessage!]! @complexity(value: 1, multipliers: ["first"])
 
     "id of the chat"
     id: ID!
@@ -375,16 +384,16 @@ type Group {
     creator: User!
 
     "all admins of the group"
-    admins(first: Int=10, offset: Int=0): [User!]!
+    admins(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "the members of the group with pagination"
-    members(first: Int = 10, offset: Int = 0): [User!]!
+    members(first: Int = 10, offset: Int = 0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "the groups chat"
     chat: ChatRoom!
 
     "the events of the group"
-    events(first: Int=10, offset: Int=0): [Event!]!
+    events(first: Int=10, offset: Int=0): [Event!]! @complexity(value: 1, multipliers: ["first"])
 
     "If the user with the specified id has joined the group"
     joined(userId: Int): Boolean!
@@ -404,7 +413,7 @@ type Event {
     group: Group!
 
     "The participants of the event."
-    participants(first: Int=10, offset: Int=0): [User!]!
+    participants(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "Returns if the user with the specified id has joined the event"
     joined(userId: Int): Boolean

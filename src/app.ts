@@ -10,6 +10,7 @@ import sharedsession = require("express-socket.io-session");
 import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
+import queryComplexity, {simpleEstimator, directiveEstimator} from "graphql-query-complexity";
 import {IncomingMessage, ServerResponse} from "http";
 import * as http from "http";
 import * as httpStatus from "http-status";
@@ -19,6 +20,7 @@ import * as redis from "redis";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
+import {query} from "winston";
 import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
@@ -189,13 +191,28 @@ class App {
             path: "/graphql",
             total: config.get("api.rateLimit.graphql.total"),
         });
-        this.app.use("/graphql",  graphqlHTTP((request, response) => {
+
+        // @ts-ignore
+        this.app.use("/graphql",  graphqlHTTP(async (request, response, {variables}) => {
             return {
                 // @ts-ignore all
                 context: {session: request.session},
                 graphiql: config.get("api.graphiql"),
                 rootValue: resolver(request, response),
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
+                validationRules: [
+                    queryComplexity({
+                        estimators: [
+                            directiveEstimator(),
+                            simpleEstimator(),
+                        ],
+                        maximumComplexity: config.get("api.maxQueryComplexity"),
+                        onComplete: (complexity: number) => {
+                            logger.debug(`QueryComplexity: ${complexity}`);
+                        },
+                        variables,
+                    }),
+                ],
             };
         }));
         // allow access to cluster information

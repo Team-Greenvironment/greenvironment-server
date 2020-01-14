@@ -3,10 +3,12 @@
 # A connection uri string to the database
 connectionUri = "sqlite://greenvironment.db"
 
+
 # Configuration for the redis connection
 [redis]
 # A connection uri string to the redis server
 connectionUri = "redis://localhost:6379"
+
 
 # Configuration of the http server
 [server]
@@ -17,6 +19,7 @@ cors = false
 # The timeout for a server response
 timeout = 30000
 
+
 # Configuration for the sessions
 [session]
 # A secret that is used for the sessions. Must be secure
@@ -24,27 +27,38 @@ secret = "REPLACE WITH SAFE RANDOM GENERATED SECRET"
 # The maximum age of a cookie. The age is reset with every request of the client
 cookieMaxAge = 6048e+5  # 7 days
 
+
 # Configuration for markdown rendering
 [markdown]
 # The plugins used in the markdown parser
 plugins = ["markdown-it-emoji"]
 
+
 # Configuration for logging
 [logging]
+
 # The loglevel
 level = "info"
 
+
 # Configuration for the frontend files
 [frontend]
+
 # The path to the angular index file. Its relative to the public path.
 angularIndex = "index.html"
+
 # The path to the public files
 publicPath = "./public"
 
+
 # Configuration for the api
 [api]
-    # if graphiql should be enabled
-    graphiql = true
+# if graphiql should be enabled
+graphiql = true
+
+# The maximum complexity of queries
+maxQueryComplexity = 5000
+
     # Configuration for the api rate limit
     [api.rateLimit]
         # rate limit of /upload

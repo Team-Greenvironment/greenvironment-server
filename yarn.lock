@@ -152,6 +152,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/graphql-query-complexity@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@types/graphql-query-complexity/-/graphql-query-complexity-0.2.1.tgz#5166c7f32b6cd0a24f1aad5e00ca513b82b7f0e0"
+  integrity sha512-PxYhF92UFagAl9UIep8seEUd9j18JardL9ZM9tOfP02fWot9ZlkBYYGFwSZ7fRE6HTva/Yr4BQem7b4P/TgDPA==
+  dependencies:
+    graphql-query-complexity "*"
+
 "@types/http-status@^0.2.30":
   version "0.2.30"
   resolved "https://registry.yarnpkg.com/@types/http-status/-/http-status-0.2.30.tgz#b43a1e1673b6ed9b5a28e8647862b51b6473634d"
@@ -2273,6 +2280,13 @@ graphql-import@^0.7.1:
     lodash "^4.17.4"
     resolve-from "^4.0.0"
 
+graphql-query-complexity@*, graphql-query-complexity@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/graphql-query-complexity/-/graphql-query-complexity-0.4.1.tgz#06ad49de617da0d74c8196fb4a641349f104552d"
+  integrity sha512-Uo87hNlnJ5jwoWBkVYITbJpTrlCVwgfG5Wrfel0K1/42G+3xvud31CpsprAwiSpFIP+gCqttAx7OVmw4eTqLQQ==
+  dependencies:
+    lodash.get "^4.4.2"
+
 graphql@^14.4.2, graphql@^14.5.3:
   version "14.5.8"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-14.5.8.tgz#504f3d3114cb9a0a3f359bbbcf38d9e5bf6a6b3c"
@@ -3039,6 +3053,11 @@ locate-path@^3.0.0:
   dependencies:
     p-locate "^3.0.0"
     path-exists "^3.0.0"
+
+lodash.get@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
+  integrity sha1-LRd/ZS+jHpObRDjVNBSZ36OCXpk=
 
 lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.4:
   version "4.17.15"
