@@ -6,6 +6,7 @@ import * as express from "express";
 import {Request, Response} from "express";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
+import sharedsession = require("express-socket.io-session");
 import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
@@ -24,7 +25,6 @@ import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
 import HomeRoute from "./routes/HomeRoute";
 import {UploadRoute} from "./routes/UploadRoute";
-import sharedsession = require("express-socket.io-session");
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const createLimiter: (...args: any) => any = require("express-limiter");

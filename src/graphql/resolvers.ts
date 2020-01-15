@@ -254,10 +254,12 @@ export function resolver(req: any, res: any): any {
         },
         async deletePost({postId}: { postId: number }) {
             if (postId) {
-                const post = await models.Post.findByPk(postId, {include: [{
+                const post = await models.Post.findByPk(postId, {
+                    include: [{
                         as: "rAuthor",
                         model: models.User,
-                }]});
+                    }],
+                });
                 const isAdmin = (await models.User.findOne({where: {id: req.session.userId}})).isAdmin;
                 if (post.rAuthor.id === req.session.userId || isAdmin) {
                     try {
@@ -497,7 +499,7 @@ export function resolver(req: any, res: any): any {
             return models.Activity.findAll();
         },
         async createActivity({name, description, points}:
-                                 {name: string, description: string, points: number}) {
+                                 { name: string, description: string, points: number }) {
             if (req.session.userId) {
                 const user = await models.User.findByPk(req.session.userId);
                 if (user.isAdmin) {

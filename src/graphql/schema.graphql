@@ -61,7 +61,7 @@ type Mutation {
     "Report the post"
     report(postId: ID!): Boolean!
 
-   "send a request"
+    "send a request"
     sendRequest(receiver: ID!, type: RequestType): Request
 
     "lets you accept a request for a given request id"
