@@ -73,4 +73,4 @@ maxQueryComplexity = 5000
         # The time in milliseconds before the rate limit is reset
         expire = 60000
         # The total number of calls allowed before rate limiting
-        total = 30
+        total = 60
