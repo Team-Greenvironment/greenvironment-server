@@ -9,8 +9,8 @@ describe("markdown", () => {
             expect(result).to.equal("<strong>Hello</strong>");
         });
         it("renders markdown emoji", () => {
-           const result = markdown.renderInline(":smile:");
-           expect(result).to.equal("😄");
+            const result = markdown.renderInline(":smile:");
+            expect(result).to.equal("😄");
         });
     });
     describe("render", () => {
@@ -19,8 +19,8 @@ describe("markdown", () => {
             expect(result).to.equal("<p>#header</p>\n<pre><code></code></pre>\n");
         });
         it("renders markdown emoji", () => {
-           const result = markdown.render(":smile:");
-           expect(result).to.equal("<p>😄</p>\n");
+            const result = markdown.render(":smile:");
+            expect(result).to.equal("<p>😄</p>\n");
         });
     });
 });

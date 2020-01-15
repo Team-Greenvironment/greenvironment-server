@@ -14,8 +14,8 @@ import {NoActionSpecifiedError} from "./errors/NoActionSpecifiedError";
 import {UserNotFoundError} from "./errors/UserNotFoundError";
 import globals from "./globals";
 import {InternalEvents} from "./InternalEvents";
-import {Activity} from "./models";
 import * as models from "./models";
+import {Activity} from "./models";
 
 // tslint:disable:completed-docs
 
@@ -160,7 +160,7 @@ namespace dataaccess {
         } else {
             // more performant way to get the votes with plain sql
             return await sequelize.query(
-                    `SELECT * FROM (
+                `SELECT * FROM (
                  SELECT *,
                  (SELECT count(*) FROM post_votes WHERE vote_type = 'UPVOTE' AND post_id = posts.id) AS upvotes ,
                  (SELECT count(*) FROM post_votes WHERE vote_type = 'DOWNVOTE' AND post_id = posts.id) AS downvotes
@@ -195,7 +195,7 @@ namespace dataaccess {
      * Deletes a post
      * @param postId
      */
-    export async function deletePost(postId: number): Promise<boolean|GraphQLError> {
+    export async function deletePost(postId: number): Promise<boolean | GraphQLError> {
         try {
             const post = await models.Post.findByPk(postId, {include: [{model: Activity}, {association: "rAuthor"}]});
             const activity = await post.activity();
@@ -263,8 +263,10 @@ namespace dataaccess {
     export async function createRequest(sender: number, receiver: number, requestType?: RequestType) {
         requestType = requestType || RequestType.FRIENDREQUEST;
 
-        const requestExists = !!await models.Request.findOne({where:
-                {senderId: sender, receiverId: receiver, requestType}});
+        const requestExists = !!await models.Request.findOne({
+            where:
+                {senderId: sender, receiverId: receiver, requestType},
+        });
 
         if (!requestExists) {
             const request = await models.Request.create({senderId: sender, receiverId: receiver, requestType});

@@ -55,7 +55,7 @@ export class Event extends Model<Event> {
      * @param first
      * @param offset
      */
-    public async participants({first, offset}: {first: number, offset: number}): Promise<User[]> {
+    public async participants({first, offset}: { first: number, offset: number }): Promise<User[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
         return await this.$get("rParticipants", {limit, offset}) as User[];
@@ -66,7 +66,7 @@ export class Event extends Model<Event> {
      * @param userId
      * @param request
      */
-    public async joined({userId}: {userId: number}, request: any): Promise<boolean> {
+    public async joined({userId}: { userId: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         if (userId) {
             const participants = await this.$get("rParticipants", {where: {id: userId}}) as User[];

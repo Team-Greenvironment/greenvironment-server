@@ -2,6 +2,7 @@ process.env.NODE_CONFIG_DIR = __dirname + "/../config";
 // tslint:disable:no-console
 import * as cluster from "cluster";
 import App from "./app";
+
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {

@@ -50,7 +50,7 @@ export class Post extends Model<Post> {
      */
     @BelongsToMany(() => User, () => PostVote)
     // tslint:disable-next-line:completed-docs
-    public rVotes: Array<User & {PostVote: PostVote}>;
+    public rVotes: Array<User & { PostVote: PostVote }>;
 
     /**
      * The date the post was created at
@@ -68,15 +68,15 @@ export class Post extends Model<Post> {
     /**
      * Returns the activity of the post.
      */
-    public async activity(): Promise<Activity|undefined> {
+    public async activity(): Promise<Activity | undefined> {
         return await this.$get("rActivity") as Activity;
     }
 
     /**
      * Returns the votes on a post
      */
-    public async votes(): Promise<Array<User & {PostVote: PostVote}>> {
-        return await this.$get("rVotes") as Array<User & {PostVote: PostVote}>;
+    public async votes(): Promise<Array<User & { PostVote: PostVote }>> {
+        return await this.$get("rVotes") as Array<User & { PostVote: PostVote }>;
     }
 
     /**
@@ -107,12 +107,12 @@ export class Post extends Model<Post> {
      */
     public async vote(userId: number, type: VoteType): Promise<VoteType> {
         type = type ?? VoteType.UPVOTE;
-        let votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+        let votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & { PostVote: PostVote }>;
         let vote = votes[0] ?? null;
         let created = false;
         if (!vote) {
             await this.$add("rVote", userId);
-            votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+            votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & { PostVote: PostVote }>;
             vote = votes[0] ?? null;
             created = true;
         }
@@ -134,10 +134,10 @@ export class Post extends Model<Post> {
      * @param userId
      * @param request
      */
-    public async userVote({userId}: {userId: number}, request: any): Promise<VoteType> {
+    public async userVote({userId}: { userId: number }, request: any): Promise<VoteType> {
         userId = userId ?? request.session.userId;
         if (userId) {
-            const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & {PostVote: PostVote}>;
+            const votes = await this.$get("rVotes", {where: {id: userId}}) as Array<User & { PostVote: PostVote }>;
             return votes[0]?.PostVote?.voteType;
         } else {
             return undefined;
@@ -149,9 +149,9 @@ export class Post extends Model<Post> {
      * @param userId
      * @param request
      */
-    public async deletable({userId}: {userId: number}, request: any): Promise<boolean> {
+    public async deletable({userId}: { userId: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
-        const isAuthor =  Number(userId) === Number(this.authorId);
+        const isAuthor = Number(userId) === Number(this.authorId);
         if (userId && !isAuthor) {
             return (await User.findOne({where: {id: userId}})).isAdmin;
         }
