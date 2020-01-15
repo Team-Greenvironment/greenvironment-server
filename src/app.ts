@@ -2,21 +2,20 @@ import * as compression from "compression";
 import * as config from "config";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
-import {Request, Response} from "express";
 import * as express from "express";
+import {Request, Response} from "express";
 import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
-import sharedsession = require("express-socket.io-session");
 import * as fsx from "fs-extra";
 import {buildSchema} from "graphql";
 import {importSchema} from "graphql-import";
 import queryComplexity, {directiveEstimator, simpleEstimator} from "graphql-query-complexity";
-import {IncomingMessage, ServerResponse} from "http";
 import * as http from "http";
+import {IncomingMessage} from "http";
 import * as httpStatus from "http-status";
 import * as path from "path";
-import {RedisClient} from "redis";
 import * as redis from "redis";
+import {RedisClient} from "redis";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
@@ -25,6 +24,7 @@ import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
 import HomeRoute from "./routes/HomeRoute";
 import {UploadRoute} from "./routes/UploadRoute";
+import sharedsession = require("express-socket.io-session");
 
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const createLimiter: (...args: any) => any = require("express-limiter");
@@ -107,7 +107,7 @@ class App {
             store: new SequelizeStore({db: this.sequelize}),
         });
 
-        await this.sequelize.sync({ logging: (msg) => logger.silly(msg)});
+        await this.sequelize.sync({logging: (msg) => logger.silly(msg)});
         this.sequelize.options.logging = (msg) => logger.silly(msg);
         logger.info("Setting up socket.io");
         try {
@@ -192,7 +192,7 @@ class App {
         });
 
         // @ts-ignore
-        this.app.use("/graphql",  graphqlHTTP(async (request, response, {variables}) => {
+        this.app.use("/graphql", graphqlHTTP(async (request, response, {variables}) => {
             response.setHeader("X-Max-Query-Complexity", config.get("api.maxQueryComplexity"));
             return {
                 // @ts-ignore all
@@ -224,7 +224,7 @@ class App {
         });
         // redirect all request to the angular file
         this.app.use((req: any, res: Response) => {
-            if (config.get("frontend.angularIndex")) {
+            if (config.has("frontend.angularIndex")) {
                 const angularIndex = path.join(this.publicPath, config.get("frontend.angularIndex"));
                 if (fsx.existsSync(path.join(angularIndex))) {
                     res.sendFile(angularIndex);
