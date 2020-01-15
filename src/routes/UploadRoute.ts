@@ -112,11 +112,13 @@ export class UploadRoute extends Route {
                 .toFile(filePath);
             fileName = `/${dataDirName}/${fileBasename}`;
             const user = await User.findByPk(request.session.userId);
-            const oldProfilePicture = path.join(this.dataDir, path.basename(user.profilePicture));
-            if (await fsx.pathExists(oldProfilePicture)) {
-                await fsx.unlink(oldProfilePicture);
-            } else {
-                globals.logger.warn(`Could not delete ${oldProfilePicture}: Not found!`);
+            if (user.profilePicture) {
+                const oldProfilePicture = path.join(this.dataDir, path.basename(user.profilePicture));
+                if (await fsx.pathExists(oldProfilePicture)) {
+                    await fsx.unlink(oldProfilePicture);
+                } else {
+                    globals.logger.warn(`Could not delete ${oldProfilePicture}: Not found!`);
+                }
             }
             user.profilePicture = fileName;
             await user.save();
