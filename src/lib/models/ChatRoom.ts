@@ -40,7 +40,7 @@ export class ChatRoom extends Model<ChatRoom> {
     public async messages({first, offset}: { first: number, offset: number }): Promise<ChatMessage[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
-        return await this.$get("rMessages", {limit, offset}) as ChatMessage[];
+        return await this.$get("rMessages", {limit, offset, order: [["id", "DESC"]]}) as ChatMessage[];
     }
 
     /**
