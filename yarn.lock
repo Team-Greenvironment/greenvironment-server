@@ -3014,6 +3014,11 @@ lead@^1.0.0:
   dependencies:
     flush-write-stream "^1.0.2"
 
+legit@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/legit/-/legit-1.0.7.tgz#ba527710cb78ee5f180362b04c35bdea09256891"
+  integrity sha512-C8BXHW/YMnJBCzk9watFCPkgRtyfjnXhm96s6Pd60R5ZKIX9p1jfmFxkfRIxFbnqDxkBykSRbxEK0SXe7DdP7g==
+
 liftoff@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/liftoff/-/liftoff-3.1.0.tgz#c9ba6081f908670607ee79062d700df062c52ed3"

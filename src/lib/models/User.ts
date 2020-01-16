@@ -204,14 +204,14 @@ export class User extends Model<User> {
      * The points of the user
      */
     public get points(): number {
-        return this.rankpoints;
+        return this.getDataValue("rankpoints");
     }
 
     /**
      * The level of the user which is the points divided by 100
      */
     public get level(): number {
-        return Math.ceil(this.rankpoints / 100);
+        return Math.ceil(this.getDataValue("rankpoints") / 100);
     }
 
     /**

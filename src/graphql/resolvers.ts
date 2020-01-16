@@ -2,6 +2,7 @@ import {GraphQLError} from "graphql";
 import * as status from "http-status";
 import * as yaml from "js-yaml";
 import {Op} from "sequelize";
+import isEmail from "validator/lib/isEmail";
 import dataaccess from "../lib/dataAccess";
 import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
@@ -9,6 +10,8 @@ import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
 import * as models from "../lib/models";
 import {is} from "../lib/regex";
+
+const legit = require("legit");
 
 // tslint:disable:completed-docs
 
@@ -170,7 +173,17 @@ export function resolver(req: any, res: any): any {
         },
         async register({username, email, passwordHash}: { username: string, email: string, passwordHash: string }) {
             if (username && email && passwordHash) {
-                if (!is.email(email)) {
+                let mailValid = isEmail(email);
+                if (mailValid) {
+                    try {
+                        mailValid = (await legit(email)).isValid;
+                    } catch (err) {
+                        globals.logger.warn(`Mail legit check returned: ${err.message}`);
+                        globals.logger.debug(err.stack);
+                        mailValid = false;
+                    }
+                }
+                if (!mailValid) {
                     res.status(status.BAD_REQUEST);
                     return new GraphQLError(`'${email}' is not a valid email address!`);
                 }
