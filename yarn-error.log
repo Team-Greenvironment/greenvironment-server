@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/bin/yarn add @types/express-limiter --dev
+  /usr/bin/node /usr/bin/yarn add @types/legit --dev
 
 PATH: 
   /home/trivernis/Documents/Programming/node/greenvironment-server/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/opt/cuda/bin:/opt/intel/mediasdk/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
@@ -14,7 +14,7 @@ Platform:
   linux x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@types%2fexpress-limiter: Not found
+  Error: https://registry.yarnpkg.com/@types%2flegit: Not found
       at Request.params.callback [as _callback] (/usr/lib/node_modules/yarn/lib/cli.js:66947:18)
       at Request.self.callback (/usr/lib/node_modules/yarn/lib/cli.js:140665:22)
       at Request.emit (events.js:321:20)
@@ -52,6 +52,7 @@ npm manifest:
       "@types/bluebird": "^3.5.27",
       "@types/chai": "^4.2.7",
       "@types/compression": "^1.0.1",
+      "@types/config": "^0.0.36",
       "@types/connect-pg-simple": "^4.2.0",
       "@types/cookie-parser": "^1.4.2",
       "@types/cors": "^2.8.6",
@@ -61,20 +62,20 @@ npm manifest:
       "@types/express-session": "^1.15.14",
       "@types/express-socket.io-session": "^1.3.2",
       "@types/fs-extra": "^8.0.0",
+      "@types/graphql-query-complexity": "^0.2.1",
       "@types/http-status": "^0.2.30",
       "@types/js-yaml": "^3.12.1",
       "@types/markdown-it": "0.0.9",
       "@types/mocha": "^5.2.7",
       "@types/node": "^12.7.12",
       "@types/pg": "^7.11.0",
+      "@types/redis": "^2.8.14",
       "@types/sequelize": "^4.28.5",
       "@types/sharp": "^0.23.1",
       "@types/socket.io": "^2.1.2",
       "@types/socket.io-redis": "^1.0.25",
       "@types/uuid": "^3.4.6",
       "@types/validator": "^10.11.3",
-      "@types/config": "^0.0.36",
-      "@types/redis": "^2.8.14",
       "chai": "^4.2.0",
       "delete": "^1.1.0",
       "gulp": "^4.0.2",
@@ -101,8 +102,10 @@ npm manifest:
       "fs-extra": "^8.1.0",
       "graphql": "^14.4.2",
       "graphql-import": "^0.7.1",
+      "graphql-query-complexity": "^0.4.1",
       "http-status": "^1.3.2",
       "js-yaml": "^3.13.1",
+      "legit": "^1.0.7",
       "markdown-it": "^10.0.0",
       "markdown-it-emoji": "^1.4.0",
       "pg": "^7.12.1",
@@ -278,6 +281,13 @@ Lockfile:
     integrity sha512-J00cVDALmi/hJOYsunyT52Hva5TnJeKP5yd1r+mH/ZU0mbYZflR0Z5kw5kITtKTRYMhm1JMClOFYdHnQszEvqw==
     dependencies:
       "@types/node" "*"
+  
+  "@types/graphql-query-complexity@^0.2.1":
+    version "0.2.1"
+    resolved "https://registry.yarnpkg.com/@types/graphql-query-complexity/-/graphql-query-complexity-0.2.1.tgz#5166c7f32b6cd0a24f1aad5e00ca513b82b7f0e0"
+    integrity sha512-PxYhF92UFagAl9UIep8seEUd9j18JardL9ZM9tOfP02fWot9ZlkBYYGFwSZ7fRE6HTva/Yr4BQem7b4P/TgDPA==
+    dependencies:
+      graphql-query-complexity "*"
   
   "@types/http-status@^0.2.30":
     version "0.2.30"
@@ -2400,6 +2410,13 @@ Lockfile:
       lodash "^4.17.4"
       resolve-from "^4.0.0"
   
+  graphql-query-complexity@*, graphql-query-complexity@^0.4.1:
+    version "0.4.1"
+    resolved "https://registry.yarnpkg.com/graphql-query-complexity/-/graphql-query-complexity-0.4.1.tgz#06ad49de617da0d74c8196fb4a641349f104552d"
+    integrity sha512-Uo87hNlnJ5jwoWBkVYITbJpTrlCVwgfG5Wrfel0K1/42G+3xvud31CpsprAwiSpFIP+gCqttAx7OVmw4eTqLQQ==
+    dependencies:
+      lodash.get "^4.4.2"
+  
   graphql@^14.4.2, graphql@^14.5.3:
     version "14.5.8"
     resolved "https://registry.yarnpkg.com/graphql/-/graphql-14.5.8.tgz#504f3d3114cb9a0a3f359bbbcf38d9e5bf6a6b3c"
@@ -3127,6 +3144,11 @@ Lockfile:
     dependencies:
       flush-write-stream "^1.0.2"
   
+  legit@^1.0.7:
+    version "1.0.7"
+    resolved "https://registry.yarnpkg.com/legit/-/legit-1.0.7.tgz#ba527710cb78ee5f180362b04c35bdea09256891"
+    integrity sha512-C8BXHW/YMnJBCzk9watFCPkgRtyfjnXhm96s6Pd60R5ZKIX9p1jfmFxkfRIxFbnqDxkBykSRbxEK0SXe7DdP7g==
+  
   liftoff@^3.1.0:
     version "3.1.0"
     resolved "https://registry.yarnpkg.com/liftoff/-/liftoff-3.1.0.tgz#c9ba6081f908670607ee79062d700df062c52ed3"
@@ -3166,6 +3188,11 @@ Lockfile:
     dependencies:
       p-locate "^3.0.0"
       path-exists "^3.0.0"
+  
+  lodash.get@^4.4.2:
+    version "4.4.2"
+    resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
+    integrity sha1-LRd/ZS+jHpObRDjVNBSZ36OCXpk=
   
   lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.4:
     version "4.17.15"

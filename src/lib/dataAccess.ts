@@ -121,7 +121,7 @@ namespace dataaccess {
         const hash = crypto.createHash("sha512");
         hash.update(password);
         password = hash.digest("hex");
-        const existResult = !!(await models.User.findOne({where: {username, email, password}}));
+        const existResult = !!(await models.User.findOne({where: {email}}));
         const handle = await generateHandle(username);
         if (!existResult) {
             return models.User.create({username, email, password, handle});
