@@ -37,6 +37,12 @@ type Query {
 
     "Returns an access token for the user that can be used in requests. To user the token in requests, it has to be set in the HTTP header 'Authorization' with the format Bearer <token>."
     getToken(email: String!, passwordHash: String!): Token!
+
+    "Checks if the input phrase contains blacklisted words"
+    blacklisted(phrase: String!): BlacklistedResult!
+
+    "Returns the blacklist with pagination."
+    getBlacklistedPhrases(first: Int = 20, offset: Int = 0): [String!]! @complexity(value: 1, multipliers: ["first"])
 }
 
 type Mutation {
@@ -111,6 +117,12 @@ type Mutation {
 
     "Creates an activity. Can only be used by admins."
     createActivity(name: String!, description: String!, points: Int!): Activity
+
+    "Adds a phrase to the blacklist. Returns true if the phrase didn't exist and was inserted."
+    addToBlacklist(phrase: String!, languageCode: String = "en"): Boolean!
+
+    "Removes a phrase from the blacklist. Returns true if the phrase could be found and deleted."
+    removeFromBlacklist(phrase: String!, languageCode: String = "en"): Boolean!
 }
 
 interface UserData {
@@ -431,6 +443,22 @@ type Token {
     expires: String!
 }
 
+"An activity that grants points"
+type Activity {
+
+    "the id of the activity"
+    id: ID!
+
+    "the name of the activity"
+    name: String!
+
+    "the description of the activity"
+    description: String!
+
+    "the number of points the activity grants"
+    points: Int!
+}
+
 "The result of a search."
 type SearchResult {
     "The users that were found in the search."
@@ -456,21 +484,18 @@ type VoteResult {
     post: Post!
 }
 
-"An activity that grants points"
-type Activity {
+"The result of checking if a phrase is blacklisted"
+type BlacklistedResult {
 
-    "the id of the activity"
-    id: ID!
+    "If the phrase contains blacklisted words."
+    blacklisted: Boolean!
 
-    "the name of the activity"
-    name: String!
-
-    "the description of the activity"
-    description: String!
-
-    "the number of points the activity grants"
-    points: Int!
+    "The specific blacklisted phrase."
+    phrases: [String!]!
 }
+
+
+
 
 "represents the type of vote performed on a post"
 enum VoteType {

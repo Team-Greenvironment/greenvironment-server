@@ -3,6 +3,7 @@ import {GraphQLError} from "graphql";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
 import {ActivityNotFoundError} from "./errors/ActivityNotFoundError";
+import {BlacklistedError} from "./errors/BlacklistedError";
 import {ChatNotFoundError} from "./errors/ChatNotFoundError";
 import {DuplicatedRequestError} from "./errors/DuplicatedRequestError";
 import {EmailAlreadyRegisteredError} from "./errors/EmailAlreadyRegisteredError";
@@ -15,7 +16,7 @@ import {UserNotFoundError} from "./errors/UserNotFoundError";
 import globals from "./globals";
 import {InternalEvents} from "./InternalEvents";
 import * as models from "./models";
-import {Activity} from "./models";
+import {Activity, BlacklistedPhrase} from "./models";
 
 // tslint:disable:completed-docs
 
@@ -62,6 +63,7 @@ namespace dataaccess {
                 models.EventParticipant,
                 models.Event,
                 models.Activity,
+                models.BlacklistedPhrase,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
@@ -118,6 +120,10 @@ namespace dataaccess {
      * @param password
      */
     export async function registerUser(username: string, email: string, password: string): Promise<models.User> {
+        const blacklisted = await checkBlacklisted(username);
+        if (blacklisted.length > 0) {
+            throw new BlacklistedError(blacklisted.map((p) => p.phrase), "username");
+        }
         const hash = crypto.createHash("sha512");
         hash.update(password);
         password = hash.digest("hex");
@@ -176,6 +182,10 @@ namespace dataaccess {
      * @param activityId
      */
     export async function createPost(content: string, authorId: number, activityId?: number): Promise<models.Post> {
+        const blacklisted = await checkBlacklisted(content);
+        if (blacklisted.length > 0) {
+            throw new BlacklistedError(blacklisted.map((p) => p.phrase), "content");
+        }
         const activity = await models.Activity.findByPk(activityId);
         if (!activityId || activity) {
             const post = await models.Post.create({content, authorId, activityId});
@@ -284,6 +294,10 @@ namespace dataaccess {
      * @param members
      */
     export async function createGroup(name: string, creator: number, members: number[]): Promise<models.Group> {
+        const blacklisted = await checkBlacklisted(name);
+        if (blacklisted.length > 0) {
+            throw new BlacklistedError(blacklisted.map((p) => p.phrase), "group name");
+        }
         const groupNameExists = !!await models.Group.findOne({where: {name}});
         if (!groupNameExists) {
             members = members || [];
@@ -335,6 +349,17 @@ namespace dataaccess {
         } else {
             throw new GroupNotFoundError(groupId);
         }
+    }
+
+    /**
+     * Checks if a given phrase is blacklisted.
+     * @param phrase
+     * @param language
+     */
+    export async function checkBlacklisted(phrase: string, language: string = "en"): Promise<models.BlacklistedPhrase[]> {
+        return sequelize.query<BlacklistedPhrase>(`
+            SELECT * FROM blacklisted_phrases WHERE ? ~* phrase AND language = ?`,
+            {replacements: [phrase, language], mapToModel: true, model: BlacklistedPhrase});
     }
 
     /**
