@@ -68,6 +68,9 @@ graphiql = true
 # The maximum complexity of queries
 maxQueryComplexity = 5000
 
+# sets the image format for the site. Values: png or webp
+imageFormat = "png"
+
     # Configuration for the api rate limit
     [api.rateLimit]
 

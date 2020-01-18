@@ -380,6 +380,9 @@ type Group {
     "name of the group"
     name: String!
 
+    "the groups icon"
+    picture: String
+
     "the creator of the group"
     creator: User!
 
