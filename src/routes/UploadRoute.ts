@@ -193,6 +193,7 @@ export class UploadRoute extends Route {
     private async processAndStoreImage(data: Buffer, width = 512, height = 512,
                                        fit: ImageFit = "cover"): Promise<string> {
         const fileBasename = UploadRoute.getFileName() + "." + config.get("api.imageFormat");
+        await fsx.ensureDir(this.dataDir);
         const filePath = path.join(this.dataDir, fileBasename);
         let image = await sharp(data)
             .resize(width, height, {
