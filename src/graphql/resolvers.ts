@@ -4,7 +4,8 @@ import * as yaml from "js-yaml";
 import {Op} from "sequelize";
 import isEmail from "validator/lib/isEmail";
 import dataaccess from "../lib/dataAccess";
-import {NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
+import {BlacklistedError} from "../lib/errors/BlacklistedError";
+import {NotAnAdminGqlError, NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
@@ -112,6 +113,16 @@ export function resolver(req: any, res: any): any {
                 res.status(status.BAD_REQUEST);
                 return new GraphQLError("No requestId given.");
             }
+        },
+        async blacklisted({phrase}: {phrase: string}) {
+            const phrases = await dataaccess.checkBlacklisted(phrase);
+            return {
+                blacklisted: phrases.length > 0,
+                phrases: phrases.map((p) => p.phrase),
+            };
+        },
+        async getBlacklistedPhrases({first, offset}: {first: number, offset: number}) {
+            return (await models.BlacklistedPhrase.findAll({limit: first, offset})).map((p) => p.phrase);
         },
         acceptCookies() {
             req.session.cookiesAccepted = true;
@@ -476,6 +487,11 @@ export function resolver(req: any, res: any): any {
                 const date = new Date(Number(dueDate));
                 const group = await models.Group.findByPk(groupId, {include: [{association: "rAdmins"}]});
                 if (group.rAdmins.find((x) => x.id === req.session.userId)) {
+                    const blacklisted = await dataaccess.checkBlacklisted(name);
+                    if (blacklisted.length > 0) {
+                        res.status(status.BAD_REQUEST);
+                        return new BlacklistedError(blacklisted.map((p) => p.phrase), "event name").graphqlError;
+                    }
                     return group.$create<models.Event>("rEvent", {name, dueDate: date});
                 } else {
                     res.status(status.FORBIDDEN);
@@ -524,7 +540,45 @@ export function resolver(req: any, res: any): any {
                     }
                 } else {
                     res.status(status.FORBIDDEN);
-                    return new GraphQLError("You are not an admin.");
+                    return new NotAnAdminGqlError();
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async addToBlacklist({phrase, languageCode}: {phrase: string, languageCode: string}) {
+            if (req.session.userId) {
+                const user = await models.User.findByPk(req.session.userId);
+                if (user.isAdmin) {
+                    const phraseExists = await models.BlacklistedPhrase.findOne(
+                        {where: {phrase, language: languageCode}});
+                    if (!phraseExists) {
+                        await models.BlacklistedPhrase.create({phrase, language: languageCode});
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return new NotAnAdminGqlError();
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async removeFromBlacklist({phrase, languageCode}: {phrase: string, languageCode: string}) {
+            if (req.session.userId) {
+                const user = await models.User.findByPk(req.session.userId);
+                if (user.isAdmin) {
+                    const phraseEntry = await models.BlacklistedPhrase.findOne(
+                        {where: {phrase, language: languageCode}});
+                    if (phraseEntry) {
+                        await phraseEntry.destroy();
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             } else {
                 res.status(status.UNAUTHORIZED);
