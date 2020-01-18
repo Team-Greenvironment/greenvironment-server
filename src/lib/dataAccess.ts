@@ -356,7 +356,8 @@ namespace dataaccess {
      * @param phrase
      * @param language
      */
-    export async function checkBlacklisted(phrase: string, language: string = "en"): Promise<models.BlacklistedPhrase[]> {
+    export async function checkBlacklisted(phrase: string, language: string = "en"):
+        Promise<models.BlacklistedPhrase[]> {
         return sequelize.query<BlacklistedPhrase>(`
             SELECT * FROM blacklisted_phrases WHERE ? ~* phrase AND language = ?`,
             {replacements: [phrase, language], mapToModel: true, model: BlacklistedPhrase});
