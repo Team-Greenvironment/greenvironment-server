@@ -1,3 +1,4 @@
+import * as sqz from "sequelize";
 import {
     BelongsTo,
     BelongsToMany,
@@ -28,6 +29,13 @@ export class Group extends Model<Group> {
     @Unique
     @Column({allowNull: false, unique: true})
     public name: string;
+
+
+    /**
+     * The url of the groups avatar picture
+     */
+    @Column({type: sqz.STRING(512)})
+    public picture: string;
 
     /**
      * The id of the user who created the group
