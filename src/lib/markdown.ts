@@ -1,21 +1,13 @@
-import * as config from "config";
 import * as MarkdownIt from "markdown-it/lib";
-import globals from "./globals";
+
+const { html5Media } = require("markdown-it-html5-media");
+const mdEmoji = require("markdown-it-emoji");
 
 namespace markdown {
 
-    const md = new MarkdownIt();
-
-    for (const pluginName of config.get("markdown.plugins") as string[]) {
-        try {
-            const plugin = require(pluginName);
-            if (plugin) {
-                md.use(plugin);
-            }
-        } catch (err) {
-            globals.logger.warn(`Markdown-it plugin '${pluginName}' not found!`);
-        }
-    }
+    const md = new MarkdownIt()
+        .use(html5Media)
+        .use(mdEmoji);
 
     /**
      * Renders the markdown string inline (without blocks).

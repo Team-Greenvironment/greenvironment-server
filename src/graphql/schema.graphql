@@ -94,6 +94,9 @@ type Mutation {
     "Creates a new group with a given name and additional members"
     createGroup(name: String!, members: [ID!]): Group!
 
+    "Deletes a group."
+    deleteGroup(groupId: ID!): Boolean!
+
     "Joins a group with the given id"
     joinGroup(id: ID!): Group
 
@@ -108,6 +111,9 @@ type Mutation {
 
     "Creates a new event with a epoch due date on a group."
     createEvent(name: String, dueDate: String, groupId: ID!): Event!
+
+    "Deletes an event."
+    deleteEvent(eventId: ID!): Boolean!
 
     "Joins a event."
     joinEvent(eventId: ID!): Event
@@ -411,7 +417,10 @@ type Group {
     events(first: Int=10, offset: Int=0): [Event!]! @complexity(value: 1, multipliers: ["first"])
 
     "If the user with the specified id has joined the group"
-    joined(userId: Int): Boolean!
+    joined(userId: ID): Boolean!
+
+    "If the group is deletable by the specified or logged in user."
+    deletable(userId: ID): Boolean!
 }
 
 type Event {
@@ -431,7 +440,10 @@ type Event {
     participants(first: Int=10, offset: Int=0): [User!]! @complexity(value: 1, multipliers: ["first"])
 
     "Returns if the user with the specified id has joined the event"
-    joined(userId: Int): Boolean
+    joined(userId: ID): Boolean!
+
+    "Returns if the Event is deletable by the logged in or specified user"
+    deletable(userId: ID): Boolean!
 }
 
 "respresents an access token entry with the value as the acutal token and expires as the date the token expires."
