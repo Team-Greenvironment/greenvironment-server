@@ -35,13 +35,6 @@ secret = "REPLACE WITH SAFE RANDOM GENERATED SECRET"
 cookieMaxAge = 6048e+5  # 7 days
 
 
-# Configuration for markdown rendering
-[markdown]
-
-# The plugins used in the markdown parser
-plugins = ["markdown-it-emoji"]
-
-
 # Configuration for logging
 [logging]
 

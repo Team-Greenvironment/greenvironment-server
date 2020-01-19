@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/bin/yarn add @types/legit --dev
+  /usr/bin/node /usr/bin/yarn add @types/markdown-it-html5-media --dev
 
 PATH: 
   /home/trivernis/Documents/Programming/node/greenvironment-server/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/opt/cuda/bin:/opt/intel/mediasdk/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
@@ -14,7 +14,7 @@ Platform:
   linux x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@types%2flegit: Not found
+  Error: https://registry.yarnpkg.com/@types%2fmarkdown-it-html5-media: Not found
       at Request.params.callback [as _callback] (/usr/lib/node_modules/yarn/lib/cli.js:66947:18)
       at Request.self.callback (/usr/lib/node_modules/yarn/lib/cli.js:140665:22)
       at Request.emit (events.js:321:20)
@@ -88,6 +88,8 @@ npm manifest:
       "typescript": "^3.7.2"
     },
     "dependencies": {
+      "@types/body-parser": "^1.17.1",
+      "body-parser": "^1.19.0",
       "compression": "^1.7.4",
       "config": "^3.2.4",
       "connect-session-sequelize": "^6.0.0",
@@ -108,6 +110,7 @@ npm manifest:
       "legit": "^1.0.7",
       "markdown-it": "^10.0.0",
       "markdown-it-emoji": "^1.4.0",
+      "markdown-it-html5-media": "^0.6.0",
       "pg": "^7.12.1",
       "pug": "^2.0.4",
       "reflect-metadata": "^0.1.13",
@@ -165,7 +168,7 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.29.tgz#7cd933c902c4fc83046517a1bef973886d00bdb6"
     integrity sha512-kmVtnxTuUuhCET669irqQmPAez4KFnFVKvpleVRyfC3g+SHD1hIkFZcWLim9BVcwUBLO59o8VZE4yGCmTif8Yw==
   
-  "@types/body-parser@*":
+  "@types/body-parser@*", "@types/body-parser@^1.17.1":
     version "1.17.1"
     resolved "https://registry.yarnpkg.com/@types/body-parser/-/body-parser-1.17.1.tgz#18fcf61768fb5c30ccc508c21d6fd2e8b3bf7897"
     integrity sha512-RoX2EZjMiFMjZh9lmYrwgoP9RTpAjSHiJxdp4oidAQVO02T7HER3xj9UKue5534ULWeqVEkujhWcyvUce+d68w==
@@ -879,7 +882,7 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.1.tgz#df70e302b471d7473489acf26a93d63b53f874de"
     integrity sha512-DdmyoGCleJnkbp3nkbxTLJ18rjDsE4yCggEwKNXkeV123sPNfOCYeDoeuOY+F2FrSjO1YXcTU+dsy96KMy+gcg==
   
-  body-parser@1.19.0:
+  body-parser@1.19.0, body-parser@^1.19.0:
     version "1.19.0"
     resolved "https://registry.yarnpkg.com/body-parser/-/body-parser-1.19.0.tgz#96b2709e57c9c4e09a6fd66a8fd979844f69f08a"
     integrity sha512-dhEPs72UPbDnAQJ9ZKMNTP6ptJaionhP5cBb541nXPlW60Jepo9RV/a4fX4XWW9CuFNK22krhrj1+rgzifNCsw==
@@ -1742,6 +1745,11 @@ Lockfile:
       debug "~4.1.0"
       engine.io-parser "~2.2.0"
       ws "^7.1.2"
+  
+  entities@~1.1.1:
+    version "1.1.2"
+    resolved "https://registry.yarnpkg.com/entities/-/entities-1.1.2.tgz#bdfa735299664dfafd34529ed4f8522a275fea56"
+    integrity sha512-f2LZMYl1Fzu7YSBKg+RoROelpOaNrcGmE9AZubeDfrCEia483oW4MI4VyFd5VNHIgQ/7qm1I0wUHK1eJnn2y2w==
   
   entities@~2.0.0:
     version "2.0.0"
@@ -3246,6 +3254,13 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/markdown-it-emoji/-/markdown-it-emoji-1.4.0.tgz#9bee0e9a990a963ba96df6980c4fddb05dfb4dcc"
     integrity sha1-m+4OmpkKljupbfaYDE/dsF37Tcw=
   
+  markdown-it-html5-media@^0.6.0:
+    version "0.6.0"
+    resolved "https://registry.yarnpkg.com/markdown-it-html5-media/-/markdown-it-html5-media-0.6.0.tgz#ed82bbdaec0545ba0879f0454c5a9d73171d3a76"
+    integrity sha512-3zxk00H5adz5n/LaC+yncTfZhSxa7igVKsKNfegUJw7gNAxMEA7D6YLHzSM+isJSnTLbiqU7663hfitv/ybzeg==
+    dependencies:
+      markdown-it "^8.4.0"
+  
   markdown-it@^10.0.0:
     version "10.0.0"
     resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-10.0.0.tgz#abfc64f141b1722d663402044e43927f1f50a8dc"
@@ -3253,6 +3268,17 @@ Lockfile:
     dependencies:
       argparse "^1.0.7"
       entities "~2.0.0"
+      linkify-it "^2.0.0"
+      mdurl "^1.0.1"
+      uc.micro "^1.0.5"
+  
+  markdown-it@^8.4.0:
+    version "8.4.2"
+    resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.4.2.tgz#386f98998dc15a37722aa7722084f4020bdd9b54"
+    integrity sha512-GcRz3AWTqSUphY3vsUqQSFMbgR38a4Lh3GWlHRh/7MRwz8mcu9n2IO7HOh+bXHrR9kOPDl5RNCaEsrneb+xhHQ==
+    dependencies:
+      argparse "^1.0.7"
+      entities "~1.1.1"
       linkify-it "^2.0.0"
       mdurl "^1.0.1"
       uc.micro "^1.0.5"

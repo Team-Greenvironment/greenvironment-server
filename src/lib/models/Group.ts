@@ -135,11 +135,25 @@ export class Group extends Model<Group> {
      * @param userId
      * @param request
      */
-    public async joined({userId}: { userId: number }, request: any): Promise<boolean> {
+    public async joined({userId}: { userId?: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         if (userId) {
             const members = await this.$get("rMembers", {where: {id: userId}}) as User[];
             return members.length !== 0;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns if the group is deletable by the given user
+     * @param userId
+     * @param request
+     */
+    public async deletable({userId}: {userId?: number}, request: any): Promise<boolean> {
+        userId = userId ?? request.session.userId;
+        if (userId) {
+            return this.creatorId === userId;
         } else {
             return false;
         }

@@ -6,6 +6,7 @@ import isEmail from "validator/lib/isEmail";
 import dataaccess from "../lib/dataAccess";
 import {BlacklistedError} from "../lib/errors/BlacklistedError";
 import {NotAnAdminGqlError, NotLoggedInGqlError, PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
+import {GroupNotFoundError} from "../lib/errors/GroupNotFoundError";
 import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
 import globals from "../lib/globals";
 import {InternalEvents} from "../lib/InternalEvents";
@@ -409,6 +410,25 @@ export function resolver(req: any, res: any): any {
                 return new NotLoggedInGqlError();
             }
         },
+        async deleteGroup({groupId}: {groupId: number}) {
+            if (req.session.userId) {
+                const group = await models.Group.findByPk(groupId);
+                if (!group) {
+                    res.status(status.BAD_REQUEST);
+                    return new GroupNotFoundError(groupId).graphqlError;
+                }
+                if (group.creatorId === req.session.userId) {
+                    await group.destroy();
+                    return true;
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new GraphQLError("You are not the group admin.");
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
         async joinGroup({id}: { id: number }) {
             if (req.session.userId) {
                 try {
@@ -496,6 +516,27 @@ export function resolver(req: any, res: any): any {
                 } else {
                     res.status(status.FORBIDDEN);
                     return new GraphQLError("You are not a group admin!");
+                }
+            } else {
+                res.status(status.UNAUTHORIZED);
+                return new NotLoggedInGqlError();
+            }
+        },
+        async deleteEvent({eventId}: {eventId: number}) {
+            if (req.session.userId) {
+                const event = await models.Event.findByPk(eventId, {include: [models.Group]});
+                const user = await models.User.findByPk(req.session.userId);
+                if (!event) {
+                    res.status(status.BAD_REQUEST);
+                    return new GraphQLError(`No event with id '${eventId}' found.`);
+                }
+                const group = await event.group();
+                if (await group.$has("rAdmins", user)) {
+                    await event.destroy();
+                    return true;
+                } else {
+                    res.status(status.FORBIDDEN);
+                    return new NotAnAdminGqlError();
                 }
             } else {
                 res.status(status.UNAUTHORIZED);

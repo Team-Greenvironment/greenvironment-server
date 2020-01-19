@@ -55,7 +55,7 @@ export class Event extends Model<Event> {
      * @param first
      * @param offset
      */
-    public async participants({first, offset}: { first: number, offset: number }): Promise<User[]> {
+    public async participants({first, offset}: { first?: number, offset?: number }): Promise<User[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
         return await this.$get("rParticipants", {limit, offset}) as User[];
@@ -71,6 +71,22 @@ export class Event extends Model<Event> {
         if (userId) {
             const participants = await this.$get("rParticipants", {where: {id: userId}}) as User[];
             return participants.length !== 0;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns if the event is deletable by the specified user
+     * @param userId
+     * @param request
+     */
+    public async deletable({userId}: {userId: number}, request: any): Promise<boolean> {
+        userId = userId ?? request.session.userId;
+        if (userId) {
+            const group = await this.$get<Group>("rGroup") as Group;
+            const user = await User.findByPk(userId);
+            return group.$has("rAdmins", user);
         } else {
             return false;
         }
