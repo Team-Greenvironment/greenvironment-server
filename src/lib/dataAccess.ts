@@ -205,7 +205,7 @@ namespace dataaccess {
      * Deletes a post
      * @param postId
      */
-    export async function deletePost(postId: number): Promise<boolean | GraphQLError> {
+    export async function deletePost(postId: number): Promise<boolean> {
         try {
             const post = await models.Post.findByPk(postId, {include: [{model: Activity}, {association: "rAuthor"}]});
             const activity = await post.activity();
