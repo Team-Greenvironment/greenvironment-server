@@ -5,7 +5,9 @@ const mdEmoji = require("markdown-it-emoji");
 
 namespace markdown {
 
-    const md = new MarkdownIt()
+    const md = new MarkdownIt({
+        linkify: true,
+    })
         .use(html5Media)
         .use(mdEmoji);
 
