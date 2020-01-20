@@ -106,7 +106,8 @@ export class QueryResolver extends MutationResolver {
      * @param first
      * @param offset
      */
-    public async search({query, first, offset}: { query: number, first: number, offset: number }): Promise<SearchResult> {
+    public async search({query, first, offset}: { query: number, first: number, offset: number }):
+        Promise<SearchResult> {
         const limit = first;
         const users = await User.findAll({
             limit,
