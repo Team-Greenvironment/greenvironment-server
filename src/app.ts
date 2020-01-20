@@ -200,7 +200,11 @@ class App {
                 formatError: (err: GraphQLError | any) => {
                     if (err.statusCode) {
                         response.status(err.statusCode);
+                    } else {
+                        response.status(400);
                     }
+                    logger.debug(err.message);
+                    logger.silly(err.stack);
                     return err.graphqlError ?? err;
                 },
                 graphiql: config.get("api.graphiql"),

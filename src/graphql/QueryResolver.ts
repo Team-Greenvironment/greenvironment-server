@@ -4,7 +4,6 @@ import dataaccess from "../lib/dataAccess";
 import {ChatNotFoundError} from "../lib/errors/ChatNotFoundError";
 import {PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import {GroupNotFoundError} from "../lib/errors/GroupNotFoundError";
-import {InvalidLoginError} from "../lib/errors/InvalidLoginError";
 import {RequestNotFoundError} from "../lib/errors/RequestNotFoundError";
 import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
 import {
@@ -17,15 +16,15 @@ import {
     Request,
     User,
 } from "../lib/models";
-import {BaseResolver} from "./BaseResolver";
 import {BlacklistedResult} from "./BlacklistedResult";
+import {MutationResolver} from "./MutationResolver";
 import {SearchResult} from "./SearchResult";
 import {Token} from "./Token";
 
 /**
  * A class that provides functions to resolve queries
  */
-export class QueryResolver extends BaseResolver {
+export class QueryResolver extends MutationResolver {
 
     /**
      * Gets a user by id or handle
