@@ -5,6 +5,9 @@ import {BaseError} from "./BaseError";
  * An error that is thrown when a request for a sender, receiver and type was not found
  */
 export class RequestNotFoundError extends BaseError {
+    public readonly statusCode = httpStatus.NOT_FOUND;
+
+    // @ts-ignore
     constructor(sender: number, receiver?: number, type?: dataaccess.RequestType) {
         if (!receiver) {
             super(`Request with id '${sender} not found.'`);

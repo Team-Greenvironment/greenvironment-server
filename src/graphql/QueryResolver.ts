@@ -6,16 +6,7 @@ import {PostNotFoundGqlError} from "../lib/errors/graphqlErrors";
 import {GroupNotFoundError} from "../lib/errors/GroupNotFoundError";
 import {RequestNotFoundError} from "../lib/errors/RequestNotFoundError";
 import {UserNotFoundError} from "../lib/errors/UserNotFoundError";
-import {
-    Activity,
-    BlacklistedPhrase,
-    ChatRoom,
-    Event,
-    Group,
-    Post,
-    Request,
-    User,
-} from "../lib/models";
+import {Activity, BlacklistedPhrase, ChatRoom, Event, Group, Post, Request, User} from "../lib/models";
 import {BlacklistedResult} from "./BlacklistedResult";
 import {MutationResolver} from "./MutationResolver";
 import {SearchResult} from "./SearchResult";
@@ -31,7 +22,7 @@ export class QueryResolver extends MutationResolver {
      * @param userId
      * @param handle
      */
-    public async getUser({userId, handle}: {userId?: number, handle?: string}): Promise<User> {
+    public async getUser({userId, handle}: { userId?: number, handle?: string }): Promise<User> {
         let user: User;
         if (userId) {
             user = await User.findByPk(userId);
@@ -52,7 +43,7 @@ export class QueryResolver extends MutationResolver {
      * @param args
      * @param request
      */
-    public async getSelf(args: null, request: any): Promise<User>  {
+    public async getSelf(args: null, request: any): Promise<User> {
         this.ensureLoggedIn(request);
         return User.findByPk(request.session.userId);
     }
@@ -61,7 +52,7 @@ export class QueryResolver extends MutationResolver {
      * Returns a post for a given post id.
      * @param postId
      */
-    public async getPost({postId}: {postId: number}): Promise<Post> {
+    public async getPost({postId}: { postId: number }): Promise<Post> {
         const post = await Post.findByPk(postId);
         if (post) {
             return post;
@@ -74,7 +65,7 @@ export class QueryResolver extends MutationResolver {
      * Returns a chat for a given chat id
      * @param chatId
      */
-    public async getChat({chatId}: {chatId: number}): Promise<ChatRoom> {
+    public async getChat({chatId}: { chatId: number }): Promise<ChatRoom> {
         const chat = await ChatRoom.findByPk(chatId);
         if (chat) {
             return chat;
@@ -87,7 +78,7 @@ export class QueryResolver extends MutationResolver {
      * Returns a group for a given group id.
      * @param groupId
      */
-    public async getGroup({groupId}: {groupId: number}): Promise<Group> {
+    public async getGroup({groupId}: { groupId: number }): Promise<Group> {
         const group = await Group.findByPk(groupId);
         if (group) {
             return group;
@@ -100,7 +91,7 @@ export class QueryResolver extends MutationResolver {
      * Returns the request for a given id.
      * @param requestId
      */
-    public async getRequest({requestId}: {requestId: number}): Promise<Request> {
+    public async getRequest({requestId}: { requestId: number }): Promise<Request> {
         const request = await Request.findByPk(requestId);
         if (request) {
             return request;
@@ -115,7 +106,7 @@ export class QueryResolver extends MutationResolver {
      * @param first
      * @param offset
      */
-    public async search({query, first, offset}: {query: number, first: number, offset: number}): Promise<SearchResult> {
+    public async search({query, first, offset}: { query: number, first: number, offset: number }): Promise<SearchResult> {
         const limit = first;
         const users = await User.findAll({
             limit,
@@ -151,7 +142,7 @@ export class QueryResolver extends MutationResolver {
      * @param offset
      * @param sort
      */
-    public async getPosts({first, offset, sort}: {first: number, offset: number, sort: dataaccess.SortType}):
+    public async getPosts({first, offset, sort}: { first: number, offset: number, sort: dataaccess.SortType }):
         Promise<Post[]> {
         return await dataaccess.getPosts(first, offset, sort);
     }
@@ -160,7 +151,7 @@ export class QueryResolver extends MutationResolver {
      * Returns all activities
      */
     public async getActivities(): Promise<Activity[]> {
-        return  Activity.findAll();
+        return Activity.findAll();
     }
 
     /**
@@ -168,7 +159,7 @@ export class QueryResolver extends MutationResolver {
      * @param email
      * @param passwordHash
      */
-    public async getToken({email, passwordHash}: {email: string, passwordHash: string}): Promise<Token> {
+    public async getToken({email, passwordHash}: { email: string, passwordHash: string }): Promise<Token> {
         const user = await dataaccess.getUserByLogin(email, passwordHash);
         return new Token(await user.token(), Number(user.authExpire).toString());
     }
@@ -177,7 +168,7 @@ export class QueryResolver extends MutationResolver {
      * Returns if a input phrase contains blacklisted phrases and which one
      * @param phrase
      */
-    public async blacklisted({phrase}: {phrase: string}): Promise<BlacklistedResult> {
+    public async blacklisted({phrase}: { phrase: string }): Promise<BlacklistedResult> {
         const phrases = await dataaccess.checkBlacklisted(phrase);
         return new BlacklistedResult(phrases.length > 0, phrases
             .map((p) => p.phrase));
@@ -188,7 +179,7 @@ export class QueryResolver extends MutationResolver {
      * @param first
      * @param offset
      */
-    public async getBlacklistedPhrases({first, offset}: {first: number, offset: number}): Promise<string[]> {
+    public async getBlacklistedPhrases({first, offset}: { first: number, offset: number }): Promise<string[]> {
         return (await BlacklistedPhrase.findAll({limit: first, offset}))
             .map((p) => p.phrase);
     }

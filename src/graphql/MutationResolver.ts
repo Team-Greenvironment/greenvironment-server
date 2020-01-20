@@ -425,7 +425,7 @@ export class MutationResolver extends BaseResolver {
      * @param languageCode
      * @param request
      */
-    public async addToBlacklist({phrase, languageCode}: {phrase: string, languageCode?: string}, request: any):
+    public async addToBlacklist({phrase, languageCode}: { phrase: string, languageCode?: string }, request: any):
         Promise<boolean> {
         this.ensureLoggedIn(request);
         const user = await User.findByPk(request.session.userId);
@@ -448,7 +448,7 @@ export class MutationResolver extends BaseResolver {
      * @param languageCode
      * @param request
      */
-    public async removeFromBlacklist({phrase, languageCode}: {phrase: string, languageCode: string}, request: any):
+    public async removeFromBlacklist({phrase, languageCode}: { phrase: string, languageCode: string }, request: any):
         Promise<boolean> {
         this.ensureLoggedIn(request);
         const user = await User.findByPk(request.session.userId);

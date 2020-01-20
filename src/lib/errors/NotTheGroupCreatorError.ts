@@ -10,5 +10,4 @@ export class NotTheGroupCreatorError extends BaseError {
     constructor(groupId: number) {
         super(`You are not the creator of '${groupId}'`);
     }
-
 }

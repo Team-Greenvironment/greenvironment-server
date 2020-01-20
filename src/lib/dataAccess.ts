@@ -1,5 +1,4 @@
 import * as crypto from "crypto";
-import {GraphQLError} from "graphql";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
 import {ActivityNotFoundError} from "./errors/ActivityNotFoundError";
@@ -166,11 +165,20 @@ namespace dataaccess {
         } else {
             // more performant way to get the votes with plain sql
             return await sequelize.query(
-                `SELECT * FROM (
-                 SELECT *,
-                 (SELECT count(*) FROM post_votes WHERE vote_type = 'UPVOTE' AND post_id = posts.id) AS upvotes ,
-                 (SELECT count(*) FROM post_votes WHERE vote_type = 'DOWNVOTE' AND post_id = posts.id) AS downvotes
-                 FROM posts) AS a ORDER BY (a.upvotes - a.downvotes) DESC, a.upvotes DESC, a.id LIMIT ? OFFSET ?`,
+                    `SELECT *
+                     FROM (
+                              SELECT *,
+                                     (SELECT count(*)
+                                      FROM post_votes
+                                      WHERE vote_type = 'UPVOTE' AND post_id = posts.id)   AS upvotes,
+                                     (SELECT count(*)
+                                      FROM post_votes
+                                      WHERE vote_type = 'DOWNVOTE' AND post_id = posts.id) AS downvotes
+                              FROM posts) AS a
+                     ORDER BY (a.upvotes - a.downvotes) DESC, a.upvotes DESC, a.id
+                     LIMIT ?
+                     OFFSET
+                     ?`,
                 {replacements: [first, offset], mapToModel: true, model: models.Post}) as models.Post[];
         }
     }
@@ -359,7 +367,10 @@ namespace dataaccess {
     export async function checkBlacklisted(phrase: string, language: string = "en"):
         Promise<models.BlacklistedPhrase[]> {
         return sequelize.query<BlacklistedPhrase>(`
-            SELECT * FROM blacklisted_phrases WHERE ? ~* phrase AND language = ?`,
+                    SELECT *
+                    FROM blacklisted_phrases
+                    WHERE ? ~* phrase
+                      AND language = ?`,
             {replacements: [phrase, language], mapToModel: true, model: BlacklistedPhrase});
     }
 

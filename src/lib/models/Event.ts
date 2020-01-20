@@ -81,7 +81,7 @@ export class Event extends Model<Event> {
      * @param userId
      * @param request
      */
-    public async deletable({userId}: {userId: number}, request: any): Promise<boolean> {
+    public async deletable({userId}: { userId: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         if (userId) {
             const group = await this.$get<Group>("rGroup") as Group;

@@ -5,7 +5,6 @@ import {Router} from "express";
 import * as fileUpload from "express-fileupload";
 import {UploadedFile} from "express-fileupload";
 import * as fsx from "fs-extra";
-import {IncomingMessage} from "http";
 import * as status from "http-status";
 import * as path from "path";
 import * as sharp from "sharp";

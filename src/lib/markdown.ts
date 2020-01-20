@@ -1,6 +1,6 @@
 import * as MarkdownIt from "markdown-it/lib";
 
-const { html5Media } = require("markdown-it-html5-media");
+const {html5Media} = require("markdown-it-html5-media");
 const mdEmoji = require("markdown-it-emoji");
 
 namespace markdown {
