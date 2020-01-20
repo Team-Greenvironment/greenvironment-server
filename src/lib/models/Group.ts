@@ -150,7 +150,7 @@ export class Group extends Model<Group> {
      * @param userId
      * @param request
      */
-    public async deletable({userId}: {userId?: number}, request: any): Promise<boolean> {
+    public async deletable({userId}: { userId?: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         if (userId) {
             return this.creatorId === userId;

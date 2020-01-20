@@ -8,7 +8,7 @@ import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
 import sharedsession = require("express-socket.io-session");
 import * as fsx from "fs-extra";
-import {buildSchema} from "graphql";
+import {buildSchema, GraphQLError} from "graphql";
 import {importSchema} from "graphql-import";
 import queryComplexity, {directiveEstimator, simpleEstimator} from "graphql-query-complexity";
 import * as http from "http";
@@ -192,11 +192,21 @@ class App {
         });
 
         // @ts-ignore
-        this.app.use("/graphql", graphqlHTTP(async (request, response, {variables}) => {
+        this.app.use("/graphql", graphqlHTTP(async (request: any, response: any, {variables}) => {
             response.setHeader("X-Max-Query-Complexity", config.get("api.maxQueryComplexity"));
             return {
                 // @ts-ignore all
                 context: {session: request.session},
+                formatError: (err: GraphQLError | any) => {
+                    if (err.statusCode) {
+                        response.status(err.statusCode);
+                    } else {
+                        response.status(400);
+                    }
+                    logger.debug(err.message);
+                    logger.silly(err.stack);
+                    return err.graphqlError ?? err;
+                },
                 graphiql: config.get("api.graphiql"),
                 rootValue: resolver(request, response),
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),

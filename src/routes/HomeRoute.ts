@@ -47,6 +47,12 @@ class HomeRoute extends Route {
             globals.internalEmitter.on(InternalEvents.GQLPOSTCREATE, async (post: Post) => {
                 socket.emit("post", Object.assign(post, {htmlContent: post.htmlContent}));
             });
+            globals.internalEmitter.on(InternalEvents.CHATCREATE, async (chat: ChatRoom) => {
+                const user = await User.findByPk(socket.handshake.session.userId);
+                if (await chat.$has("rMembers", user)) {
+                    socket.emit("chatCreate", chat);
+                }
+            });
         });
 
         const chats = await dataaccess.getAllChats();

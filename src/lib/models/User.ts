@@ -80,7 +80,7 @@ export class User extends Model<User> {
      * The auth token for bearer authentication
      */
     @Unique
-    @Column({defaultValue: uuidv4, unique: true, type: sqz.UUIDV4})
+    @Column({defaultValue: uuidv4, unique: true, type: sqz.UUID})
     public authToken: string;
 
     /**

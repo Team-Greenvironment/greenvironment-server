@@ -1,15 +1,5 @@
 import * as sqz from "sequelize";
-import {
-    BelongsTo,
-    BelongsToMany,
-    Column,
-    ForeignKey,
-    HasMany,
-    Model,
-    NotNull,
-    Table,
-    Unique,
-} from "sequelize-typescript";
+import {Column, Model, NotNull, Table, Unique} from "sequelize-typescript";
 
 /**
  * Represents a blacklisted phrase
