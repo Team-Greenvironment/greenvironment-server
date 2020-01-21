@@ -1,3 +1,4 @@
+import * as httpStatus from "http-status";
 import {BaseError} from "./BaseError";
 
 /**
