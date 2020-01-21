@@ -1,3 +1,4 @@
+import * as httpStatus from "http-status";
 import dataaccess from "../dataAccess";
 import {BaseError} from "./BaseError";
 
