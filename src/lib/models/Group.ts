@@ -153,7 +153,8 @@ export class Group extends Model<Group> {
     public async deletable({userId}: { userId?: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         if (userId) {
-            return this.creatorId === userId;
+            const user = await User.findByPk(userId);
+            return this.creatorId === userId || user.isAdmin;
         } else {
             return false;
         }
