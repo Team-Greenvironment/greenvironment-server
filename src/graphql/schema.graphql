@@ -98,10 +98,10 @@ type Mutation {
     deleteGroup(groupId: ID!): Boolean!
 
     "Joins a group with the given id"
-    joinGroup(id: ID!): Group
+    joinGroup(groupId: ID!): Group
 
     "leaves the group with the given id"
-    leaveGroup(id: ID!): Group
+    leaveGroup(groupId: ID!): Group
 
     "adds an admin to the group"
     addGroupAdmin(groupId: ID!, userId: ID!): Group
