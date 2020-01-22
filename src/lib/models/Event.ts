@@ -86,7 +86,7 @@ export class Event extends Model<Event> {
         if (userId) {
             const group = await this.$get<Group>("rGroup") as Group;
             const user = await User.findByPk(userId);
-            return group.$has("rAdmins", user);
+            return (await group.$has("rAdmins", user)) || user.isAdmin;
         } else {
             return false;
         }
