@@ -1,4 +1,4 @@
-import {NotLoggedInGqlError} from "../lib/errors/graphqlErrors";
+import {NotLoggedInGqlError} from "../../lib/errors/graphqlErrors";
 
 /**
  * Base resolver class to provide common methods to all resolver classes

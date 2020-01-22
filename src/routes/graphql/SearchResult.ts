@@ -1,4 +1,4 @@
-import {Event, Group, Post, User} from "../lib/models";
+import {Event, Group, Post, User} from "../../lib/models";
 
 /**
  * A class to wrap search results returned by the search resolver

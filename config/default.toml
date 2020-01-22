@@ -51,7 +51,6 @@ angularIndex = "index.html"
 # The path to the public files
 publicPath = "./public"
 
-
 # Configuration for the api
 [api]
 

@@ -34,6 +34,12 @@ export class Post extends Model<Post> {
     public activityId: number;
 
     /**
+     * An url pointing to any media that belongs to the post
+     */
+    @Column({allowNull: true, type: sqz.STRING(512)})
+    public mediaUrl: string;
+
+    /**
      * The author of the post
      */
     @BelongsTo(() => User, "authorId")

@@ -1,17 +1,21 @@
 import {GraphQLError} from "graphql";
+import {FileUpload} from "graphql-upload";
 import * as yaml from "js-yaml";
 import isEmail from "validator/lib/isEmail";
-import dataaccess from "../lib/dataAccess";
-import {BlacklistedError} from "../lib/errors/BlacklistedError";
-import {GroupNotFoundError} from "../lib/errors/GroupNotFoundError";
-import {InvalidEmailError} from "../lib/errors/InvalidEmailError";
-import {NotAGroupAdminError} from "../lib/errors/NotAGroupAdminError";
-import {NotAnAdminError} from "../lib/errors/NotAnAdminError";
-import {NotTheGroupCreatorError} from "../lib/errors/NotTheGroupCreatorError";
-import {PostNotFoundError} from "../lib/errors/PostNotFoundError";
-import globals from "../lib/globals";
-import {InternalEvents} from "../lib/InternalEvents";
-import {Activity, BlacklistedPhrase, ChatMessage, ChatRoom, Event, Group, Post, Request, User} from "../lib/models";
+import dataaccess from "../../lib/dataAccess";
+import {BlacklistedError} from "../../lib/errors/BlacklistedError";
+import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
+import {InvalidEmailError} from "../../lib/errors/InvalidEmailError";
+import {InvalidFileError} from "../../lib/errors/InvalidFileError";
+import {NotAGroupAdminError} from "../../lib/errors/NotAGroupAdminError";
+import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
+import {NotTheGroupCreatorError} from "../../lib/errors/NotTheGroupCreatorError";
+import {PostNotFoundError} from "../../lib/errors/PostNotFoundError";
+import globals from "../../lib/globals";
+import {InternalEvents} from "../../lib/InternalEvents";
+import {Activity, BlacklistedPhrase, ChatMessage, ChatRoom, Event, Group, Post, Request, User} from "../../lib/models";
+import {is} from "../../lib/regex";
+import {UploadManager} from "../../lib/UploadManager";
 import {BaseResolver} from "./BaseResolver";
 
 const legit = require("legit");
@@ -20,6 +24,17 @@ const legit = require("legit");
  * A class that provides methods to resolve mutations
  */
 export class MutationResolver extends BaseResolver {
+
+    /**
+     * An instance of the upload manager to handle uploads
+     */
+    protected uploadManager: UploadManager;
+
+    constructor() {
+        super();
+        this.uploadManager = new UploadManager();
+    }
+
 
     /**
      * Accepts the usage of cookies and stores the session
@@ -130,13 +145,27 @@ export class MutationResolver extends BaseResolver {
      * @param activityId
      * @param request
      */
-    public async createPost({content, activityId}: { content: string, activityId?: number }, request: any):
-        Promise<Post> {
+    public async createPost({content, activityId, file}: { content: string, activityId?: number, file: FileUpload },
+                            request: any): Promise<Post> {
         this.ensureLoggedIn(request);
         if (content.length > 2048) {
             throw new GraphQLError("Content too long.");
         }
         const post = await dataaccess.createPost(content, request.session.userId, activityId);
+        if (file) {
+            let fileUrl: string;
+            if (is.video(file.mimetype)) {
+                const fileBuffer = await this.uploadManager.streamToBuffer(file.createReadStream());
+                fileUrl = await this.uploadManager.processAndStoreVideo(fileBuffer);
+            } else if (is.image(file.mimetype)) {
+                const fileBuffer = await this.uploadManager.streamToBuffer(file.createReadStream());
+                fileUrl = await this.uploadManager.processAndStoreImage(fileBuffer);
+            } else {
+                throw new InvalidFileError(file.mimetype);
+            }
+            post.mediaUrl = fileUrl;
+            await post.save();
+        }
         globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
         return post;
     }

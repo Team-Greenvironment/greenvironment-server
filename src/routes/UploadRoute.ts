@@ -2,17 +2,16 @@ import * as bodyParser from "body-parser";
 import * as config from "config";
 import * as crypto from "crypto";
 import {Router} from "express";
-import * as fileUpload from "express-fileupload";
 import {UploadedFile} from "express-fileupload";
+import * as fileUpload from "express-fileupload";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as fsx from "fs-extra";
 import * as status from "http-status";
 import * as path from "path";
-import * as sharp from "sharp";
-import {ReadableStreamBuffer} from "stream-buffers";
 import globals from "../lib/globals";
 import {Group, User} from "../lib/models";
 import Route from "../lib/Route";
+import {UploadManager} from "../lib/UploadManager";
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const dataDirName = "data";
@@ -54,12 +53,14 @@ export class UploadRoute extends Route {
      * The directory where the uploaded data will be saved in
      */
     public readonly dataDir: string;
+    private uploadManager: UploadManager;
 
     constructor(private publicPath: string) {
         super();
         this.router = Router();
         this.dataDir = path.join(this.publicPath, dataDirName);
         ffmpeg.setFfmpegPath(ffmpegPath);
+        this.uploadManager = new UploadManager();
     }
 
     /**
@@ -118,9 +119,9 @@ export class UploadRoute extends Route {
         try {
             const user = await User.findByPk(request.session.userId);
             if (user) {
-                fileName = await this.processAndStoreImage(profilePic.data);
+                fileName = await this.uploadManager.processAndStoreImage(profilePic.data);
                 if (user.profilePicture) {
-                    await this.deleteWebFile(user.profilePicture);
+                    await this.uploadManager.deleteWebFile(user.profilePicture);
                 }
                 user.profilePicture = fileName;
                 await user.save();
@@ -162,9 +163,9 @@ export class UploadRoute extends Route {
                 }
                 const isAdmin = await group.$has("rAdmins", user);
                 if (isAdmin) {
-                    fileName = await this.processAndStoreImage(groupPicture.data);
+                    fileName = await this.uploadManager.processAndStoreImage(groupPicture.data);
                     if (group.picture) {
-                        await this.deleteWebFile(group.picture);
+                        await this.uploadManager.deleteWebFile(group.picture);
                     }
                     group.picture = fileName;
                     await group.save();
@@ -185,77 +186,5 @@ export class UploadRoute extends Route {
             fileName,
             success,
         };
-    }
-
-    /**
-     * Converts a file to the webp format and stores it with a uuid filename.
-     * The web path for the image is returned.
-     * @param data
-     * @param width
-     * @param height
-     * @param fit
-     */
-    private async processAndStoreImage(data: Buffer, width = 512, height = 512,
-                                       fit: ImageFit = "cover"): Promise<string> {
-        const fileBasename = UploadRoute.getFileName() + "." + config.get("api.imageFormat");
-        await fsx.ensureDir(this.dataDir);
-        const filePath = path.join(this.dataDir, fileBasename);
-        let image = await sharp(data)
-            .resize(width, height, {
-                fit,
-            })
-            .normalise();
-        if (config.get<string>("api.imageFormat") === "webp") {
-            image = await image.webp({
-                reductionEffort: 6,
-                smartSubsample: true,
-            });
-        } else {
-            image = await image.png({
-                adaptiveFiltering: true,
-                colors: 128,
-            });
-        }
-        await image.toFile(filePath);
-        return `/${dataDirName}/${fileBasename}`;
-    }
-
-    /**
-     * Converts a video into a smaller format and .mp4 and returns the web path
-     * @param data
-     * @param width
-     */
-    private async processAndStoreVideo(data: Buffer, width: number = 720): Promise<string> {
-        return new Promise(async (resolve) => {
-            const fileBasename = UploadRoute.getFileName() + ".mp4";
-            await fsx.ensureDir(this.dataDir);
-            const filePath = path.join(this.dataDir, fileBasename);
-            const videoFileStream = new ReadableStreamBuffer({
-                chunkSize: 2048,
-                frequency: 10,
-            });
-            videoFileStream.put(data);
-            const video = ffmpeg(videoFileStream);
-            video
-                .on("end", () => {
-                    resolve(`/${dataDirName}/${fileBasename}`);
-                })
-                .size(`${width}x?`)
-                .toFormat("libx264")
-                .output(filePath);
-        });
-    }
-
-    /**
-     * Deletes an image for a provided web path.
-     * @param webPath
-     */
-    private async deleteWebFile(webPath: string) {
-        const realPath = path.join(this.dataDir, path.basename(webPath));
-        if (await fsx.pathExists(realPath)) {
-            await fsx.unlink(realPath);
-        } else {
-            globals.logger.warn(`Could not delete web image ${realPath}: Not found!`);
-        }
     }
 }

@@ -13,7 +13,7 @@ if (cluster.isMaster) {
     cluster.on("exit", (worker, code) => {
         console.error(`[CLUSTER-M] Worker ${worker.id} died! (code: ${code})`);
         console.log("[CLUSTER-M] Starting new worker");
-        cluster.fork();
+        setTimeout(cluster.fork, 1000);
     });
     cluster.on("online", (worker) => {
         worker.process.stdout.on("data", (data) => {
