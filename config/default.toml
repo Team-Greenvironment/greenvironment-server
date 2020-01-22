@@ -64,6 +64,9 @@ maxQueryComplexity = 5000
 # sets the image format for the site. Values: png or webp
 imageFormat = "png"
 
+# the max file size for uploading in bytes
+maxFileSize = 5_242_880
+
     # Configuration for the api rate limit
     [api.rateLimit]
 
