@@ -63,6 +63,7 @@
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "@types/body-parser": "^1.17.1",
+    "@types/graphql-upload": "^8.0.3",
     "body-parser": "^1.19.0",
     "compression": "^1.7.4",
     "config": "^3.2.4",
@@ -80,6 +81,7 @@
     "graphql": "^14.4.2",
     "graphql-import": "^0.7.1",
     "graphql-query-complexity": "^0.4.1",
+    "graphql-upload": "^9.0.0",
     "http-status": "^1.3.2",
     "js-yaml": "^3.13.1",
     "legit": "^1.0.7",

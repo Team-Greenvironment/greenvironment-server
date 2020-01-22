@@ -11,6 +11,7 @@ import * as fsx from "fs-extra";
 import {buildSchema, GraphQLError} from "graphql";
 import {importSchema} from "graphql-import";
 import queryComplexity, {directiveEstimator, simpleEstimator} from "graphql-query-complexity";
+import {graphqlUploadExpress} from "graphql-upload";
 import * as http from "http";
 import {IncomingMessage} from "http";
 import * as httpStatus from "http-status";
@@ -191,6 +192,10 @@ class App {
             total: config.get("api.rateLimit.graphql.total"),
         });
 
+        this.app.use("/graphql", graphqlUploadExpress({
+            maxFileSize: config.get<number>("api.maxFileSize"),
+            maxFiles: 10,
+        }));
         // @ts-ignore
         this.app.use("/graphql", graphqlHTTP(async (request: any, response: any, {variables}) => {
             response.setHeader("X-Max-Query-Complexity", config.get("api.maxQueryComplexity"));
@@ -207,7 +212,7 @@ class App {
                     logger.silly(err.stack);
                     return err.graphqlError ?? err;
                 },
-                graphiql: config.get("api.graphiql"),
+                graphiql: config.get<boolean>("api.graphiql"),
                 rootValue: resolver(request, response),
                 schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
                 validationRules: [
@@ -216,7 +221,7 @@ class App {
                             directiveEstimator(),
                             simpleEstimator(),
                         ],
-                        maximumComplexity: config.get("api.maxQueryComplexity"),
+                        maximumComplexity: config.get<number>("api.maxQueryComplexity"),
                         onComplete: (complexity: number) => {
                             logger.debug(`QueryComplexity: ${complexity}`);
                             response.setHeader("X-Query-Complexity", complexity);

@@ -7,6 +7,8 @@ directive @complexity(
     multipliers: [String!]
 ) on FIELD_DEFINITION
 
+scalar Upload
+
 type Query {
     "returns the user object for a given user id or a handle (only one required)"
     getUser(userId: ID, handle: String): User
