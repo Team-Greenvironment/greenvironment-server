@@ -1,17 +1,13 @@
 import * as config from "config";
 import * as crypto from "crypto";
-import {FfprobeData} from "fluent-ffmpeg";
-import * as ffmpeg from "fluent-ffmpeg";
 import * as fsx from "fs-extra";
 import * as path from "path";
 import * as sharp from "sharp";
 import {Readable} from "stream";
-import {ReadableStreamBuffer} from "stream-buffers";
 import globals from "./globals";
 
 const toArray = require("stream-to-array");
 
-const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const dataDirName = "data";
 
 interface IUploadConfirmation {
@@ -51,7 +47,6 @@ export class UploadManager {
 
     constructor() {
         this.dataDir = path.join(globals.getPublicDir(), dataDirName);
-        ffmpeg.setFfmpegPath(ffmpegPath);
     }
 
     /**
