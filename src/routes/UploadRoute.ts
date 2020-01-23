@@ -204,7 +204,7 @@ export class UploadRoute extends Route {
                 const post = await Post.findByPk(postId);
                 if (post.authorId === request.session.userId) {
                     if (is.image(postMedia.mimetype)) {
-                        fileName = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "contain");
+                        fileName = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "inside");
                     } else if (is.video(postMedia.mimetype)) {
                         fileName = await this.uploadManager.processAndStoreVideo(postMedia.data, 1080);
                     } else {
