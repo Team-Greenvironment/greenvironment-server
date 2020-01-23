@@ -1,3 +1,4 @@
+import * as config from "config";
 import * as sqz from "sequelize";
 import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import markdown from "../markdown";
@@ -112,7 +113,7 @@ export class Post extends Model<Post> {
     public get media() {
         const url = this.getDataValue("mediaUrl");
         if (url) {
-            const type = url.endsWith(".webm") ? "VIDEO" : "IMAGE";
+            const type = url.endsWith(config.get("api.imageFormat")) ? "IMAGE" : "VIDEO";
             return {
                 type,
                 url,

@@ -66,6 +66,9 @@ imageFormat = "png"
 # the max file size for uploading in bytes
 maxFileSize = 10_485_760
 
+# the max length of a video in seconds
+maxVideoLenght = 60
+
     # Configuration for the api rate limit
     [api.rateLimit]
 
