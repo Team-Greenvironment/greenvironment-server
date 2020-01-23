@@ -1,5 +1,6 @@
 import * as config from "config";
 import * as crypto from "crypto";
+import {FfprobeData} from "fluent-ffmpeg";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as fsx from "fs-extra";
 import * as path from "path";
@@ -103,33 +104,14 @@ export class UploadManager {
     /**
      * Converts a video into a smaller format and .mp4 and returns the web path
      * @param data
-     * @param width
+     * @param extension
      */
-    public async processAndStoreVideo(data: Buffer, width: number = 720): Promise<string> {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const fileBasename = UploadManager.getCrypticFileName() + ".webm";
-                await fsx.ensureDir(this.dataDir);
-                const filePath = path.join(this.dataDir, fileBasename);
-                const tempFile = filePath + ".tmp";
-                await fsx.writeFile(tempFile, data);
-                const video = ffmpeg(tempFile);
-                video
-                    .size(`${width}x?`)
-                    .toFormat("webm")
-                    .on("end", async () => {
-                        await fsx.unlink(tempFile);
-                        resolve(`/${dataDirName}/${fileBasename}`);
-                    })
-                    .on("error", async (err) => {
-                        await fsx.unlink(tempFile);
-                        reject(err);
-                    })
-                    .save(filePath);
-            } catch (err) {
-                reject(err);
-            }
-        });
+    public async processAndStoreVideo(data: Buffer, extension: string): Promise<string> {
+        const fileBasename = UploadManager.getCrypticFileName() + extension;
+        await fsx.ensureDir(this.dataDir);
+        const filePath = path.join(this.dataDir, fileBasename);
+        await fsx.writeFile(filePath, data);
+        return `/${dataDirName}/${fileBasename}`;
     }
 
     /**

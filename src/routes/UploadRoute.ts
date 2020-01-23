@@ -206,7 +206,8 @@ export class UploadRoute extends Route {
                     if (is.image(postMedia.mimetype)) {
                         fileName = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "inside");
                     } else if (is.video(postMedia.mimetype)) {
-                        fileName = await this.uploadManager.processAndStoreVideo(postMedia.data, 1080);
+                        fileName = await this.uploadManager.processAndStoreVideo(postMedia.data, postMedia.mimetype
+                            .replace("video/", ""));
                     } else {
                         error = "Wrong type of file provided";
                     }
