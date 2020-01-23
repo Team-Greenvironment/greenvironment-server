@@ -7,6 +7,8 @@ directive @complexity(
     multipliers: [String!]
 ) on FIELD_DEFINITION
 
+scalar Upload
+
 type Query {
     "returns the user object for a given user id or a handle (only one required)"
     getUser(userId: ID, handle: String): User
@@ -338,6 +340,9 @@ type Post {
 
     "the activity that belongs to the post"
     activity: Activity
+
+    "the uploaded file or video for the post"
+    media: Media
 }
 
 "represents a request of any type"
@@ -506,8 +511,21 @@ type BlacklistedResult {
     phrases: [String!]!
 }
 
+"a type of uploaded media"
+type Media {
 
+    "the url pointing to the media in the data folder"
+    url: String!
 
+    "the type of media that is uploaded"
+    type: MediaType
+}
+
+"represents the type of media"
+enum MediaType {
+    VIDEO
+    IMAGE
+}
 
 "represents the type of vote performed on a post"
 enum VoteType {

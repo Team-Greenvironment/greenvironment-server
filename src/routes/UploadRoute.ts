@@ -2,15 +2,17 @@ import * as bodyParser from "body-parser";
 import * as config from "config";
 import * as crypto from "crypto";
 import {Router} from "express";
-import * as fileUpload from "express-fileupload";
 import {UploadedFile} from "express-fileupload";
+import * as fileUpload from "express-fileupload";
+import * as ffmpeg from "fluent-ffmpeg";
 import * as fsx from "fs-extra";
 import * as status from "http-status";
 import * as path from "path";
-import * as sharp from "sharp";
 import globals from "../lib/globals";
-import {Group, User} from "../lib/models";
+import {Group, Post, User} from "../lib/models";
+import {is} from "../lib/regex";
 import Route from "../lib/Route";
+import {UploadManager} from "../lib/UploadManager";
 
 const dataDirName = "data";
 
@@ -51,11 +53,13 @@ export class UploadRoute extends Route {
      * The directory where the uploaded data will be saved in
      */
     public readonly dataDir: string;
+    private uploadManager: UploadManager;
 
     constructor(private publicPath: string) {
         super();
         this.router = Router();
         this.dataDir = path.join(this.publicPath, dataDirName);
+        this.uploadManager = new UploadManager();
     }
 
     /**
@@ -63,7 +67,9 @@ export class UploadRoute extends Route {
      */
     public async init() {
         await fsx.ensureDir(this.dataDir);
-        this.router.use(fileUpload());
+        this.router.use(fileUpload({
+            limits: config.get<number>("api.maxFileSize"),
+        }));
         this.router.use(bodyParser());
         // Uploads a file to the data directory and returns the filename
         this.router.use(async (req, res) => {
@@ -73,6 +79,8 @@ export class UploadRoute extends Route {
                     uploadConfirmation = await this.uploadProfilePicture(req);
                 } else if (req.files.groupPicture) {
                     uploadConfirmation = await this.uploadGroupPicture(req);
+                } else if (req.files.postMedia) {
+                    uploadConfirmation = await this.uploadPostMedia(req);
                 } else {
                     res.status(status.BAD_REQUEST);
                     uploadConfirmation = {
@@ -112,9 +120,9 @@ export class UploadRoute extends Route {
         try {
             const user = await User.findByPk(request.session.userId);
             if (user) {
-                fileName = await this.processAndStoreImage(profilePic.data);
+                fileName = await this.uploadManager.processAndStoreImage(profilePic.data);
                 if (user.profilePicture) {
-                    await this.deleteWebImage(user.profilePicture);
+                    await this.uploadManager.deleteWebFile(user.profilePicture);
                 }
                 user.profilePicture = fileName;
                 await user.save();
@@ -156,9 +164,9 @@ export class UploadRoute extends Route {
                 }
                 const isAdmin = await group.$has("rAdmins", user);
                 if (isAdmin) {
-                    fileName = await this.processAndStoreImage(groupPicture.data);
+                    fileName = await this.uploadManager.processAndStoreImage(groupPicture.data);
                     if (group.picture) {
-                        await this.deleteWebImage(group.picture);
+                        await this.uploadManager.deleteWebFile(group.picture);
                     }
                     group.picture = fileName;
                     await group.save();
@@ -182,48 +190,47 @@ export class UploadRoute extends Route {
     }
 
     /**
-     * Converts a file to the webp format and stores it with a uuid filename.
-     * The web path for the image is returned.
-     * @param data
-     * @param width
-     * @param height
-     * @param fit
+     * Uploads a media file for a post
+     * @param request
      */
-    private async processAndStoreImage(data: Buffer, width = 512, height = 512,
-                                       fit: ImageFit = "cover"): Promise<string> {
-        const fileBasename = UploadRoute.getFileName() + "." + config.get("api.imageFormat");
-        await fsx.ensureDir(this.dataDir);
-        const filePath = path.join(this.dataDir, fileBasename);
-        let image = await sharp(data)
-            .resize(width, height, {
-                fit,
-            })
-            .normalise();
-        if (config.get("api.imageFormat") === "webp") {
-            image = await image.webp({
-                reductionEffort: 6,
-                smartSubsample: true,
-            });
+    private async uploadPostMedia(request: any) {
+        let error: string;
+        let fileName: string;
+        let success = false;
+        const postId = request.body.postId;
+        const postMedia = request.files.postMedia as UploadedFile;
+        if (postId) {
+            try {
+                const post = await Post.findByPk(postId);
+                if (post.authorId === request.session.userId) {
+                    if (is.image(postMedia.mimetype)) {
+                        fileName = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "contain");
+                    } else if (is.video(postMedia.mimetype)) {
+                        fileName = await this.uploadManager.processAndStoreVideo(postMedia.data, 1080);
+                    } else {
+                        error = "Wrong type of file provided";
+                    }
+                    if (fileName) {
+                        post.mediaUrl = fileName;
+                        await post.save();
+                        success = true;
+                    }
+                } else {
+                    error = "You are not the author of the post";
+                }
+            } catch (err) {
+                error = err.message;
+                globals.logger.error(err.message);
+                globals.logger.debug(err.stack);
+            }
         } else {
-            image = await image.png({
-                adaptiveFiltering: true,
-                colors: 128,
-            });
+            error = "No post Id provided";
         }
-        await image.toFile(filePath);
-        return `/${dataDirName}/${fileBasename}`;
-    }
 
-    /**
-     * Deletes an image for a provided web path.
-     * @param webPath
-     */
-    private async deleteWebImage(webPath: string) {
-        const realPath = path.join(this.dataDir, path.basename(webPath));
-        if (await fsx.pathExists(realPath)) {
-            await fsx.unlink(realPath);
-        } else {
-            globals.logger.warn(`Could not delete web image ${realPath}: Not found!`);
-        }
+        return {
+            error,
+            fileName,
+            success,
+        };
     }
 }

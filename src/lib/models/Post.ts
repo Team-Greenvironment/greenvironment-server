@@ -34,6 +34,12 @@ export class Post extends Model<Post> {
     public activityId: number;
 
     /**
+     * An url pointing to any media that belongs to the post
+     */
+    @Column({allowNull: true, type: sqz.STRING(512)})
+    public mediaUrl: string;
+
+    /**
      * The author of the post
      */
     @BelongsTo(() => User, "authorId")
@@ -98,6 +104,22 @@ export class Post extends Model<Post> {
      */
     public async downvotes() {
         return (await this.votes()).filter((v) => v.PostVote.voteType === VoteType.DOWNVOTE).length;
+    }
+
+    /**
+     * Returns the media description object of the post
+     */
+    public get media() {
+        const url = this.getDataValue("mediaUrl");
+        if (url) {
+            const type = url.endsWith(".webm") ? "VIDEO" : "IMAGE";
+            return {
+                type,
+                url,
+            };
+        } else {
+            return null;
+        }
     }
 
     /**

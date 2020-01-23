@@ -4,13 +4,9 @@ import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import * as express from "express";
 import {Request, Response} from "express";
-import * as graphqlHTTP from "express-graphql";
 import * as session from "express-session";
 import sharedsession = require("express-socket.io-session");
 import * as fsx from "fs-extra";
-import {buildSchema, GraphQLError} from "graphql";
-import {importSchema} from "graphql-import";
-import queryComplexity, {directiveEstimator, simpleEstimator} from "graphql-query-complexity";
 import * as http from "http";
 import {IncomingMessage} from "http";
 import * as httpStatus from "http-status";
@@ -20,9 +16,9 @@ import {RedisClient} from "redis";
 import {Sequelize} from "sequelize-typescript";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
-import {resolver} from "./graphql/resolvers";
 import dataaccess from "./lib/dataAccess";
 import globals from "./lib/globals";
+import {GraphqlRoute} from "./routes/GraphqlRoute";
 import HomeRoute from "./routes/HomeRoute";
 import {UploadRoute} from "./routes/UploadRoute";
 
@@ -160,8 +156,10 @@ class App {
 
         const uploadRoute = new UploadRoute(this.publicPath);
         const homeRoute = new HomeRoute();
+        const graphqlRoute = new GraphqlRoute();
         await uploadRoute.init();
         await homeRoute.init(this.io);
+        await graphqlRoute.init();
 
         this.app.use("/home", homeRoute.router);
         this.limiter({
@@ -190,42 +188,8 @@ class App {
             path: "/graphql",
             total: config.get("api.rateLimit.graphql.total"),
         });
+        this.app.use("/graphql", graphqlRoute.router);
 
-        // @ts-ignore
-        this.app.use("/graphql", graphqlHTTP(async (request: any, response: any, {variables}) => {
-            response.setHeader("X-Max-Query-Complexity", config.get("api.maxQueryComplexity"));
-            return {
-                // @ts-ignore all
-                context: {session: request.session},
-                formatError: (err: GraphQLError | any) => {
-                    if (err.statusCode) {
-                        response.status(err.statusCode);
-                    } else {
-                        response.status(400);
-                    }
-                    logger.debug(err.message);
-                    logger.silly(err.stack);
-                    return err.graphqlError ?? err;
-                },
-                graphiql: config.get("api.graphiql"),
-                rootValue: resolver(request, response),
-                schema: buildSchema(importSchema(path.join(__dirname, "./graphql/schema.graphql"))),
-                validationRules: [
-                    queryComplexity({
-                        estimators: [
-                            directiveEstimator(),
-                            simpleEstimator(),
-                        ],
-                        maximumComplexity: config.get("api.maxQueryComplexity"),
-                        onComplete: (complexity: number) => {
-                            logger.debug(`QueryComplexity: ${complexity}`);
-                            response.setHeader("X-Query-Complexity", complexity);
-                        },
-                        variables,
-                    }),
-                ],
-            };
-        }));
         // allow access to cluster information
         this.app.use("/cluster-info", (req: Request, res: Response) => {
             res.json({

@@ -1,5 +1,6 @@
 import * as config from "config";
 import {EventEmitter} from "events";
+import * as path from "path";
 import * as winston from "winston";
 
 require("winston-daily-rotate-file");
@@ -38,6 +39,18 @@ namespace globals {
             }),
         ],
     });
+
+    /**
+     * Returns the absolute public path
+     */
+    export function getPublicDir(): string {
+        let publicPath = config.get<string>("frontend.publicPath");
+        if (!path.isAbsolute(publicPath)) {
+            publicPath = path.normalize(path.join(__dirname, "../", publicPath));
+        }
+        return publicPath;
+    }
+
     export const internalEmitter: EventEmitter = new EventEmitter();
 }
 

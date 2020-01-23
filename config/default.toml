@@ -51,7 +51,6 @@ angularIndex = "index.html"
 # The path to the public files
 publicPath = "./public"
 
-
 # Configuration for the api
 [api]
 
@@ -63,6 +62,9 @@ maxQueryComplexity = 5000
 
 # sets the image format for the site. Values: png or webp
 imageFormat = "png"
+
+# the max file size for uploading in bytes
+maxFileSize = 10_485_760
 
     # Configuration for the api rate limit
     [api.rateLimit]
