@@ -9,11 +9,11 @@ import * as fsx from "fs-extra";
 import * as status from "http-status";
 import * as path from "path";
 import globals from "../lib/globals";
-import {Group, User} from "../lib/models";
+import {Group, Post, User} from "../lib/models";
+import {is} from "../lib/regex";
 import Route from "../lib/Route";
 import {UploadManager} from "../lib/UploadManager";
 
-const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const dataDirName = "data";
 
 interface IUploadConfirmation {
@@ -59,7 +59,6 @@ export class UploadRoute extends Route {
         super();
         this.router = Router();
         this.dataDir = path.join(this.publicPath, dataDirName);
-        ffmpeg.setFfmpegPath(ffmpegPath);
         this.uploadManager = new UploadManager();
     }
 
@@ -80,6 +79,8 @@ export class UploadRoute extends Route {
                     uploadConfirmation = await this.uploadProfilePicture(req);
                 } else if (req.files.groupPicture) {
                     uploadConfirmation = await this.uploadGroupPicture(req);
+                } else if (req.files.postMedia) {
+                    uploadConfirmation = await this.uploadPostMedia(req);
                 } else {
                     res.status(status.BAD_REQUEST);
                     uploadConfirmation = {
@@ -181,6 +182,51 @@ export class UploadRoute extends Route {
         } else {
             error = "No groupId provided! (the request body must contain a groupId)";
         }
+        return {
+            error,
+            fileName,
+            success,
+        };
+    }
+
+    /**
+     * Uploads a media file for a post
+     * @param request
+     */
+    private async uploadPostMedia(request: any) {
+        let error: string;
+        let fileName: string;
+        let success = false;
+        const postId = request.body.postId;
+        const postMedia = request.files.postMedia as UploadedFile;
+        if (postId) {
+            try {
+                const post = await Post.findByPk(postId);
+                if (post.authorId === request.session.userId) {
+                    if (is.image(postMedia.mimetype)) {
+                        fileName = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "contain");
+                    } else if (is.video(postMedia.mimetype)) {
+                        fileName = await this.uploadManager.processAndStoreVideo(postMedia.data, 1080);
+                    } else {
+                        error = "Wrong type of file provided";
+                    }
+                    if (fileName) {
+                        post.mediaUrl = fileName;
+                        await post.save();
+                        success = true;
+                    }
+                } else {
+                    error = "You are not the author of the post";
+                }
+            } catch (err) {
+                error = err.message;
+                globals.logger.error(err.message);
+                globals.logger.debug(err.stack);
+            }
+        } else {
+            error = "No post Id provided";
+        }
+
         return {
             error,
             fileName,

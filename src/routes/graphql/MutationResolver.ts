@@ -145,27 +145,13 @@ export class MutationResolver extends BaseResolver {
      * @param activityId
      * @param request
      */
-    public async createPost({content, activityId, file}: { content: string, activityId?: number, file: FileUpload },
+    public async createPost({content, activityId}: { content: string, activityId?: number},
                             request: any): Promise<Post> {
         this.ensureLoggedIn(request);
         if (content.length > 2048) {
             throw new GraphQLError("Content too long.");
         }
         const post = await dataaccess.createPost(content, request.session.userId, activityId);
-        if (file) {
-            let fileUrl: string;
-            if (is.video(file.mimetype)) {
-                const fileBuffer = await this.uploadManager.streamToBuffer(file.createReadStream());
-                fileUrl = await this.uploadManager.processAndStoreVideo(fileBuffer);
-            } else if (is.image(file.mimetype)) {
-                const fileBuffer = await this.uploadManager.streamToBuffer(file.createReadStream());
-                fileUrl = await this.uploadManager.processAndStoreImage(fileBuffer);
-            } else {
-                throw new InvalidFileError(file.mimetype);
-            }
-            post.mediaUrl = fileUrl;
-            await post.save();
-        }
         globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
         return post;
     }

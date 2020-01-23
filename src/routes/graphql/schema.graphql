@@ -85,7 +85,7 @@ type Mutation {
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
     "create a post that can belong to an activity"
-    createPost(content: String!, activityId: ID, file: Upload): Post!
+    createPost(content: String!, activityId: ID): Post!
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean!

@@ -107,6 +107,22 @@ export class Post extends Model<Post> {
     }
 
     /**
+     * Returns the media description object of the post
+     */
+    public get media() {
+        const url = this.getDataValue("mediaUrl");
+        if (url) {
+            const type = url.endsWith(".webm") ? "VIDEO" : "IMAGE";
+            return {
+                type,
+                url,
+            };
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Toggles the vote of the user.
      * @param userId
      * @param type

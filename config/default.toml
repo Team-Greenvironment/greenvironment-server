@@ -64,7 +64,7 @@ maxQueryComplexity = 5000
 imageFormat = "png"
 
 # the max file size for uploading in bytes
-maxFileSize = 5_242_880
+maxFileSize = 10_485_760
 
     # Configuration for the api rate limit
     [api.rateLimit]
