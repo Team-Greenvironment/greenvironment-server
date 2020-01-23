@@ -4,7 +4,6 @@ import * as crypto from "crypto";
 import {Router} from "express";
 import {UploadedFile} from "express-fileupload";
 import * as fileUpload from "express-fileupload";
-import * as ffmpeg from "fluent-ffmpeg";
 import * as fsx from "fs-extra";
 import * as status from "http-status";
 import * as path from "path";
