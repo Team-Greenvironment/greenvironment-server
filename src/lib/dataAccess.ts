@@ -79,12 +79,17 @@ namespace dataaccess {
      * - deletes all media entries without associations
      */
     async function databaseCleanup() {
-        const allMedia = await models.Media
-            .findAll({include: [models.Post, models.User, models.Group]}) as models.Media[];
-        for (const media of allMedia) {
-            if (!media.user && !media.post && !media.group) {
-                await media.destroy();
+        try {
+            const allMedia = await models.Media
+                .findAll({include: [models.Post, models.User, models.Group]}) as models.Media[];
+            for (const media of allMedia) {
+                if (!media.user && !media.post && !media.group) {
+                    await media.destroy();
+                }
             }
+        } catch (err) {
+            globals.logger.error(err.message);
+            globals.logger.debug(err.stack);
         }
     }
 
