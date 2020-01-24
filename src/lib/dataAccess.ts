@@ -1,3 +1,4 @@
+import * as config from "config";
 import * as crypto from "crypto";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
@@ -63,10 +64,27 @@ namespace dataaccess {
                 models.Event,
                 models.Activity,
                 models.BlacklistedPhrase,
+                models.Media,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
             globals.logger.debug(err.stack);
+        }
+        await databaseCleanup();
+        setInterval(databaseCleanup, config.get<number>("database.cleanupInterval"));
+    }
+
+    /**
+     * Cleans the database.
+     * - deletes all media entries without associations
+     */
+    async function databaseCleanup() {
+        const allMedia = await models.Media
+            .findAll({include: [models.Post, models.User, models.Group]}) as models.Media[];
+        for (const media of allMedia) {
+            if (!media.user && !media.post && !media.group) {
+                await media.destroy();
+            }
         }
     }
 

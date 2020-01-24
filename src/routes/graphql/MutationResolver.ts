@@ -171,14 +171,6 @@ export class MutationResolver extends BaseResolver {
         });
         const isAdmin = (await User.findOne({where: {id: request.session.userId}})).isAdmin;
         if (post.rAuthor.id === request.session.userId || isAdmin) {
-            if (post.mediaUrl) {
-                try {
-                    await this.uploadManager.deleteWebFile(post.mediaUrl);
-                } catch (err) {
-                    globals.logger.error(err.message);
-                    globals.logger.debug(err.stack);
-                }
-            }
             return await dataaccess.deletePost(post.id);
         } else {
             throw new GraphQLError("User is not author of the post.");

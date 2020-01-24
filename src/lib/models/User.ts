@@ -1,9 +1,10 @@
 import * as sqz from "sequelize";
 import {
+    BelongsTo,
     BelongsToMany,
     Column,
-    CreatedAt,
-    HasMany,
+    CreatedAt, ForeignKey,
+    HasMany, HasOne,
     Model,
     NotNull,
     Table,
@@ -22,6 +23,7 @@ import {Friendship} from "./Friendship";
 import {Group} from "./Group";
 import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
+import {Media} from "./Media";
 import {Post} from "./Post";
 import {PostVote} from "./PostVote";
 import {Request, RequestType} from "./Request";
@@ -97,10 +99,18 @@ export class User extends Model<User> {
     public isAdmin: boolean;
 
     /**
-     * The url of the users profile picture
+     * The id of the media that is the users profile picture
      */
-    @Column({type: sqz.STRING(512)})
-    public profilePicture: string;
+    @ForeignKey(() => Media)
+    @Column({allowNull: false})
+    public mediaId: number;
+
+
+    /**
+     * The media of the user
+     */
+    @BelongsTo(() => Media)
+    public rMedia: Media;
 
     /**
      * The friends of the user
@@ -219,6 +229,14 @@ export class User extends Model<User> {
      */
     public get settings(): string {
         return JSON.stringify(this.getDataValue("frontendSettings"));
+    }
+
+    /**
+     * Returns the media url which is the profile picture
+     */
+    public async profilePicture(): Promise<string> {
+        const media = await this.$get<Media>("rMedia") as Media;
+        return media ? media.url : undefined;
     }
 
     /**

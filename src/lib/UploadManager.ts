@@ -5,10 +5,19 @@ import * as path from "path";
 import * as sharp from "sharp";
 import {Readable} from "stream";
 import globals from "./globals";
+import {Media} from "./models/Media";
 
 const toArray = require("stream-to-array");
 
 const dataDirName = "data";
+
+/**
+ * An enum representing a type of media
+ */
+export enum MediaType {
+    IMAGE = "IMAGE",
+    VIDEO = "VIDEO",
+}
 
 interface IUploadConfirmation {
     /**
@@ -71,7 +80,7 @@ export class UploadManager {
      * @param fit
      */
     public async processAndStoreImage(data: Buffer, width = 512, height = 512,
-                                      fit: ImageFit = "cover"): Promise<string> {
+                                      fit: ImageFit = "cover"): Promise<Media> {
         const fileBasename = UploadManager.getCrypticFileName() + "." + config.get("api.imageFormat");
         await fsx.ensureDir(this.dataDir);
         const filePath = path.join(this.dataDir, fileBasename);
@@ -93,7 +102,11 @@ export class UploadManager {
             });
         }
         await image.toFile(filePath);
-        return `/${dataDirName}/${fileBasename}`;
+        return Media.create({
+            path: filePath,
+            type: MediaType.IMAGE,
+            url: `/${dataDirName}/${fileBasename}`,
+        });
     }
 
     /**
@@ -101,12 +114,16 @@ export class UploadManager {
      * @param data
      * @param extension
      */
-    public async processAndStoreVideo(data: Buffer, extension: string): Promise<string> {
+    public async processAndStoreVideo(data: Buffer, extension: string): Promise<Media> {
         const fileBasename = UploadManager.getCrypticFileName() + extension;
         await fsx.ensureDir(this.dataDir);
         const filePath = path.join(this.dataDir, fileBasename);
         await fsx.writeFile(filePath, data);
-        return `/${dataDirName}/${fileBasename}`;
+        return Media.create({
+            path: filePath,
+            type: MediaType.VIDEO,
+            url: `/${dataDirName}/${fileBasename}`,
+        });
     }
 
     /**

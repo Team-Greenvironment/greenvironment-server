@@ -1,8 +1,20 @@
 import * as config from "config";
 import * as sqz from "sequelize";
-import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
+import {
+    BelongsTo,
+    BelongsToMany,
+    Column,
+    CreatedAt,
+    ForeignKey,
+    HasOne,
+    Model,
+    NotNull,
+    Table,
+} from "sequelize-typescript";
 import markdown from "../markdown";
+import {MediaType} from "../UploadManager";
 import {Activity} from "./Activity";
+import {Media} from "./Media";
 import {PostVote, VoteType} from "./PostVote";
 import {User} from "./User";
 
@@ -35,10 +47,11 @@ export class Post extends Model<Post> {
     public activityId: number;
 
     /**
-     * An url pointing to any media that belongs to the post
+     * An id pointing to a media entry
      */
-    @Column({allowNull: true, type: sqz.STRING(512)})
-    public mediaUrl: string;
+    @ForeignKey(() => Media)
+    @Column({allowNull: true})
+    public mediaId: number;
 
     /**
      * The author of the post
@@ -51,6 +64,12 @@ export class Post extends Model<Post> {
      */
     @BelongsTo(() => Activity, "activityId")
     public rActivity?: Activity;
+
+    /**
+     * The media of the post
+     */
+    @BelongsTo(() => Media, "mediaId")
+    public rMedia?: Media;
 
     /**
      * The votes that were performed on the post
@@ -110,17 +129,8 @@ export class Post extends Model<Post> {
     /**
      * Returns the media description object of the post
      */
-    public get media() {
-        const url = this.getDataValue("mediaUrl");
-        if (url) {
-            const type = url.endsWith(config.get("api.imageFormat")) ? "IMAGE" : "VIDEO";
-            return {
-                type,
-                url,
-            };
-        } else {
-            return null;
-        }
+    public async media() {
+        return await this.$get<Media>("rMedia") as Media;
     }
 
     /**
