@@ -2,13 +2,14 @@ import * as bodyParser from "body-parser";
 import * as config from "config";
 import * as crypto from "crypto";
 import {Router} from "express";
-import {UploadedFile} from "express-fileupload";
 import * as fileUpload from "express-fileupload";
+import {UploadedFile} from "express-fileupload";
 import * as fsx from "fs-extra";
 import * as status from "http-status";
 import * as path from "path";
 import globals from "../lib/globals";
 import {Group, Post, User} from "../lib/models";
+import {Media} from "../lib/models";
 import {is} from "../lib/regex";
 import Route from "../lib/Route";
 import {UploadManager} from "../lib/UploadManager";
@@ -117,14 +118,15 @@ export class UploadRoute extends Route {
         let fileName: string;
         const profilePic = request.files.profilePicture as UploadedFile;
         try {
-            const user = await User.findByPk(request.session.userId);
+            const user = await User.findByPk(request.session.userId, {include: [Media]});
             if (user) {
-                fileName = await this.uploadManager.processAndStoreImage(profilePic.data);
-                if (user.profilePicture) {
-                    await this.uploadManager.deleteWebFile(user.profilePicture);
+                const media = await this.uploadManager.processAndStoreImage(profilePic.data);
+                if (user.mediaId) {
+                    const previousMedia = await user.$get("rMedia") as Media;
+                    await previousMedia.destroy();
                 }
-                user.profilePicture = fileName;
-                await user.save();
+                await user.$set("rMedia", media);
+                fileName = media.url;
                 success = true;
             } else {
                 error = "User not found";
@@ -153,7 +155,7 @@ export class UploadRoute extends Route {
         if (request.body.groupId) {
             try {
                 const user = await User.findByPk(request.session.userId);
-                const group = await Group.findByPk(request.body.groupId);
+                const group = await Group.findByPk(request.body.groupId, {include: [Media]});
                 if (!group) {
                     error = `No group with the id '${request.body.groupId}' found.`;
                     return {
@@ -163,12 +165,13 @@ export class UploadRoute extends Route {
                 }
                 const isAdmin = await group.$has("rAdmins", user);
                 if (isAdmin) {
-                    fileName = await this.uploadManager.processAndStoreImage(groupPicture.data);
-                    if (group.picture) {
-                        await this.uploadManager.deleteWebFile(group.picture);
+                    const media = await this.uploadManager.processAndStoreImage(groupPicture.data);
+                    if (group.mediaId) {
+                        const previousMedia = await group.$get("rMedia") as Media;
+                        await previousMedia.destroy();
                     }
-                    group.picture = fileName;
-                    await group.save();
+                    await group.$set("rMedia", media);
+                    fileName = media.url;
                     success = true;
                 } else {
                     error = "You are not a group admin.";
@@ -200,19 +203,22 @@ export class UploadRoute extends Route {
         const postMedia = request.files.postMedia as UploadedFile;
         if (postId) {
             try {
+                let media: Media;
                 const post = await Post.findByPk(postId);
                 if (post.authorId === request.session.userId) {
                     if (is.image(postMedia.mimetype)) {
-                        fileName = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "inside");
+                        media = await this.uploadManager.processAndStoreImage(postMedia.data, 1080, 720, "inside");
                     } else if (is.video(postMedia.mimetype)) {
-                        fileName = await this.uploadManager.processAndStoreVideo(postMedia.data, postMedia.mimetype
+                        media = await this.uploadManager.processAndStoreVideo(postMedia.data, postMedia.mimetype
                             .replace("video/", ""));
                     } else {
                         error = "Wrong type of file provided";
                     }
-                    if (fileName) {
-                        post.mediaUrl = fileName;
+                    if (media) {
+                        await post.$set("rMedia", media);
+                        post.visible = true;
                         await post.save();
+                        fileName = media.url;
                         success = true;
                     }
                 } else {

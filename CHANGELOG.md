@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rate limits with defaults of 10/min for `/upload` and 30/min for `/graphql`
 - complexity limits for graphql queries that can be configured with the `api.maxQueryComplexity` option
 - complexity headers `X-Query-Complexity` and `X-Max-Query-Complexity`
+- Media model to store information about media (videos and images)
+- Media association to users, groups and posts
+- Upload handling for media entries (via /upload)
+- routine to cleanup orphaned media entries (not referenced by post, user, group)
+- delete handler for media to delete the corresponding file
+- type for create post to know if it is a media or text post (media posts are invisible until a media file is uploaded)
 
 ### Removed
 

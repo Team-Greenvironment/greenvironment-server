@@ -1,3 +1,4 @@
+import * as config from "config";
 import * as crypto from "crypto";
 import * as sqz from "sequelize";
 import {Sequelize} from "sequelize-typescript";
@@ -63,10 +64,27 @@ namespace dataaccess {
                 models.Event,
                 models.Activity,
                 models.BlacklistedPhrase,
+                models.Media,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
             globals.logger.debug(err.stack);
+        }
+        await databaseCleanup();
+        setInterval(databaseCleanup, config.get<number>("database.cleanupInterval"));
+    }
+
+    /**
+     * Cleans the database.
+     * - deletes all media entries without associations
+     */
+    async function databaseCleanup() {
+        const allMedia = await models.Media
+            .findAll({include: [models.Post, models.User, models.Group]}) as models.Media[];
+        for (const media of allMedia) {
+            if (!media.user && !media.post && !media.group) {
+                await media.destroy();
+            }
         }
     }
 
@@ -161,6 +179,9 @@ namespace dataaccess {
                 limit: first,
                 offset,
                 order: [["createdAt", "DESC"]],
+                where: {
+                    visible: true,
+                },
             });
         } else {
             // more performant way to get the votes with plain sql
@@ -170,10 +191,12 @@ namespace dataaccess {
                               SELECT *,
                                      (SELECT count(*)
                                       FROM post_votes
-                                      WHERE vote_type = 'UPVOTE' AND post_id = posts.id)   AS upvotes,
+                                      WHERE vote_type = 'UPVOTE'
+                                        AND post_id = posts.id) AS upvotes,
                                      (SELECT count(*)
                                       FROM post_votes
-                                      WHERE vote_type = 'DOWNVOTE' AND post_id = posts.id) AS downvotes
+                                      WHERE vote_type = 'DOWNVOTE'
+                                        AND post_id = posts.id) AS downvotes
                               FROM posts) AS a
                      ORDER BY (a.upvotes - a.downvotes) DESC, a.upvotes DESC, a.id
                      LIMIT ?
@@ -188,15 +211,17 @@ namespace dataaccess {
      * @param content
      * @param authorId
      * @param activityId
+     * @param type
      */
-    export async function createPost(content: string, authorId: number, activityId?: number): Promise<models.Post> {
+    export async function createPost(content: string, authorId: number, activityId?: number,
+                                     type: PostType = PostType.TEXT): Promise<models.Post> {
         const blacklisted = await checkBlacklisted(content);
         if (blacklisted.length > 0) {
             throw new BlacklistedError(blacklisted.map((p) => p.phrase), "content");
         }
         const activity = await models.Activity.findByPk(activityId);
         if (!activityId || activity) {
-            const post = await models.Post.create({content, authorId, activityId});
+            const post = await models.Post.create({content, authorId, activityId, visible: type !== PostType.MEDIA});
             globals.internalEmitter.emit(InternalEvents.POSTCREATE, post);
             if (activity) {
                 const user = await models.User.findByPk(authorId);
@@ -218,11 +243,15 @@ namespace dataaccess {
             const post = await models.Post.findByPk(postId, {include: [{model: Activity}, {association: "rAuthor"}]});
             const activity = await post.activity();
             const author = await post.author();
+            const media = await post.$get("rMedia") as models.Media;
             if (activity && author) {
                 author.rankpoints -= activity.points;
                 await author.save();
             }
             await post.destroy();
+            if (media) {
+                await media.destroy();
+            }
         } catch (err) {
             globals.logger.error(err.message);
             globals.logger.debug(err.stack);
@@ -399,6 +428,17 @@ namespace dataaccess {
         NEW = "NEW",
     }
 
+    /**
+     * The type of the post
+     */
+    export enum PostType {
+        TEXT = "TEXT",
+        MEDIA = "MEDIA",
+    }
+
+    /**
+     * Enum representing the type of membership change for the membership change function
+     */
     export enum MembershipChangeAction {
         ADD,
         REMOVE,

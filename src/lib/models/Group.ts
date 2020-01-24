@@ -1,4 +1,3 @@
-import * as sqz from "sequelize";
 import {
     BelongsTo,
     BelongsToMany,
@@ -14,6 +13,7 @@ import {ChatRoom} from "./ChatRoom";
 import {Event} from "./Event";
 import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
+import {Media} from "./Media";
 import {User} from "./User";
 
 /**
@@ -30,12 +30,12 @@ export class Group extends Model<Group> {
     @Column({allowNull: false, unique: true})
     public name: string;
 
-
     /**
-     * The url of the groups avatar picture
+     * The id of the media that represents the groups profile picture
      */
-    @Column({type: sqz.STRING(512)})
-    public picture: string;
+    @ForeignKey(() => Media)
+    @Column({allowNull: true})
+    public mediaId: number;
 
     /**
      * The id of the user who created the group
@@ -52,6 +52,12 @@ export class Group extends Model<Group> {
     @ForeignKey(() => ChatRoom)
     @Column({allowNull: false})
     public chatId: number;
+
+    /**
+     * The media of the group
+     */
+    @BelongsTo(() => Media, "mediaId")
+    public rMedia: Media;
 
     /**
      * The creator of the group
@@ -82,6 +88,14 @@ export class Group extends Model<Group> {
      */
     @HasMany(() => Event, "groupId")
     public rEvents: Event[];
+
+    /**
+     * Returns the media url of the group which is the profile picture
+     */
+    public async picture(): Promise<string> {
+        const media = await this.$get<Media>("rMedia") as Media;
+        return media ? media.url : undefined;
+    }
 
     /**
      * Returns the creator of the group

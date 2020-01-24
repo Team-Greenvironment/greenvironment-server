@@ -5,26 +5,18 @@ import * as path from "path";
 import * as sharp from "sharp";
 import {Readable} from "stream";
 import globals from "./globals";
+import {Media} from "./models";
 
 const toArray = require("stream-to-array");
 
 const dataDirName = "data";
 
-interface IUploadConfirmation {
-    /**
-     * Indicates the error that might have occured during the upload
-     */
-    error?: string;
-
-    /**
-     * The file that has been uploaded
-     */
-    fileName?: string;
-
-    /**
-     * If the upload was successful
-     */
-    success: boolean;
+/**
+ * An enum representing a type of media
+ */
+export enum MediaType {
+    IMAGE = "IMAGE",
+    VIDEO = "VIDEO",
 }
 
 type ImageFit = "cover" | "contain" | "fill" | "inside" | "outside";
@@ -71,7 +63,7 @@ export class UploadManager {
      * @param fit
      */
     public async processAndStoreImage(data: Buffer, width = 512, height = 512,
-                                      fit: ImageFit = "cover"): Promise<string> {
+                                      fit: ImageFit = "cover"): Promise<Media> {
         const fileBasename = UploadManager.getCrypticFileName() + "." + config.get("api.imageFormat");
         await fsx.ensureDir(this.dataDir);
         const filePath = path.join(this.dataDir, fileBasename);
@@ -93,7 +85,11 @@ export class UploadManager {
             });
         }
         await image.toFile(filePath);
-        return `/${dataDirName}/${fileBasename}`;
+        return Media.create({
+            path: filePath,
+            type: MediaType.IMAGE,
+            url: `/${dataDirName}/${fileBasename}`,
+        });
     }
 
     /**
@@ -101,12 +97,16 @@ export class UploadManager {
      * @param data
      * @param extension
      */
-    public async processAndStoreVideo(data: Buffer, extension: string): Promise<string> {
+    public async processAndStoreVideo(data: Buffer, extension: string): Promise<Media> {
         const fileBasename = UploadManager.getCrypticFileName() + extension;
         await fsx.ensureDir(this.dataDir);
         const filePath = path.join(this.dataDir, fileBasename);
         await fsx.writeFile(filePath, data);
-        return `/${dataDirName}/${fileBasename}`;
+        return Media.create({
+            path: filePath,
+            type: MediaType.VIDEO,
+            url: `/${dataDirName}/${fileBasename}`,
+        });
     }
 
     /**

@@ -13,3 +13,4 @@ export {Event} from "./Event";
 export {EventParticipant} from "./EventParticipant";
 export {Activity} from "./Activity";
 export {BlacklistedPhrase} from "./BlacklistedPhrase";
+export {Media} from "./Media";

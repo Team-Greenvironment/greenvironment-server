@@ -29,7 +29,8 @@
         "privacies": "all",
         "locations": "instance"
       }
-    }]
+    }],
+    "array-type": false
   },
   "jsRules": {
     "max-line-length": {

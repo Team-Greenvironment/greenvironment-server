@@ -1,8 +1,10 @@
 import * as sqz from "sequelize";
 import {
+    BelongsTo,
     BelongsToMany,
     Column,
     CreatedAt,
+    ForeignKey,
     HasMany,
     Model,
     NotNull,
@@ -22,6 +24,7 @@ import {Friendship} from "./Friendship";
 import {Group} from "./Group";
 import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
+import {Media} from "./Media";
 import {Post} from "./Post";
 import {PostVote} from "./PostVote";
 import {Request, RequestType} from "./Request";
@@ -97,10 +100,18 @@ export class User extends Model<User> {
     public isAdmin: boolean;
 
     /**
-     * The url of the users profile picture
+     * The id of the media that is the users profile picture
      */
-    @Column({type: sqz.STRING(512)})
-    public profilePicture: string;
+    @ForeignKey(() => Media)
+    @Column({allowNull: false})
+    public mediaId: number;
+
+
+    /**
+     * The media of the user
+     */
+    @BelongsTo(() => Media)
+    public rMedia: Media;
 
     /**
      * The friends of the user
@@ -222,6 +233,14 @@ export class User extends Model<User> {
     }
 
     /**
+     * Returns the media url which is the profile picture
+     */
+    public async profilePicture(): Promise<string> {
+        const media = await this.$get<Media>("rMedia") as Media;
+        return media ? media.url : undefined;
+    }
+
+    /**
      * Returns the token for the user that can be used as a bearer in requests
      */
     public async token(): Promise<string> {
@@ -287,11 +306,15 @@ export class User extends Model<User> {
      * a list of posts the user has created
      * @param first
      * @param offset
+     * @param request
      */
-    public async posts({first, offset}: { first: number, offset: number }): Promise<Post[]> {
+    public async posts({first, offset}: { first: number, offset: number }, request: any): Promise<Post[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
-        return await this.$get("rPosts", {limit, offset}) as Post[];
+        if (request.session.userId === this.getDataValue("id")) {
+            return await this.$get("rPosts", {limit, offset, order: [["id", "desc"]]}) as Post[];
+        }
+        return await this.$get("rPosts", {limit, offset, where: {visible: true}, order: [["id", "desc"]]}) as Post[];
     }
 
     /**

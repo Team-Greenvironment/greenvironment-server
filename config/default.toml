@@ -4,6 +4,9 @@
 # A connection uri string to the database
 connectionUri = "sqlite://greenvironment.db"
 
+# The cleanup interval of orphaned entries in seconds
+cleanupInterval = 6000
+
 
 # Configuration for the redis connection
 [redis]
@@ -53,6 +56,7 @@ publicPath = "./public"
 
 # Configuration for the api
 [api]
+
 
 # if graphiql should be enabled
 graphiql = true

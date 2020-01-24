@@ -1,12 +1,10 @@
 import {GraphQLError} from "graphql";
-import {FileUpload} from "graphql-upload";
 import * as yaml from "js-yaml";
 import isEmail from "validator/lib/isEmail";
-import dataaccess from "../../lib/dataAccess";
+import dataAccess from "../../lib/dataAccess";
 import {BlacklistedError} from "../../lib/errors/BlacklistedError";
 import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
 import {InvalidEmailError} from "../../lib/errors/InvalidEmailError";
-import {InvalidFileError} from "../../lib/errors/InvalidFileError";
 import {NotAGroupAdminError} from "../../lib/errors/NotAGroupAdminError";
 import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
 import {NotTheGroupCreatorError} from "../../lib/errors/NotTheGroupCreatorError";
@@ -14,7 +12,6 @@ import {PostNotFoundError} from "../../lib/errors/PostNotFoundError";
 import globals from "../../lib/globals";
 import {InternalEvents} from "../../lib/InternalEvents";
 import {Activity, BlacklistedPhrase, ChatMessage, ChatRoom, Event, Group, Post, Request, User} from "../../lib/models";
-import {is} from "../../lib/regex";
 import {UploadManager} from "../../lib/UploadManager";
 import {BaseResolver} from "./BaseResolver";
 
@@ -53,7 +50,7 @@ export class MutationResolver extends BaseResolver {
      * @param request
      */
     public async login({email, passwordHash}: { email: string, passwordHash: string }, request: any): Promise<User> {
-        const user = await dataaccess.getUserByLogin(email, passwordHash);
+        const user = await dataAccess.getUserByLogin(email, passwordHash);
         request.session.userId = user.id;
         return user;
     }
@@ -96,7 +93,7 @@ export class MutationResolver extends BaseResolver {
         if (!mailValid) {
             throw new InvalidEmailError(email);
         }
-        const user = await dataaccess.registerUser(username, email, passwordHash);
+        const user = await dataAccess.registerUser(username, email, passwordHash);
         request.session.userId = user.id;
         return user;
     }
@@ -124,8 +121,8 @@ export class MutationResolver extends BaseResolver {
      * @param type
      * @param request
      */
-    public async vote({postId, type}: { postId: number, type: dataaccess.VoteType }, request: any):
-        Promise<{ post: Post, voteType: dataaccess.VoteType }> {
+    public async vote({postId, type}: { postId: number, type: dataAccess.VoteType }, request: any):
+        Promise<{ post: Post, voteType: dataAccess.VoteType }> {
         this.ensureLoggedIn(request);
         const post = await Post.findByPk(postId);
         if (post) {
@@ -143,15 +140,17 @@ export class MutationResolver extends BaseResolver {
      * Creates a new post
      * @param content
      * @param activityId
+     * @param type
      * @param request
      */
-    public async createPost({content, activityId}: { content: string, activityId?: number},
-                            request: any): Promise<Post> {
+    public async createPost(
+        {content, activityId, type}: { content: string, activityId?: number, type: dataAccess.PostType },
+        request: any): Promise<Post> {
         this.ensureLoggedIn(request);
         if (content.length > 2048) {
             throw new GraphQLError("Content too long.");
         }
-        const post = await dataaccess.createPost(content, request.session.userId, activityId);
+        const post = await dataAccess.createPost(content, request.session.userId, activityId, type);
         globals.internalEmitter.emit(InternalEvents.GQLPOSTCREATE, post);
         return post;
     }
@@ -171,15 +170,7 @@ export class MutationResolver extends BaseResolver {
         });
         const isAdmin = (await User.findOne({where: {id: request.session.userId}})).isAdmin;
         if (post.rAuthor.id === request.session.userId || isAdmin) {
-            if (post.mediaUrl) {
-                try {
-                    await this.uploadManager.deleteWebFile(post.mediaUrl);
-                } catch (err) {
-                    globals.logger.error(err.message);
-                    globals.logger.debug(err.stack);
-                }
-            }
-            return await dataaccess.deletePost(post.id);
+            return await dataAccess.deletePost(post.id);
         } else {
             throw new GraphQLError("User is not author of the post.");
         }
@@ -196,7 +187,7 @@ export class MutationResolver extends BaseResolver {
         if (members) {
             chatMembers.push(...members);
         }
-        return await dataaccess.createChat(...chatMembers);
+        return await dataAccess.createChat(...chatMembers);
     }
 
     /**
@@ -208,7 +199,7 @@ export class MutationResolver extends BaseResolver {
     public async sendMessage({chatId, content}: { chatId: number, content: string }, request: any):
         Promise<ChatMessage> {
         this.ensureLoggedIn(request);
-        const message = await dataaccess.sendChatMessage(request.session.userId, chatId, content);
+        const message = await dataAccess.sendChatMessage(request.session.userId, chatId, content);
         globals.internalEmitter.emit(InternalEvents.GQLCHATMESSAGE, message);
         return message;
     }
@@ -219,10 +210,10 @@ export class MutationResolver extends BaseResolver {
      * @param type
      * @param request
      */
-    public async sendRequest({receiver, type}: { receiver: number, type: dataaccess.RequestType }, request: any):
+    public async sendRequest({receiver, type}: { receiver: number, type: dataAccess.RequestType }, request: any):
         Promise<Request> {
         this.ensureLoggedIn(request);
-        return dataaccess.createRequest(request.session.userId, receiver, type);
+        return dataAccess.createRequest(request.session.userId, receiver, type);
     }
 
     /**
@@ -231,7 +222,7 @@ export class MutationResolver extends BaseResolver {
      * @param type
      * @param request
      */
-    public async denyRequest({sender, type}: { sender: number, type: dataaccess.RequestType }, request: any) {
+    public async denyRequest({sender, type}: { sender: number, type: dataAccess.RequestType }, request: any) {
         this.ensureLoggedIn(request);
         const user = await User.findByPk(request.session.userId);
         await user.acceptRequest(sender, type);
@@ -244,7 +235,7 @@ export class MutationResolver extends BaseResolver {
      * @param type
      * @param request
      */
-    public async acceptRequest({sender, type}: { sender: number, type: dataaccess.RequestType }, request: any) {
+    public async acceptRequest({sender, type}: { sender: number, type: dataAccess.RequestType }, request: any) {
         this.ensureLoggedIn(request);
         const user = await User.findByPk(request.session.userId);
         await user.acceptRequest(sender, type);
@@ -270,7 +261,7 @@ export class MutationResolver extends BaseResolver {
      */
     public async createGroup({name, members}: { name: string, members: number[] }, request: any): Promise<Group> {
         this.ensureLoggedIn(request);
-        return await dataaccess.createGroup(name, request.session.userId, members);
+        return await dataAccess.createGroup(name, request.session.userId, members);
     }
 
     /**
@@ -299,8 +290,8 @@ export class MutationResolver extends BaseResolver {
      */
     public async joinGroup({groupId}: { groupId: number }, request: any): Promise<Group> {
         this.ensureLoggedIn(request);
-        return dataaccess.changeGroupMembership(groupId, request.session.userId,
-            dataaccess.MembershipChangeAction.ADD);
+        return dataAccess.changeGroupMembership(groupId, request.session.userId,
+            dataAccess.MembershipChangeAction.ADD);
     }
 
     /**
@@ -310,8 +301,8 @@ export class MutationResolver extends BaseResolver {
      */
     public async leaveGroup({groupId}: { groupId: number }, request: any): Promise<Group> {
         this.ensureLoggedIn(request);
-        return dataaccess.changeGroupMembership(groupId, request.session.userId,
-            dataaccess.MembershipChangeAction.REMOVE);
+        return dataAccess.changeGroupMembership(groupId, request.session.userId,
+            dataAccess.MembershipChangeAction.REMOVE);
     }
 
     /**
@@ -327,8 +318,8 @@ export class MutationResolver extends BaseResolver {
         if (group && !(await group.$has("rAdmins", user)) && (await group.creator()) !== user.id) {
             throw new NotAGroupAdminError(groupId);
         }
-        return dataaccess.changeGroupMembership(groupId, userId,
-            dataaccess.MembershipChangeAction.OP);
+        return dataAccess.changeGroupMembership(groupId, userId,
+            dataAccess.MembershipChangeAction.OP);
     }
 
     /**
@@ -349,8 +340,8 @@ export class MutationResolver extends BaseResolver {
             throw new GraphQLError(
                 "You are not allowed to remove a creator as an admin.");
         }
-        return await dataaccess.changeGroupMembership(groupId, userId,
-            dataaccess.MembershipChangeAction.DEOP);
+        return await dataAccess.changeGroupMembership(groupId, userId,
+            dataAccess.MembershipChangeAction.DEOP);
     }
 
     /**
@@ -369,7 +360,7 @@ export class MutationResolver extends BaseResolver {
         if (!(await group.$has("rAdmins", user))) {
             throw new NotAGroupAdminError(groupId);
         }
-        const blacklisted = await dataaccess.checkBlacklisted(name);
+        const blacklisted = await dataAccess.checkBlacklisted(name);
         if (blacklisted.length > 0) {
             throw new BlacklistedError(blacklisted.map((p) => p.phrase), "event name");
         }
