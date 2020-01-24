@@ -305,11 +305,15 @@ export class User extends Model<User> {
      * a list of posts the user has created
      * @param first
      * @param offset
+     * @param request
      */
-    public async posts({first, offset}: { first: number, offset: number }): Promise<Post[]> {
+    public async posts({first, offset}: { first: number, offset: number }, request: any): Promise<Post[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
-        return await this.$get("rPosts", {limit, offset}) as Post[];
+        if (request.session.userId === this.getDataValue("id")) {
+            return await this.$get("rPosts", { limit, offset, order: [["id", "desc"]]}) as Post[];
+        }
+        return await this.$get("rPosts", { limit, offset, where: {visible: true}, order: [["id", "desc"]]}) as Post[];
     }
 
     /**

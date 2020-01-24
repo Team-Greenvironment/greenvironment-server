@@ -32,6 +32,13 @@ export class Post extends Model<Post> {
     public content: string;
 
     /**
+     * If the post is publically visible
+     */
+    @NotNull
+    @Column({defaultValue: true, allowNull: false})
+    public visible: boolean;
+
+    /**
      * The id of the post author
      */
     @ForeignKey(() => User)

@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upload handling for media entries (via /upload)
 - routine to cleanup orphaned media entries (not referenced by post, user, group)
 - delete handler for media to delete the corresponding file
+- type for create post to know if it is a media or text post (media posts are invisible until a media file is uploaded)
 
 ### Removed
 

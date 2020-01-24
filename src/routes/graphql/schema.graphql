@@ -85,7 +85,7 @@ type Mutation {
     sendMessage(chatId: ID!, content: String!): ChatMessage
 
     "create a post that can belong to an activity"
-    createPost(content: String!, activityId: ID): Post!
+    createPost(content: String!, activityId: ID, type: PostType = TEXT): Post!
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean!
@@ -317,6 +317,9 @@ type Post {
     "the text of the post"
     content: String
 
+    "If the post is publically visible"
+    visible: Boolean!
+
     "the content of the post rendered by markdown-it"
     htmlContent: String
 
@@ -543,7 +546,16 @@ enum RequestType {
     EVENTINVITE
 }
 
+"the type of sorting for getPosts"
 enum SortType {
     TOP
     NEW
+}
+"""
+The type of the post. If the post was created with the type MEDIA,
+It stays invisible until a media file has been uploaded for the post
+"""
+enum PostType {
+    MEDIA
+    TEXT
 }

@@ -216,6 +216,8 @@ export class UploadRoute extends Route {
                     }
                     if (media) {
                         await post.$set("rMedia", media);
+                        post.visible = true;
+                        await post.save();
                         fileName = media.url;
                         success = true;
                     }

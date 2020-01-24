@@ -179,6 +179,9 @@ namespace dataaccess {
                 limit: first,
                 offset,
                 order: [["createdAt", "DESC"]],
+                where: {
+                    visible: true,
+                },
             });
         } else {
             // more performant way to get the votes with plain sql
@@ -206,15 +209,17 @@ namespace dataaccess {
      * @param content
      * @param authorId
      * @param activityId
+     * @param type
      */
-    export async function createPost(content: string, authorId: number, activityId?: number): Promise<models.Post> {
+    export async function createPost(content: string, authorId: number, activityId?: number,
+                                     type: PostType = PostType.TEXT): Promise<models.Post> {
         const blacklisted = await checkBlacklisted(content);
         if (blacklisted.length > 0) {
             throw new BlacklistedError(blacklisted.map((p) => p.phrase), "content");
         }
         const activity = await models.Activity.findByPk(activityId);
         if (!activityId || activity) {
-            const post = await models.Post.create({content, authorId, activityId});
+            const post = await models.Post.create({content, authorId, activityId, visible: type !== PostType.MEDIA});
             globals.internalEmitter.emit(InternalEvents.POSTCREATE, post);
             if (activity) {
                 const user = await models.User.findByPk(authorId);
@@ -236,11 +241,15 @@ namespace dataaccess {
             const post = await models.Post.findByPk(postId, {include: [{model: Activity}, {association: "rAuthor"}]});
             const activity = await post.activity();
             const author = await post.author();
+            const media = await post.$get("rMedia") as models.Media;
             if (activity && author) {
                 author.rankpoints -= activity.points;
                 await author.save();
             }
             await post.destroy();
+            if (media) {
+                await media.destroy();
+            }
         } catch (err) {
             globals.logger.error(err.message);
             globals.logger.debug(err.stack);
@@ -417,6 +426,17 @@ namespace dataaccess {
         NEW = "NEW",
     }
 
+    /**
+     * The type of the post
+     */
+    export enum PostType {
+        TEXT = "TEXT",
+        MEDIA = "MEDIA",
+    }
+
+    /**
+     * Enum representing the type of membership change for the membership change function
+     */
     export enum MembershipChangeAction {
         ADD,
         REMOVE,

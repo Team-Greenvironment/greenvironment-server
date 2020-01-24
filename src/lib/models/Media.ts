@@ -14,8 +14,8 @@ export class Media extends Model<Media> {
      * @param instance
      */
     @BeforeDestroy
-    public static deleteMediaFile(instance: Media) {
-        fsx.unlinkSync(instance.path);
+    public static async deleteMediaFile(instance: Media) {
+        await fsx.unlink(instance.path);
     }
 
     /**
