@@ -4,9 +4,10 @@ import dataaccess from "../../lib/dataAccess";
 import {ChatNotFoundError} from "../../lib/errors/ChatNotFoundError";
 import {PostNotFoundGqlError} from "../../lib/errors/graphqlErrors";
 import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
+import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
 import {RequestNotFoundError} from "../../lib/errors/RequestNotFoundError";
 import {UserNotFoundError} from "../../lib/errors/UserNotFoundError";
-import {Activity, BlacklistedPhrase, ChatRoom, Event, Group, Post, Request, User} from "../../lib/models";
+import {Activity, BlacklistedPhrase, ChatRoom, Event, Group, Post, Report, Request, User} from "../../lib/models";
 import {BlacklistedResult} from "./BlacklistedResult";
 import {MutationResolver} from "./MutationResolver";
 import {SearchResult} from "./SearchResult";
@@ -183,5 +184,20 @@ export class QueryResolver extends MutationResolver {
     public async getBlacklistedPhrases({first, offset}: { first: number, offset: number }): Promise<string[]> {
         return (await BlacklistedPhrase.findAll({limit: first, offset}))
             .map((p) => p.phrase);
+    }
+
+    /**
+     * Returns all reports with pagination if the user is an admin
+     * @param first
+     * @param offset
+     * @param request
+     */
+    public async getReports({first, offset}: {first: number, offset: number}, request: any): Promise<Report[]> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        if (!user?.isAdmin) {
+            throw new NotAnAdminError();
+        }
+        return Report.findAll({limit: first, offset});
     }
 }

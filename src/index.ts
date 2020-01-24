@@ -5,6 +5,16 @@ import App from "./app";
 
 const numCPUs = require("os").cpus().length;
 
+/**
+ * An asynchronous delay
+ * @param millis
+ */
+async function delay(millis: number) {
+    return new Promise(((resolve) => {
+        setTimeout(resolve, millis);
+    }));
+}
+
 if (cluster.isMaster) {
     console.log(`[CLUSTER-M] Master ${process.pid} is running`);
 
@@ -21,9 +31,12 @@ if (cluster.isMaster) {
         });
     });
 
-    for (let i = 0; i < numCPUs; i++) {
-        cluster.fork();
-    }
+    (async () => {
+        for (let i = 0; i < numCPUs; i++) {
+            cluster.fork();
+            await delay(1000);
+        }
+    })();
 } else {
 
     /**

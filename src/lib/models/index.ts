@@ -14,3 +14,5 @@ export {EventParticipant} from "./EventParticipant";
 export {Activity} from "./Activity";
 export {BlacklistedPhrase} from "./BlacklistedPhrase";
 export {Media} from "./Media";
+export {Report} from "./Report";
+export {ReportReason} from "./ReportReason";

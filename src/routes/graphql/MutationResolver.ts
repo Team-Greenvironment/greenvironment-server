@@ -4,14 +4,20 @@ import isEmail from "validator/lib/isEmail";
 import dataAccess from "../../lib/dataAccess";
 import {BlacklistedError} from "../../lib/errors/BlacklistedError";
 import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
+import {HandleInUseError} from "../../lib/errors/HandleInUseError";
 import {InvalidEmailError} from "../../lib/errors/InvalidEmailError";
 import {NotAGroupAdminError} from "../../lib/errors/NotAGroupAdminError";
 import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
 import {NotTheGroupCreatorError} from "../../lib/errors/NotTheGroupCreatorError";
 import {PostNotFoundError} from "../../lib/errors/PostNotFoundError";
+import {ReportAlreadyExistsError} from "../../lib/errors/ReportAlreadyExistsError";
+import {ReportReasonNameAlreadyExistsError} from "../../lib/errors/ReportReasonNameAlreadyExistsError";
+import {ReportReasonNotFoundError} from "../../lib/errors/ReportReasonNotFoundError";
 import globals from "../../lib/globals";
 import {InternalEvents} from "../../lib/InternalEvents";
 import {Activity, BlacklistedPhrase, ChatMessage, ChatRoom, Event, Group, Post, Request, User} from "../../lib/models";
+import {Report} from "../../lib/models";
+import {ReportReason} from "../../lib/models";
 import {UploadManager} from "../../lib/UploadManager";
 import {BaseResolver} from "./BaseResolver";
 
@@ -99,6 +105,36 @@ export class MutationResolver extends BaseResolver {
     }
 
     /**
+     * Sets a new username for a user
+     * @param username
+     * @param request
+     */
+    public async setUsername({username}: {username: string}, request: any): Promise<User> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        user.username = username;
+        await user.save();
+        return user;
+    }
+
+    /**
+     * Sets a new handle for the user. If the handle is alredy used by a different user, an error is returned
+     * @param handle
+     * @param request
+     */
+    public async setHandle({handle}: {handle: string}, request: any): Promise<User> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        const handleAvailable = !(await User.findOne({where: {handle}}));
+        if (!handleAvailable) {
+            throw new HandleInUseError(handle);
+        }
+        user.handle = handle;
+        await user.save();
+        return user;
+    }
+
+    /**
      * Sets the frontend settings for the logged in user
      * @param settings
      * @param request
@@ -174,6 +210,29 @@ export class MutationResolver extends BaseResolver {
         } else {
             throw new GraphQLError("User is not author of the post.");
         }
+    }
+
+    /**
+     * Reports a post
+     * @param postId
+     * @param reasonId
+     * @param request
+     */
+    public async reportPost({postId, reasonId}: {postId: number, reasonId: number}, request: any): Promise<Report> {
+        this.ensureLoggedIn(request);
+        const post = await Post.findByPk(postId);
+        if (!post) {
+            throw new PostNotFoundError(postId);
+        }
+        const reason = await ReportReason.findByPk(reasonId);
+        if (!reason) {
+            throw new ReportReasonNotFoundError(reasonId);
+        }
+        const report = await Report.findOne({where: {postId, reasonId, userId: request.session.userId}});
+        if (report) {
+            throw new ReportAlreadyExistsError();
+        }
+        return Report.create({postId, reasonId, userId: request.session.userId}, {include: [ReportReason]});
     }
 
     /**
@@ -477,5 +536,25 @@ export class MutationResolver extends BaseResolver {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Creates a new reason for reporting posts
+     * @param name
+     * @param description
+     * @param request
+     */
+    public async createReportReason({name, description}: {name: string, description: string}, request: any):
+        Promise<ReportReason> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        if (!user.isAdmin) {
+            throw new NotAnAdminError();
+        }
+        const reasonExists = await ReportReason.findOne({where: {name}});
+        if (reasonExists) {
+            throw new ReportReasonNameAlreadyExistsError(name);
+        }
+        return ReportReason.create({name, description});
     }
 }

@@ -46,8 +46,8 @@ export class GraphqlRoute extends Route {
                     } else {
                         response.status(400);
                     }
-                    logger.debug(err.message);
-                    logger.silly(err.stack);
+                    logger.verbose(err.message);
+                    logger.debug(err.stack);
                     return err.graphqlError ?? err;
                 },
                 graphiql: config.get<boolean>("api.graphiql"),

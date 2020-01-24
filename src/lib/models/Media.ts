@@ -38,7 +38,8 @@ export class Media extends Model<Media> {
     /**
      * The type of media
      */
-    @Column({type: sqz.ENUM, values: ["IMAGE", "VIDEO"]})
+    @NotNull
+    @Column({type: sqz.ENUM, values: ["IMAGE", "VIDEO"], allowNull: false})
     public type: MediaType;
 
     /**
