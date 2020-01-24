@@ -63,28 +63,35 @@ export class UploadRoute extends Route {
         // Uploads a file to the data directory and returns the filename
         this.router.use(async (req, res) => {
             let uploadConfirmation: IUploadConfirmation;
-            if (req.session.userId) {
-                if (req.files.profilePicture) {
-                    uploadConfirmation = await this.uploadProfilePicture(req);
-                } else if (req.files.groupPicture) {
-                    uploadConfirmation = await this.uploadGroupPicture(req);
-                } else if (req.files.postMedia) {
-                    uploadConfirmation = await this.uploadPostMedia(req);
+            try {
+                if (req.session.userId) {
+                    if (req.files.profilePicture) {
+                        uploadConfirmation = await this.uploadProfilePicture(req);
+                    } else if (req.files.groupPicture) {
+                        uploadConfirmation = await this.uploadGroupPicture(req);
+                    } else if (req.files.postMedia) {
+                        uploadConfirmation = await this.uploadPostMedia(req);
+                    } else {
+                        res.status(status.BAD_REQUEST);
+                        uploadConfirmation = {
+                            error: "You did not provide a (valid) file.",
+                            success: false,
+                        };
+                    }
                 } else {
-                    res.status(status.BAD_REQUEST);
+                    res.status(status.UNAUTHORIZED);
                     uploadConfirmation = {
-                        error: "You did not provide a (valid) file.",
+                        error: "You are not logged in.",
                         success: false,
                     };
                 }
-            } else {
-                res.status(status.UNAUTHORIZED);
+            } catch (err) {
                 uploadConfirmation = {
-                    error: "You are not logged in.",
+                    error: err,
                     success: false,
                 };
             }
-            if (uploadConfirmation.error) {
+            if (uploadConfirmation?.error) {
                 res.status(httpStatus.BAD_REQUEST);
             }
             res.json(uploadConfirmation);
