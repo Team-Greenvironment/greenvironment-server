@@ -33,21 +33,10 @@ interface IUploadConfirmation {
     success: boolean;
 }
 
-type ImageFit = "cover" | "contain" | "fill" | "inside" | "outside";
-
 /**
  * Represents an upload handler.
  */
 export class UploadRoute extends Route {
-
-    /**
-     * Returns the hash of the current time to be used as a filename.
-     */
-    private static getFileName() {
-        const hash = crypto.createHash("md5");
-        hash.update(Number(Date.now()).toString());
-        return hash.digest("hex");
-    }
 
     /**
      * The directory where the uploaded data will be saved in
