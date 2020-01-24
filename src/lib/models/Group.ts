@@ -1,10 +1,9 @@
-import * as sqz from "sequelize";
 import {
     BelongsTo,
     BelongsToMany,
     Column,
     ForeignKey,
-    HasMany, HasOne,
+    HasMany,
     Model,
     NotNull,
     Table,

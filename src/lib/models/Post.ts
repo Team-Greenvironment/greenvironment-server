@@ -1,18 +1,6 @@
-import * as config from "config";
 import * as sqz from "sequelize";
-import {
-    BelongsTo,
-    BelongsToMany,
-    Column,
-    CreatedAt,
-    ForeignKey,
-    HasOne,
-    Model,
-    NotNull,
-    Table,
-} from "sequelize-typescript";
+import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
 import markdown from "../markdown";
-import {MediaType} from "../UploadManager";
 import {Activity} from "./Activity";
 import {Media} from "./Media";
 import {PostVote, VoteType} from "./PostVote";

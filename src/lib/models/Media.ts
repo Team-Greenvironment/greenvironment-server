@@ -6,6 +6,9 @@ import {Group} from "./Group";
 import {Post} from "./Post";
 import {User} from "./User";
 
+/**
+ * Represents a single media file that can be used as a profile picture for groups and users or a post picture
+ */
 @Table({underscored: true})
 export class Media extends Model<Media> {
 

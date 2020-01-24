@@ -5,7 +5,7 @@ import * as path from "path";
 import * as sharp from "sharp";
 import {Readable} from "stream";
 import globals from "./globals";
-import {Media} from "./models/Media";
+import {Media} from "./models";
 
 const toArray = require("stream-to-array");
 
@@ -17,23 +17,6 @@ const dataDirName = "data";
 export enum MediaType {
     IMAGE = "IMAGE",
     VIDEO = "VIDEO",
-}
-
-interface IUploadConfirmation {
-    /**
-     * Indicates the error that might have occured during the upload
-     */
-    error?: string;
-
-    /**
-     * The file that has been uploaded
-     */
-    fileName?: string;
-
-    /**
-     * If the upload was successful
-     */
-    success: boolean;
 }
 
 type ImageFit = "cover" | "contain" | "fill" | "inside" | "outside";

@@ -3,8 +3,9 @@ import {
     BelongsTo,
     BelongsToMany,
     Column,
-    CreatedAt, ForeignKey,
-    HasMany, HasOne,
+    CreatedAt,
+    ForeignKey,
+    HasMany,
     Model,
     NotNull,
     Table,
@@ -311,9 +312,9 @@ export class User extends Model<User> {
         const limit = first ?? 10;
         offset = offset ?? 0;
         if (request.session.userId === this.getDataValue("id")) {
-            return await this.$get("rPosts", { limit, offset, order: [["id", "desc"]]}) as Post[];
+            return await this.$get("rPosts", {limit, offset, order: [["id", "desc"]]}) as Post[];
         }
-        return await this.$get("rPosts", { limit, offset, where: {visible: true}, order: [["id", "desc"]]}) as Post[];
+        return await this.$get("rPosts", {limit, offset, where: {visible: true}, order: [["id", "desc"]]}) as Post[];
     }
 
     /**

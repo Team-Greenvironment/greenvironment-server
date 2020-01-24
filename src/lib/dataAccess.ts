@@ -191,10 +191,12 @@ namespace dataaccess {
                               SELECT *,
                                      (SELECT count(*)
                                       FROM post_votes
-                                      WHERE vote_type = 'UPVOTE' AND post_id = posts.id)   AS upvotes,
+                                      WHERE vote_type = 'UPVOTE'
+                                        AND post_id = posts.id) AS upvotes,
                                      (SELECT count(*)
                                       FROM post_votes
-                                      WHERE vote_type = 'DOWNVOTE' AND post_id = posts.id) AS downvotes
+                                      WHERE vote_type = 'DOWNVOTE'
+                                        AND post_id = posts.id) AS downvotes
                               FROM posts) AS a
                      ORDER BY (a.upvotes - a.downvotes) DESC, a.upvotes DESC, a.id
                      LIMIT ?
