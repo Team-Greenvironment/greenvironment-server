@@ -60,6 +60,12 @@ type Mutation {
     "Sets the user settings to the specified settings string. The settings parameter should be a valid yaml."
     setUserSettings(settings: String!): String!
 
+    "Sets a new username"
+    setUsername(username: String!): Profile!
+
+    "Sets a new handle"
+    setHandle(handle: String!): Profile!
+
     "Logout of the user."
     logout: Boolean
 

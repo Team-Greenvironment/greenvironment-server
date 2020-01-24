@@ -4,6 +4,7 @@ import isEmail from "validator/lib/isEmail";
 import dataAccess from "../../lib/dataAccess";
 import {BlacklistedError} from "../../lib/errors/BlacklistedError";
 import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
+import {HandleInUseError} from "../../lib/errors/HandleInUseError";
 import {InvalidEmailError} from "../../lib/errors/InvalidEmailError";
 import {NotAGroupAdminError} from "../../lib/errors/NotAGroupAdminError";
 import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
@@ -95,6 +96,36 @@ export class MutationResolver extends BaseResolver {
         }
         const user = await dataAccess.registerUser(username, email, passwordHash);
         request.session.userId = user.id;
+        return user;
+    }
+
+    /**
+     * Sets a new username for a user
+     * @param username
+     * @param request
+     */
+    public async setUsername({username}: {username: string}, request: any): Promise<User> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        user.username = username;
+        await user.save();
+        return user;
+    }
+
+    /**
+     * Sets a new handle for the user. If the handle is alredy used by a different user, an error is returned
+     * @param handle
+     * @param request
+     */
+    public async setHandle({handle}: {handle: string}, request: any): Promise<User> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        const handleAvailable = !(await User.findOne({where: {handle}}));
+        if (!handleAvailable) {
+            throw new HandleInUseError(handle);
+        }
+        user.handle = handle;
+        await user.save();
         return user;
     }
 
