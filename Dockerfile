@@ -1,11 +1,12 @@
-FROM node:current-alpine
+FROM node:13.7.0
 
 COPY . /home/node/green
 WORKDIR /home/node/green
+RUN apt update
+RUN apt install redis-server -y
 RUN npm install -g gulp
-RUN npm install --save-dev
-RUN npm rebuild node-sass
+RUN yarn install
 RUN gulp
 COPY . .
 EXPOSE 8080
-CMD ["npm" , "run"]
+CMD ["redis-server", "&", "node" , "./dist"]
