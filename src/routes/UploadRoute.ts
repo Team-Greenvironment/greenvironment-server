@@ -84,6 +84,9 @@ export class UploadRoute extends Route {
                     success: false,
                 };
             }
+            if (uploadConfirmation.error) {
+                res.status(httpStatus.BAD_REQUEST);
+            }
             res.json(uploadConfirmation);
         });
     }
