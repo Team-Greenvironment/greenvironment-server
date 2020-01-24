@@ -71,7 +71,7 @@ namespace dataaccess {
             globals.logger.debug(err.stack);
         }
         await databaseCleanup();
-        setInterval(databaseCleanup, config.get<number>("database.cleanupInterval"));
+        setInterval(databaseCleanup, config.get<number>("database.cleanupInterval") * 1000);
     }
 
     /**
