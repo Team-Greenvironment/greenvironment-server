@@ -103,9 +103,8 @@ export class User extends Model<User> {
      * The id of the media that is the users profile picture
      */
     @ForeignKey(() => Media)
-    @Column({allowNull: false})
+    @Column({allowNull: true})
     public mediaId: number;
-
 
     /**
      * The media of the user
