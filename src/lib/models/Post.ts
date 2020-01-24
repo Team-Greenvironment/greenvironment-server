@@ -1,9 +1,20 @@
 import * as sqz from "sequelize";
-import {BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, Model, NotNull, Table} from "sequelize-typescript";
+import {
+    BelongsTo,
+    BelongsToMany,
+    Column,
+    CreatedAt,
+    ForeignKey,
+    HasMany,
+    Model,
+    NotNull,
+    Table,
+} from "sequelize-typescript";
 import markdown from "../markdown";
 import {Activity} from "./Activity";
 import {Media} from "./Media";
 import {PostVote, VoteType} from "./PostVote";
+import {Report} from "./Report";
 import {User} from "./User";
 
 /**
@@ -74,6 +85,12 @@ export class Post extends Model<Post> {
     public rVotes: Array<User & { PostVote: PostVote }>;
 
     /**
+     * The reports on the post
+     */
+    @HasMany(() => Report, "postId")
+    public rReports: Report[];
+
+    /**
      * The date the post was created at
      */
     @CreatedAt
@@ -98,6 +115,13 @@ export class Post extends Model<Post> {
      */
     public async votes(): Promise<Array<User & { PostVote: PostVote }>> {
         return await this.$get("rVotes") as Array<User & { PostVote: PostVote }>;
+    }
+
+    /**
+     * Returns the reports on the post
+     */
+    public async reports({first, offset}: {first: number, offset: number}): Promise<Report[]> {
+        return await this.$get("rReports", {limit: first, offset}) as Report[];
     }
 
     /**

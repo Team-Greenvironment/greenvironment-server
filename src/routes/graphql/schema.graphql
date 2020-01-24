@@ -45,6 +45,9 @@ type Query {
 
     "Returns the blacklist with pagination."
     getBlacklistedPhrases(first: Int = 20, offset: Int = 0): [String!]! @complexity(value: 1, multipliers: ["first"])
+
+    "Returns all issued reports with pagination"
+    getReports(first: Int = 20, offset: Int = 0): [Report!]! @complexity(value: 1, multipliers: ["first"])
 }
 
 type Mutation {
@@ -72,9 +75,6 @@ type Mutation {
     "Upvote/downvote a Post"
     vote(postId: ID!, type: VoteType!): VoteResult
 
-    "Report the post"
-    report(postId: ID!): Boolean!
-
     "send a request"
     sendRequest(receiver: ID!, type: RequestType): Request
 
@@ -95,6 +95,9 @@ type Mutation {
 
     "delete the post for a given post id"
     deletePost(postId: ID!): Boolean!
+
+    "reports the post for a specific report reason"
+    reportPost(postId: ID!, reasonId: ID!): Report
 
     "Creates a chat between the user (and optional an other user)"
     createChat(members: [ID!]): ChatRoom!
@@ -137,6 +140,9 @@ type Mutation {
 
     "Removes a phrase from the blacklist. Returns true if the phrase could be found and deleted."
     removeFromBlacklist(phrase: String!, languageCode: String = "en"): Boolean!
+
+    "Creates a new report reason"
+    createReportReason(name: String!, description: String!): ReportReason
 }
 
 interface UserData {
@@ -352,6 +358,9 @@ type Post {
 
     "the uploaded file or video for the post"
     media: Media
+
+    "returns all reports issued on the post"
+    reports(first: Int = 20, offset: Int = 0): [Report!]!
 }
 
 "represents a request of any type"
@@ -523,11 +532,43 @@ type BlacklistedResult {
 "a type of uploaded media"
 type Media {
 
+    "the id of the media"
+    id: ID!
+
     "the url pointing to the media in the data folder"
     url: String!
 
     "the type of media that is uploaded"
     type: MediaType
+}
+
+"a report on a post"
+type Report {
+
+    "the id of the report"
+    id: ID!
+
+    "the post that was reported"
+    post: Post!
+
+    "the reason why the post was reported"
+    reason: ReportReason!
+
+    "the user who reported the post"
+    user: User!
+}
+
+"the reason for a report"
+type ReportReason {
+
+    "the id of the reason"
+    id: ID!
+
+    "the name of the report reason"
+    name: String!
+
+    "the description of the reason"
+    description: String!
 }
 
 "represents the type of media"

@@ -10,9 +10,14 @@ import {NotAGroupAdminError} from "../../lib/errors/NotAGroupAdminError";
 import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
 import {NotTheGroupCreatorError} from "../../lib/errors/NotTheGroupCreatorError";
 import {PostNotFoundError} from "../../lib/errors/PostNotFoundError";
+import {ReportAlreadyExistsError} from "../../lib/errors/ReportAlreadyExistsError";
+import {ReportReasonNameAlreadyExistsError} from "../../lib/errors/ReportReasonNameAlreadyExistsError";
+import {ReportReasonNotFoundError} from "../../lib/errors/ReportReasonNotFoundError";
 import globals from "../../lib/globals";
 import {InternalEvents} from "../../lib/InternalEvents";
 import {Activity, BlacklistedPhrase, ChatMessage, ChatRoom, Event, Group, Post, Request, User} from "../../lib/models";
+import {Report} from "../../lib/models";
+import {ReportReason} from "../../lib/models";
 import {UploadManager} from "../../lib/UploadManager";
 import {BaseResolver} from "./BaseResolver";
 
@@ -205,6 +210,29 @@ export class MutationResolver extends BaseResolver {
         } else {
             throw new GraphQLError("User is not author of the post.");
         }
+    }
+
+    /**
+     * Reports a post
+     * @param postId
+     * @param reasonId
+     * @param request
+     */
+    public async reportPost({postId, reasonId}: {postId: number, reasonId: number}, request: any): Promise<Report> {
+        this.ensureLoggedIn(request);
+        const post = await Post.findByPk(postId);
+        if (!post) {
+            throw new PostNotFoundError(postId);
+        }
+        const reason = await ReportReason.findByPk(reasonId);
+        if (!reason) {
+            throw new ReportReasonNotFoundError(reasonId);
+        }
+        const report = await Report.findOne({where: {postId, reasonId, userId: request.session.userId}});
+        if (report) {
+            throw new ReportAlreadyExistsError();
+        }
+        return Report.create({postId, reasonId, userId: request.session.userId}, {include: [ReportReason]});
     }
 
     /**
@@ -508,5 +536,25 @@ export class MutationResolver extends BaseResolver {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Creates a new reason for reporting posts
+     * @param name
+     * @param description
+     * @param request
+     */
+    public async createReportReason({name, description}: {name: string, description: string}, request: any):
+        Promise<ReportReason> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        if (!user.isAdmin) {
+            throw new NotAnAdminError();
+        }
+        const reasonExists = await ReportReason.findOne({where: {name}});
+        if (reasonExists) {
+            throw new ReportReasonNameAlreadyExistsError(name);
+        }
+        return ReportReason.create({name, description});
     }
 }

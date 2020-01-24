@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - routine to cleanup orphaned media entries (not referenced by post, user, group)
 - delete handler for media to delete the corresponding file
 - type for create post to know if it is a media or text post (media posts are invisible until a media file is uploaded)
+- reports and mutations to report posts and create reasons to report
 
 ### Removed
 
@@ -49,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - only group admins can create group events
 - config behaviour to use all files that reside in the ./config directory with the .toml format
 - default response timeout from 2 minutes to 30 seconds
+- cluster api to start workers with a 2 second delay each to avoid race conditions
 
 ### Fixed
 

@@ -65,6 +65,8 @@ namespace dataaccess {
                 models.Activity,
                 models.BlacklistedPhrase,
                 models.Media,
+                models.Report,
+                models.ReportReason,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
