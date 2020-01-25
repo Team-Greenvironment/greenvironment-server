@@ -48,6 +48,9 @@ type Query {
 
     "Returns all issued reports with pagination"
     getReports(first: Int = 20, offset: Int = 0): [Report!]! @complexity(value: 1, multipliers: ["first"])
+
+    "Returns the levels configured in the backend"
+    getLevels(first: Int =20, offset: Int = 0): [Level!]! @complexity(value: 1, multipliers: ["first"])
 }
 
 type Mutation {
@@ -143,6 +146,9 @@ type Mutation {
 
     "Creates a new report reason"
     createReportReason(name: String!, description: String!): ReportReason
+
+    "Creates a new level"
+    createLevel(name: String!, requiredPoints: Int!): Level!
 }
 
 interface UserData {
@@ -574,11 +580,17 @@ type ReportReason {
 "A level of a user"
 type Level {
 
+    "The level id"
+    id: ID!
+
     "The name of the level"
     name: String!
 
     "The number of the level in the ranking"
-    levelNumber: String!
+    levelNumber: Int!
+
+    "The points required for this level"
+    points: Int!
 }
 
 "represents the type of media"

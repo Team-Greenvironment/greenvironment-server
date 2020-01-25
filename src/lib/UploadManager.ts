@@ -98,7 +98,7 @@ export class UploadManager {
      * @param extension
      */
     public async processAndStoreVideo(data: Buffer, extension: string): Promise<Media> {
-        const fileBasename = UploadManager.getCrypticFileName() + extension;
+        const fileBasename = UploadManager.getCrypticFileName() + "." + extension;
         await fsx.ensureDir(this.dataDir);
         const filePath = path.join(this.dataDir, fileBasename);
         await fsx.writeFile(filePath, data);

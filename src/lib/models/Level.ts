@@ -16,18 +16,17 @@ export class Level extends Model<Level> {
     public name: string;
 
     /**
-     * The number of the level
-     */
-    @NotNull
-    @Unique
-    @Column({allowNull: false, unique: true})
-    public levelNumber: number;
-
-    /**
      * The required points for the level
      */
     @NotNull
     @Unique
     @Column({allowNull: false, unique: true})
     public points: number;
+
+    /**
+     * Returns the number of the level as the number of the database entry
+     */
+    public async levelNumber(): Promise<number> {
+        return Level.count({where: {points: {[sqz.Op.lte]: this.points}}});
+    }
 }

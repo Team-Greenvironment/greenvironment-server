@@ -44,7 +44,7 @@ export class User extends Model<User> {
      */
     @BeforeUpdate
     public static async assignLevel(instance: User) {
-        const level = await Level.findOne({where: {points: {[sqz.Op.lte]: instance.rankpoints}}, order: [["levelNumber", "desc"]]}) as Level;
+        const level = await Level.findOne({where: {points: {[sqz.Op.lte]: instance.rankpoints}}, order: [["points", "desc"]]}) as Level;
         if (level) {
             instance.$set("rLevel", level);
         }

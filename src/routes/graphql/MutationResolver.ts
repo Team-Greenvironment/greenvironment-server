@@ -1,11 +1,13 @@
 import {GraphQLError} from "graphql";
 import * as yaml from "js-yaml";
+import sequelize from "sequelize";
 import isEmail from "validator/lib/isEmail";
 import dataAccess from "../../lib/dataAccess";
 import {BlacklistedError} from "../../lib/errors/BlacklistedError";
 import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
 import {HandleInUseError} from "../../lib/errors/HandleInUseError";
 import {InvalidEmailError} from "../../lib/errors/InvalidEmailError";
+import {LevelAlreadyExistsError} from "../../lib/errors/LevelAlreadyExistsError";
 import {NotAGroupAdminError} from "../../lib/errors/NotAGroupAdminError";
 import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
 import {NotTheGroupCreatorError} from "../../lib/errors/NotTheGroupCreatorError";
@@ -15,7 +17,18 @@ import {ReportReasonNameAlreadyExistsError} from "../../lib/errors/ReportReasonN
 import {ReportReasonNotFoundError} from "../../lib/errors/ReportReasonNotFoundError";
 import globals from "../../lib/globals";
 import {InternalEvents} from "../../lib/InternalEvents";
-import {Activity, BlacklistedPhrase, ChatMessage, ChatRoom, Event, Group, Post, Request, User} from "../../lib/models";
+import {
+    Activity,
+    BlacklistedPhrase,
+    ChatMessage,
+    ChatRoom,
+    Event,
+    Group,
+    Level,
+    Post,
+    Request,
+    User,
+} from "../../lib/models";
 import {Report} from "../../lib/models";
 import {ReportReason} from "../../lib/models";
 import {UploadManager} from "../../lib/UploadManager";
@@ -147,6 +160,8 @@ export class MutationResolver extends BaseResolver {
             await user.save();
             return user.settings;
         } catch (err) {
+            globals.logger.warning(err.message);
+            globals.logger.debug(err.stack);
             throw new GraphQLError("Invalid settings json.");
         }
     }
@@ -556,5 +571,27 @@ export class MutationResolver extends BaseResolver {
             throw new ReportReasonNameAlreadyExistsError(name);
         }
         return ReportReason.create({name, description});
+    }
+
+    /**
+     * Creates a new level
+     * @param name
+     * @param levelNumber
+     * @param requiredPoints
+     * @param request
+     */
+    public async createLevel({name, requiredPoints}: {name: string, requiredPoints: number}, request: any):
+        Promise<Level> {
+        this.ensureLoggedIn(request);
+        const user = await User.findByPk(request.session.userId);
+        if (!user.isAdmin) {
+            throw new NotAnAdminError();
+        }
+        const existingLevel = await Level.findOne({where: {[sequelize.Op.or]: [{name}, {points: requiredPoints}]}});
+        if (existingLevel) {
+            throw new LevelAlreadyExistsError(
+                existingLevel.name === name ? "name" : "points");
+        }
+        return Level.create({name, points: requiredPoints});
     }
 }
