@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - graphql schema for denyRequest using the wrong parameters
 - sendRequest allowing duplicates
 - upload throwing an error when the old picture doesn't exist
-
+- extension of uploaded videos doesn't have a dot
 
 ## [0.9] - 2019-10-29
 
