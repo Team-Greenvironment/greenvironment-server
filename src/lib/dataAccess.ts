@@ -67,12 +67,12 @@ namespace dataaccess {
                 models.Media,
                 models.Report,
                 models.ReportReason,
+                models.Level,
             ]);
         } catch (err) {
             globals.logger.error(err.message);
             globals.logger.debug(err.stack);
         }
-        await databaseCleanup();
         setInterval(databaseCleanup, config.get<number>("database.cleanupInterval") * 1000);
     }
 
