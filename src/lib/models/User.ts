@@ -1,5 +1,6 @@
 import * as sqz from "sequelize";
 import {
+    BeforeUpdate,
     BelongsTo,
     BelongsToMany,
     Column,
@@ -24,6 +25,7 @@ import {Friendship} from "./Friendship";
 import {Group} from "./Group";
 import {GroupAdmin} from "./GroupAdmin";
 import {GroupMember} from "./GroupMember";
+import {Level} from "./Level";
 import {Media} from "./Media";
 import {Post} from "./Post";
 import {PostVote} from "./PostVote";
@@ -34,6 +36,19 @@ import {Request, RequestType} from "./Request";
  */
 @Table({underscored: true})
 export class User extends Model<User> {
+
+    /**
+     * A function that is called before the user is updated.
+     * It assigns the corresponding level to the user
+     * @param instance
+     */
+    @BeforeUpdate
+    public static async assignLevel(instance: User) {
+        const level = await Level.findOne({where: {points: {[sqz.Op.lte]: instance.rankpoints}}, order: [["points", "desc"]]}) as Level;
+        if (level) {
+            instance.$set("rLevel", level);
+        }
+    }
 
     /**
      * The name of the user
@@ -100,12 +115,24 @@ export class User extends Model<User> {
     public isAdmin: boolean;
 
     /**
+     * The level of the user
+     */
+    @ForeignKey(() => Level)
+    @Column({allowNull: true})
+    public levelId: number;
+
+    /**
      * The id of the media that is the users profile picture
      */
     @ForeignKey(() => Media)
-    @Column({allowNull: false})
+    @Column({allowNull: true})
     public mediaId: number;
 
+    /**
+     * The level of the user
+     */
+    @BelongsTo(() => Level)
+    public rLevel: Level;
 
     /**
      * The media of the user
@@ -221,8 +248,8 @@ export class User extends Model<User> {
     /**
      * The level of the user which is the points divided by 100
      */
-    public get level(): number {
-        return Math.ceil(this.getDataValue("rankpoints") / 100);
+    public async level(): Promise<Level> {
+        return await this.$get("rLevel") as Level;
     }
 
     /**

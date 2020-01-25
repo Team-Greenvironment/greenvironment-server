@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - delete handler for media to delete the corresponding file
 - type for create post to know if it is a media or text post (media posts are invisible until a media file is uploaded)
 - reports and mutations to report posts and create reasons to report
+- level entity
 
 ### Removed
 
@@ -51,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - config behaviour to use all files that reside in the ./config directory with the .toml format
 - default response timeout from 2 minutes to 30 seconds
 - cluster api to start workers with a 2 second delay each to avoid race conditions
+- levels to be configured in the backend
 
 ### Fixed
 
@@ -60,7 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - style issues
 - graphql schema for denyRequest using the wrong parameters
 - sendRequest allowing duplicates
-
+- upload throwing an error when the old picture doesn't exist
+- extension of uploaded videos doesn't have a dot
 
 ## [0.9] - 2019-10-29
 

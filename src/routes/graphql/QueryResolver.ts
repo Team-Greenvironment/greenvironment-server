@@ -7,7 +7,18 @@ import {GroupNotFoundError} from "../../lib/errors/GroupNotFoundError";
 import {NotAnAdminError} from "../../lib/errors/NotAnAdminError";
 import {RequestNotFoundError} from "../../lib/errors/RequestNotFoundError";
 import {UserNotFoundError} from "../../lib/errors/UserNotFoundError";
-import {Activity, BlacklistedPhrase, ChatRoom, Event, Group, Post, Report, Request, User} from "../../lib/models";
+import {
+    Activity,
+    BlacklistedPhrase,
+    ChatRoom,
+    Event,
+    Group,
+    Level,
+    Post,
+    Report,
+    Request,
+    User
+} from "../../lib/models";
 import {BlacklistedResult} from "./BlacklistedResult";
 import {MutationResolver} from "./MutationResolver";
 import {SearchResult} from "./SearchResult";
@@ -198,6 +209,15 @@ export class QueryResolver extends MutationResolver {
         if (!user?.isAdmin) {
             throw new NotAnAdminError();
         }
-        return Report.findAll({limit: first, offset});
+        return Report.findAll({limit: first, offset, order: [["id", "DESC"]]});
+    }
+
+    /**
+     * Returns the levels that are configured
+     * @param first
+     * @param offset
+     */
+    public async getLevels({first, offset}: {first: number, offset: number}): Promise<Level[]> {
+        return Level.findAll({limit: first, offset, order: [["points", "ASC"]]});
     }
 }
