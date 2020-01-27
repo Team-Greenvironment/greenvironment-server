@@ -35,7 +35,7 @@ type Query {
     getPosts(first: Int=20, offset: Int=0, sort: SortType = NEW): [Post!]! @complexity(value: 1, multipliers: ["first"])
 
     "returns all activities"
-    getActivities: [Activity]
+    getActivities: [Activity!]!
 
     "Returns an access token for the user that can be used in requests. To user the token in requests, it has to be set in the HTTP header 'Authorization' with the format Bearer <token>."
     getToken(email: String!, passwordHash: String!): Token!
@@ -48,6 +48,9 @@ type Query {
 
     "Returns all issued reports with pagination"
     getReports(first: Int = 20, offset: Int = 0): [Report!]! @complexity(value: 1, multipliers: ["first"])
+
+    "Returns all report reasons"
+    getReportReasons: [ReportReason!]!
 
     "Returns the levels configured in the backend"
     getLevels(first: Int =20, offset: Int = 0): [Level!]! @complexity(value: 1, multipliers: ["first"])

@@ -1,5 +1,6 @@
 import * as sqz from "sequelize";
 import {
+    BeforeCreate,
     BeforeUpdate,
     BelongsTo,
     BelongsToMany,
@@ -42,11 +43,14 @@ export class User extends Model<User> {
      * It assigns the corresponding level to the user
      * @param instance
      */
+    @BeforeCreate
     @BeforeUpdate
     public static async assignLevel(instance: User) {
-        const level = await Level.findOne({where: {points: {[sqz.Op.lte]: instance.rankpoints}}, order: [["points", "desc"]]}) as Level;
-        if (level) {
-            instance.$set("rLevel", level);
+        if (instance.changed("rankpoints") || instance.isNewRecord) {
+            const level = await Level.findOne({where: {points: {[sqz.Op.lte]: instance.rankpoints}}, order: [["points", "desc"]]}) as Level;
+            if (level) {
+                instance.$set("rLevel", level);
+            }
         }
     }
 

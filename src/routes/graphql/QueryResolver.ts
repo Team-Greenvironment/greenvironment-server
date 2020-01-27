@@ -15,7 +15,7 @@ import {
     Group,
     Level,
     Post,
-    Report,
+    Report, ReportReason,
     Request,
     User
 } from "../../lib/models";
@@ -210,6 +210,13 @@ export class QueryResolver extends MutationResolver {
             throw new NotAnAdminError();
         }
         return Report.findAll({limit: first, offset, order: [["id", "DESC"]]});
+    }
+
+    /**
+     * Returns all report reasons
+     */
+    public async getReportReasons(): Promise<ReportReason[]> {
+        return ReportReason.findAll();
     }
 
     /**
