@@ -291,14 +291,16 @@ export class User extends Model<User> {
     public async friends({first, offset}: { first: number, offset: number }): Promise<User[]> {
         const limit = first ?? 10;
         offset = offset ?? 0;
-        return await this.$get("rFriendOf", {limit, offset}) as User[];
+        const friendList = await this.$get("rFriendOf", {limit, offset}) as User[];
+        friendList.concat(await this.$get("rFriends", {limit, offset}) as User[]);
+        return friendList.slice(0, limit);
     }
 
     /**
      * The total number of the users friends.
      */
     public async friendCount(): Promise<number> {
-        return this.$count("rFriends");
+        return await this.$count("rFriends") +  await this.$count("rFriendOf");
     }
 
     /**
