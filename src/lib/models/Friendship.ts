@@ -11,7 +11,6 @@ export class Friendship extends Model<Friendship> {
      * The id of the first user
      */
     @ForeignKey(() => User)
-    @PrimaryKey
     @NotNull
     @Column({allowNull: false})
     public userId: number;
@@ -20,7 +19,6 @@ export class Friendship extends Model<Friendship> {
      * The id of the second user
      */
     @ForeignKey(() => User)
-    @PrimaryKey
     @NotNull
     @Column({allowNull: false})
     public friendId: number;
