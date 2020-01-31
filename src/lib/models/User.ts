@@ -293,7 +293,13 @@ export class User extends Model<User> {
         offset = offset ?? 0;
         let friendList = await this.$get("rFriendOf", {limit, offset}) as User[];
         friendList = friendList.concat(await this.$get("rFriends", {limit, offset}) as User[]);
-        return friendList.slice(0, limit);
+        const resultList: User[] = [];
+        for (const friend of friendList) {
+            if (!resultList.find((user) => user.id === friend.id) && friend.id !== this.id) {
+                resultList.push(friend);
+            }
+        }
+        return resultList.slice(0, limit);
     }
 
     /**
@@ -430,7 +436,7 @@ export class User extends Model<User> {
                 await Friendship.bulkCreate([
                     {userId: this.id, friendId: sender},
                     {userId: sender, friendId: this.id},
-                ], {ignoreDuplicates: true});
+                ], {ignoreDuplicates: false});
                 await request.destroy();
             }
         } else {
