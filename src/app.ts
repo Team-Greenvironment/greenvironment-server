@@ -164,7 +164,7 @@ class App {
         this.app.use("/home", homeRoute.router);
         this.limiter({
             expire: config.get("api.rateLimit.upload.expire"),
-            lookup: ["connection.remoteAddress"],
+            lookup: ["connection.remoteAddress", "session.userId"],
             method: "all",
             onRateLimited: (req: IncomingMessage, res: any) => {
                 res.status(httpStatus.TOO_MANY_REQUESTS);
@@ -179,7 +179,7 @@ class App {
         // listen for graphql requests
         this.limiter({
             expire: config.get("api.rateLimit.graphql.expire"),
-            lookup: ["connection.remoteAddress"],
+            lookup: ["connection.remoteAddress", "session.userId"],
             method: "all",
             onRateLimited: (req: IncomingMessage, res: any) => {
                 res.status(httpStatus.TOO_MANY_REQUESTS);
