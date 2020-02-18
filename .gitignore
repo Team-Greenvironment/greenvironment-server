@@ -11,3 +11,4 @@ greenvironment.db
 logs
 logs*
 config/*
+yarn-error.log

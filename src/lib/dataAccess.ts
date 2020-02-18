@@ -18,7 +18,41 @@ import {InternalEvents} from "./InternalEvents";
 import * as models from "./models";
 import {Activity, BlacklistedPhrase} from "./models";
 
+const scrypt = require("scrypt-js");
 // tslint:disable:completed-docs
+
+const scrN = 32768;
+const scrR = 8;
+const scrP = 1;
+const scrKeyLength = 64;
+
+/**
+ * Creates a random salt.
+ */
+function generateSalt(): Buffer {
+    return crypto.randomBytes(32);
+}
+
+/**
+ * Returns a scrypt generated key
+ * @param password
+ * @param salt
+ */
+async function scryptHashPassword(password: string, salt: Buffer): Promise<string> {
+    const key: readonly number[] = await scrypt.scrypt(Buffer.from(password), salt, scrN, scrR, scrP, scrKeyLength);
+    const keyMut = [...key];
+    return Buffer.from(keyMut).toString("base64");
+}
+
+/**
+ * Creates a sha512 hash from a password
+ * @param password
+ */
+function sha512HashPassword(password: string) {
+    const hash = crypto.createHash("sha512");
+    hash.update(password);
+    return hash.digest("hex");
+}
 
 /**
  * Generates a new handle from the username and a base64 string of the current time.
@@ -114,10 +148,19 @@ namespace dataaccess {
      * @param password
      */
     export async function getUserByLogin(email: string, password: string): Promise<models.User> {
-        const hash = crypto.createHash("sha512");
-        hash.update(password);
-        password = hash.digest("hex");
         const user = await models.User.findOne({where: {email}});
+        if (!user.salt) {
+            const hashPassword = sha512HashPassword(password);
+            if (hashPassword === user.password) {
+                const salt = generateSalt();
+                user.salt = Buffer.from(salt).toString("hex");
+                user.password = await scryptHashPassword(password, Buffer.from(user.salt));
+                await user.save();
+                password = user.password;
+            }
+        } else {
+            password = await scryptHashPassword(password, Buffer.from(user.salt));
+        }
         if (user) {
             if (user.password === password) {
                 return user;

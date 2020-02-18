@@ -297,6 +297,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/scrypt-js@^2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@types/scrypt-js/-/scrypt-js-2.0.4.tgz#c75d17910357d79552a8aa102a8c907ebcd029d5"
+  integrity sha512-FCgSes9EwZrZEv3VmEKGSWeDgJSm6DJdR/QrBnZ1Y6Xhi9EAKmZqr6ocpPtZT/ZbJwaa/rpLyLq4uIy1Imzrhw==
+  dependencies:
+    "@types/node" "*"
+
 "@types/sequelize@^4.28.5":
   version "4.28.6"
   resolved "https://registry.yarnpkg.com/@types/sequelize/-/sequelize-4.28.6.tgz#01d2f1d3781cc34448cd63c2fd97bdb0612b15de"
@@ -4564,6 +4571,11 @@ sax@^1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
   integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
+
+scrypt-js@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/scrypt-js/-/scrypt-js-3.0.0.tgz#52361c1f272eeaab09ec1f806ea82078bca58b15"
+  integrity sha512-7CC7aufwukEvqdmllR0ny0QaSg0+S22xKXrXz3ZahaV6J+fgD2YAtrjtImuoDWog17/Ty9Q4HBmnXEXJ3JkfQA==
 
 semver-greatest-satisfied-range@^1.1.0:
   version "1.1.0"

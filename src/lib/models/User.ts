@@ -85,6 +85,12 @@ export class User extends Model<User> {
     public password: string;
 
     /**
+     * The salt for the password
+     */
+    @Column({type: sqz.STRING(128)})
+    public salt: string;
+
+    /**
      * The ranking points of the user
      */
     @NotNull
