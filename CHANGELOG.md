@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - default response timeout from 2 minutes to 30 seconds
 - cluster api to start workers with a 2 second delay each to avoid race conditions
 - levels to be configured in the backend
+- password hash function to be sCrypt with a salt
 
 ### Fixed
 
