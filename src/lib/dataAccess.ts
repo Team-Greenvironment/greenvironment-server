@@ -29,8 +29,9 @@ const scrKeyLength = 64;
 /**
  * Creates a random salt.
  */
-function generateSalt(): Buffer {
-    return crypto.randomBytes(32);
+function generateSalt(): string {
+    const salt = crypto.randomBytes(32);
+    return Buffer.from(salt).toString("hex");
 }
 
 /**
@@ -58,11 +59,11 @@ function sha512HashPassword(password: string) {
  * Generates a new handle from the username and a base64 string of the current time.
  * @param username
  */
-async function generateHandle(username: string) {
+async function generateHandle(username: string): Promise<string> {
     username = username.toLowerCase().replace(/\s/g, "_");
     const count = await models.User.count({where: {handle: {[sqz.Op.like]: `%${username}%`}}});
     if (count > 0) {
-        return `${username}${count}`;
+        return await generateHandle(`${username}${count}`);
     } else {
         return username;
     }
@@ -149,19 +150,18 @@ namespace dataaccess {
      */
     export async function getUserByLogin(email: string, password: string): Promise<models.User> {
         const user = await models.User.findOne({where: {email}});
-        if (!user.salt) {
-            const hashPassword = sha512HashPassword(password);
-            if (hashPassword === user.password) {
-                const salt = generateSalt();
-                user.salt = Buffer.from(salt).toString("hex");
-                user.password = await scryptHashPassword(password, Buffer.from(user.salt));
-                await user.save();
-                password = user.password;
-            }
-        } else {
-            password = await scryptHashPassword(password, Buffer.from(user.salt));
-        }
         if (user) {
+            if (!user.salt) {
+                const hashPassword = sha512HashPassword(password);
+                if (hashPassword === user.password) {
+                    user.salt = generateSalt();
+                    user.password = await scryptHashPassword(password, Buffer.from(user.salt));
+                    await user.save();
+                    password = user.password;
+                }
+            } else {
+                password = await scryptHashPassword(password, Buffer.from(user.salt));
+            }
             if (user.password === password) {
                 return user;
             } else {
@@ -191,13 +191,12 @@ namespace dataaccess {
         if (blacklisted.length > 0) {
             throw new BlacklistedError(blacklisted.map((p) => p.phrase), "username");
         }
-        const hash = crypto.createHash("sha512");
-        hash.update(password);
-        password = hash.digest("hex");
         const existResult = !!(await models.User.findOne({where: {email}}));
         const handle = await generateHandle(username);
         if (!existResult) {
-            return models.User.create({username, email, password, handle});
+            const salt = generateSalt();
+            password = await scryptHashPassword(password, Buffer.from(salt));
+            return models.User.create({username, email, password, handle, salt});
         } else {
             throw new EmailAlreadyRegisteredError(email);
         }

@@ -312,7 +312,7 @@ export class User extends Model<User> {
      * The total number of the users friends.
      */
     public async friendCount(): Promise<number> {
-        return await this.$count("rFriends") +  await this.$count("rFriendOf");
+        return this.$count("rFriends");
     }
 
     /**

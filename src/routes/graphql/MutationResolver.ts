@@ -31,6 +31,7 @@ import {
 } from "../../lib/models";
 import {Report} from "../../lib/models";
 import {ReportReason} from "../../lib/models";
+import {is} from "../../lib/regex";
 import {UploadManager} from "../../lib/UploadManager";
 import {BaseResolver} from "./BaseResolver";
 
@@ -99,7 +100,10 @@ export class MutationResolver extends BaseResolver {
      */
     public async register({username, email, passwordHash}: { username: string, email: string, passwordHash: string },
                           request: any): Promise<User> {
-        let mailValid = isEmail(email);
+        if (username?.length === 0 || email?.length === 0 || passwordHash?.length === 0) {
+            throw new GraphQLError("No username or email or password given.");
+        }
+        let mailValid = is.email(email);
         if (mailValid) {
             try {
                 mailValid = (await legit(email)).isValid;

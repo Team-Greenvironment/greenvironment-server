@@ -17,7 +17,7 @@ import {
     Post,
     Report, ReportReason,
     Request,
-    User
+    User,
 } from "../../lib/models";
 import {BlacklistedResult} from "./BlacklistedResult";
 import {MutationResolver} from "./MutationResolver";
