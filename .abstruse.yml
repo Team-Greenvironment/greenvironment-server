@@ -1,7 +1,6 @@
 image: nodejs-12
 
 matrix:
-  - env: SCRIPT=build
   - env: SCRIPT=test
 
 before_install:
@@ -10,6 +9,9 @@ before_install:
 
 install:
   - yarn install
+
+before_script:
+  - gulp
 
 script:
   - if [[ "$SCRIPT" ]]; then yarn $SCRIPT; fi
