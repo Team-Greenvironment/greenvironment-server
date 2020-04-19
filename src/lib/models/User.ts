@@ -267,7 +267,7 @@ export class User extends Model<User> {
      * Returns the media url which is the profile picture
      */
     public async profilePicture(): Promise<string> {
-        const media = await this.$get<Media>("rMedia") as Media;
+        const media = await this.$get("rMedia") as Media;
         return media ? media.url : undefined;
     }
 

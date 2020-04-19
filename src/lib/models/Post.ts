@@ -149,7 +149,7 @@ export class Post extends Model<Post> {
      * Returns the media description object of the post
      */
     public async media() {
-        return await this.$get<Media>("rMedia") as Media;
+        return await this.$get("rMedia") as Media;
     }
 
     /**

@@ -93,7 +93,7 @@ export class Group extends Model<Group> {
      * Returns the media url of the group which is the profile picture
      */
     public async picture(): Promise<string> {
-        const media = await this.$get<Media>("rMedia") as Media;
+        const media = await this.$get("rMedia") as Media;
         return media ? media.url : undefined;
     }
 

@@ -84,7 +84,7 @@ export class Event extends Model<Event> {
     public async deletable({userId}: { userId: number }, request: any): Promise<boolean> {
         userId = userId ?? request.session.userId;
         if (userId) {
-            const group = await this.$get<Group>("rGroup") as Group;
+            const group = await this.$get("rGroup") as Group;
             const user = await User.findByPk(userId);
             return (await group.$has("rAdmins", user)) || user.isAdmin;
         } else {

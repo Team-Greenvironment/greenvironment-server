@@ -40,7 +40,7 @@ class HomeRoute extends Route {
                 }
             });
             globals.internalEmitter.on(InternalEvents.REQUESTCREATE, async (request: Request) => {
-                if ((await request.$get("sender") as User).id === socket.handshake.session.userId) {
+                if ((await request.$get("rSender") as User).id === socket.handshake.session.userId) {
                     socket.emit("request", request);
                 }
             });
@@ -92,7 +92,7 @@ class HomeRoute extends Route {
                 }
             });
             globals.internalEmitter.on(InternalEvents.GQLCHATMESSAGE, async (message: ChatMessage) => {
-                if ((await message.$get("chat") as ChatRoom).id === chatId) {
+                if ((await message.$get("rChat") as ChatRoom).id === chatId) {
                     socket.emit("chatMessage", Object.assign(message, {htmlContent: message.htmlContent}));
                 }
             });
