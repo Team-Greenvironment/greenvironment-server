@@ -1,0 +1,18 @@
+image: nodejs-12
+
+matrix:
+  - env: SCRIPT=build
+  - env: SCRIPT=test
+
+before_install:
+  - npm config set spin false
+  - npm config set progress false
+
+install:
+  - yarn install
+
+script:
+  - if [[ "$SCRIPT" ]]; then yarn $SCRIPT; fi
+
+cache:
+  - node_modules
