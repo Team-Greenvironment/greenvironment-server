@@ -87,7 +87,7 @@
     "markdown-it-emoji": "^1.4.0",
     "markdown-it-html5-media": "^0.6.0",
     "pg": "^7.12.1",
-    "pug": "^2.0.4",
+    "pug": "^3.0.1",
     "reflect-metadata": "^0.1.13",
     "scrypt-js": "^3.0.0",
     "sequelize": "^5.19.6",
